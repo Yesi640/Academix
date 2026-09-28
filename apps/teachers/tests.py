@@ -67,3 +67,17 @@ class TeachersTests(TestCase):
         )
         self.assertEqual(TeachingAssignment.objects.count(), 1)
         self.assertEqual(updated_assignment.teacher, teacher2)
+
+    def test_assign_teacher_as_group_director(self):
+        """Prueba asignación marcando al docente como director de grupo."""
+        assignment = assign_teacher_to_subject(
+            teacher=self.teacher_profile,
+            course_section=self.section,
+            subject=self.subject,
+            academic_year=self.year,
+            is_group_director=True
+        )
+        self.assertTrue(assignment.is_group_director)
+        self.section.refresh_from_db()
+        self.assertEqual(self.section.homeroom_teacher, self.user)
+        self.assertTrue(self.user.is_group_director)

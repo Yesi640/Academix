@@ -8,11 +8,32 @@
         <h3 class="fw-bold text-dark mb-0">Estructura Académica y Cursos</h3>
         <p class="text-muted small mb-0">Gestión de años escolares, grados, secciones y grupos institucionales</p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
+        {% if user.is_admin_role or user.is_rector or user.is_secretary %}
+        <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#createYearModal">
+            <i class="bi bi-calendar-plus"></i>
+            <span>Nuevo Año Lectivo</span>
+        </button>
+        {% endif %}
+
+        {% if active_year and not active_year.is_current and user.is_admin_role or user.is_rector %}
+        <a href="{% url 'courses:set_active_year' active_year.id %}" class="btn btn-success btn-sm d-flex align-items-center gap-1 shadow-sm" onclick="return confirm('¿Desea establecer {{ active_year.name }} como el año escolar vigente en todo el sistema?');">
+            <i class="bi bi-check2-circle"></i>
+            <span>Establecer como Año Vigente</span>
+        </a>
+        {% endif %}
+
+        {% if inst_settings.institution_type == 'COLEGIO' and active_year and sections|length == 0 and user.is_admin_role or user.is_rector %}
+        <a href="{% url 'courses:generate_default_sections' active_year.id %}" class="btn btn-warning text-dark btn-sm d-flex align-items-center gap-1 shadow-sm">
+            <i class="bi bi-magic"></i>
+            <span>Generar Cursos Típicos</span>
+        </a>
+        {% endif %}
+
         {% if user.is_admin_role or user.is_rector %}
         <button class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#createSectionModal">
             <i class="bi bi-plus-circle"></i>
-            <span>Nuevo Grupo / Sección</span>
+            <span>Nuevo(a) {{ institution.term_section|default:'Grupo' }}</span>
         </button>
         {% endif %}
     </div>
@@ -24,21 +45,25 @@
         <div class="ac-card metric-card border-primary p-3">
             <div class="text-muted small fw-semibold">AÑO LECTIVO VIGENTE</div>
             <div class="fs-4 fw-bold text-dark mt-1">{{ current_year.name|default:"Sin definir" }}</div>
-            <span class="badge bg-success-subtle text-success small"><i class="bi bi-check-circle me-1"></i>Vigente</span>
+            <span class="badge bg-success-subtle text-success small"><i class="bi bi-check-circle me-1"></i>En curso</span>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
         <div class="ac-card metric-card border-info p-3">
-            <div class="text-muted small fw-semibold text-uppercase">{{ institution.term_grade|default:'Grados' }} Activos</div>
+            <div class="text-muted small fw-semibold text-uppercase">{{ institution.term_grade|default:'Grados' }} Disponibles</div>
             <div class="fs-4 fw-bold text-dark mt-1">{{ grades.count }}</div>
+            {% if inst_settings.institution_type == 'COLEGIO' %}
+            <span class="badge bg-info-subtle text-info border border-info-subtle small">{{ inst_settings.get_school_scope_display }}</span>
+            {% else %}
             <span class="text-muted small">{{ institution.get_institution_type_display|default:'Estructura Vigente' }}</span>
+            {% endif %}
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
         <div class="ac-card metric-card border-warning p-3">
             <div class="text-muted small fw-semibold text-uppercase">{{ institution.term_sections|default:'Cursos / Grupos' }}</div>
             <div class="fs-4 fw-bold text-dark mt-1">{{ sections.count }}</div>
-            <span class="text-muted small">Registrados en {{ active_year.year|default:"2026" }}</span>
+            <span class="text-muted small">Registrados en {{ active_year.name|default:"2026" }}</span>
         </div>
     </div>
     <div class="col-sm-6 col-lg-3">
@@ -50,37 +75,140 @@
     </div>
 </div>
 
-<!-- Barra de Filtros Reactivos HTMX -->
+<!-- Barra de Filtros Reactivos HTMX y Selector de Año -->
 <div class="card ac-card p-3 mb-4">
-    <form class="row g-3" hx-get="{% url 'courses:sections_partial' %}" hx-target="#sections-table-container" hx-trigger="change, keyup changed delay:300ms" hx-swap="innerHTML">
+    <div class="row g-3 align-items-center">
         <div class="col-md-4">
-            <div class="input-group">
-                <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
-                <input type="text" name="q" class="form-control" placeholder="Buscar {{ institution.term_section|lower|default:'grupo' }} por nombre...">
-            </div>
+            <label class="form-label small fw-bold text-secondary mb-1">Año Escolar a Consultar:</label>
+            <form method="get">
+                <select name="year" class="form-select fw-bold" onchange="this.form.submit()">
+                    {% for yr in years %}
+                    <option value="{{ yr.id }}" {% if yr == active_year %}selected{% endif %}>
+                        {{ yr.name }} {% if yr.is_current %}★ [VIGENTE]{% endif %}
+                    </option>
+                    {% empty %}
+                    <option value="">No hay años lectivos registrados</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
         <div class="col-md-4">
-            <select name="grade" class="form-select">
-                <option value="">-- Todos los {{ institution.term_grade|lower|default:'grados' }} --</option>
-                {% for grade in grades %}
-                <option value="{{ grade.id }}">{{ grade.name }} ({{ grade.get_level_stage_display }})</option>
-                {% endfor %}
-            </select>
+            <label class="form-label small fw-bold text-secondary mb-1">Buscar por Nombre:</label>
+            <form hx-get="{% url 'courses:sections_partial' %}" hx-target="#sections-table-container" hx-trigger="keyup changed delay:300ms">
+                <input type="hidden" name="year" value="{{ active_year.id }}">
+                <div class="input-group">
+                    <span class="input-group-text bg-light"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control" placeholder="Buscar {{ institution.term_section|lower|default:'grupo' }}...">
+                </div>
+            </form>
         </div>
         <div class="col-md-4">
-            <select name="year" class="form-select">
-                {% for yr in years %}
-                <option value="{{ yr.id }}" {% if yr == active_year %}selected{% endif %}>{{ yr.name }} {% if yr.is_current %}(Vigente){% endif %}</option>
-                {% endfor %}
-            </select>
+            <label class="form-label small fw-bold text-secondary mb-1">Filtrar por {{ institution.term_grade|default:'Grado' }}:</label>
+            <form hx-get="{% url 'courses:sections_partial' %}" hx-target="#sections-table-container" hx-trigger="change">
+                <input type="hidden" name="year" value="{{ active_year.id }}">
+                <select name="grade" class="form-select">
+                    <option value="">-- Todos los {{ institution.term_grade|lower|default:'grados' }} --</option>
+                    {% for grade in grades %}
+                    <option value="{{ grade.id }}">{{ grade.name }} ({{ grade.get_level_stage_display }})</option>
+                    {% endfor %}
+                </select>
+            </form>
         </div>
-    </form>
+    </div>
 </div>
 
 <!-- Contenedor Reemplazable de la Tabla de Cursos -->
 <div id="sections-table-container">
     {% include 'courses/partials/sections_table.html' %}
 </div>
+
+<!-- Modal para Crear Nuevo Año Lectivo (2026 en adelante) -->
+<div class="modal fade" id="createYearModal" tabindex="-1" aria-labelledby="createYearModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form method="POST" action="{% url 'courses:create_academic_year' %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="createYearModalLabel">
+                        <i class="bi bi-calendar-plus me-2"></i>Nuevo Año Lectivo
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Año Calendario</label>
+                        <select name="year" id="select_year_calendar" class="form-select fw-bold" required onchange="updateYearDefaults(this.value)">
+                            {% for sy in suggested_years %}
+                            <option value="{{ sy }}">{{ sy }}</option>
+                            {% empty %}
+                            <option value="2026">2026</option>
+                            <option value="2027">2027</option>
+                            <option value="2028">2028</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text small">Admite años lectivos nuevos a partir del 2026 en adelante.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Nombre Descriptivo</label>
+                        <input type="text" name="name" id="input_year_name" class="form-control" value="Año Escolar 2026" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Fecha de Inicio</label>
+                            <input type="date" name="start_date" id="input_start_date" class="form-control" value="2026-01-15" required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold text-secondary">Fecha de Finalización</label>
+                            <input type="date" name="end_date" id="input_end_date" class="form-control" value="2026-11-30" required>
+                        </div>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 border mb-3">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="is_current" id="is_current_switch" value="1" checked>
+                            <label class="form-check-label fw-semibold text-dark small" for="is_current_switch">
+                                Establecer de inmediato como Año Lectivo Vigente
+                            </label>
+                        </div>
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" name="auto_create_periods" id="auto_periods_switch" value="1" checked>
+                            <label class="form-check-label fw-semibold text-dark small" for="auto_periods_switch">
+                                Crear automáticamente los 4 periodos estándar (25% cada uno)
+                            </label>
+                        </div>
+                        {% if inst_settings.institution_type == 'COLEGIO' %}
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" name="auto_generate_sections" id="auto_sections_switch" value="1" checked>
+                            <label class="form-check-label fw-semibold text-dark small" for="auto_sections_switch">
+                                Generar cursos normales sugeridos del colegio (según enfoque {{ inst_settings.get_school_scope_display }})
+                            </label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Guardar Año Lectivo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateYearDefaults(yearVal) {
+    document.getElementById('input_year_name').value = 'Año Escolar ' + yearVal;
+    document.getElementById('input_start_date').value = yearVal + '-01-15';
+    document.getElementById('input_end_date').value = yearVal + '-11-30';
+}
+// Inicializar con el valor por defecto
+document.addEventListener('DOMContentLoaded', function() {
+    var sel = document.getElementById('select_year_calendar');
+    if (sel && sel.value) {
+        updateYearDefaults(sel.value);
+    }
+});
+</script>
 
 <!-- Modal para Crear Nuevo Grupo / Sección -->
 <div class="modal fade" id="createSectionModal" tabindex="-1" aria-labelledby="createSectionModalLabel" aria-hidden="true">
@@ -99,7 +227,7 @@
                         <label class="form-label small fw-semibold text-secondary">Año Lectivo</label>
                         <select name="academic_year" class="form-select" required>
                             {% for yr in years %}
-                            <option value="{{ yr.id }}" {% if yr.is_current %}selected{% endif %}>{{ yr.name }}</option>
+                            <option value="{{ yr.id }}" {% if yr == active_year %}selected{% endif %}>{{ yr.name }}</option>
                             {% endfor %}
                         </select>
                     </div>

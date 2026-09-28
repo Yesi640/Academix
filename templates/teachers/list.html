@@ -55,7 +55,13 @@
                                 <small class="text-muted ms-1">({{ asg.course_section.grade_level.name }})</small>
                             </td>
                             <td class="text-end">
+                                {% if asg.is_group_director %}
+                                <span class="badge bg-warning text-dark border border-warning shadow-sm">
+                                    <i class="bi bi-star-fill me-1"></i>Director de Grupo
+                                </span>
+                                {% else %}
                                 <span class="badge bg-success-subtle text-success border border-success-subtle">Titular</span>
+                                {% endif %}
                             </td>
                         </tr>
                         {% empty %}
@@ -138,6 +144,17 @@
                             <option value="{{ subj.id }}">{{ subj.name }} ({{ subj.area.name }})</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch p-3 bg-light rounded-3 border">
+                            <input class="form-check-input ms-0 me-2" type="checkbox" role="switch" id="is_group_director" name="is_group_director" value="1">
+                            <label class="form-check-label fw-bold text-dark small" for="is_group_director">
+                                <i class="bi bi-star-fill text-warning me-1"></i>¿Es Profe de Grupo (Director de Grupo)?
+                            </label>
+                            <div class="form-text small text-muted mt-1" style="font-size:0.75rem;">
+                                Si se activa, este docente será el Director de Grupo del curso y tendrá acceso a la sábana de notas y boletines.
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">

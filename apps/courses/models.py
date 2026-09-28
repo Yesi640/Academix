@@ -134,11 +134,23 @@ class InstitutionSetting(models.Model):
         ACADEMIA = 'ACADEMIA', 'Academia / Educación Continua'
         OTRO = 'OTRO', 'Institución Personalizada'
 
+    class SchoolLevelScope(models.TextChoices):
+        COMPLETA = 'COMPLETA', 'Colegio Completo (Transición, Primaria y Secundaria/Media)'
+        PRIMARIA = 'PRIMARIA', 'Solo Primaria (Transición, 1° a 5°)'
+        SECUNDARIA = 'SECUNDARIA', 'Solo Secundaria y Media (6° a 11°)'
+
     institution_type = models.CharField(
         max_length=20,
         choices=InstitutionType.choices,
         default=InstitutionType.COLEGIO,
         verbose_name='Tipo de Institución'
+    )
+    school_scope = models.CharField(
+        max_length=20,
+        choices=SchoolLevelScope.choices,
+        default=SchoolLevelScope.COMPLETA,
+        verbose_name='Enfoque del Colegio',
+        help_text='Aplica para Colegios: Define si ofrece Primaria, Secundaria o Ambos niveles.'
     )
     institution_name = models.CharField(
         max_length=150,

@@ -47,6 +47,8 @@ def assign_teacher_view(request):
         subject_id = request.POST.get('subject_id')
         year_id = request.POST.get('academic_year_id')
 
+        is_group_director = request.POST.get('is_group_director') in ['on', 'true', 'True', '1', True]
+
         teacher = get_object_or_404(TeacherProfile, id=teacher_id)
         section = get_object_or_404(CourseSection, id=section_id)
         subject = get_object_or_404(Subject, id=subject_id)
@@ -58,9 +60,11 @@ def assign_teacher_view(request):
                 course_section=section,
                 subject=subject,
                 academic_year=academic_year,
+                is_group_director=is_group_director,
                 user=request.user
             )
-            messages.success(request, f'Docente {teacher.user.get_full_name()} asignado a {subject.name} en {section.name}.')
+            director_txt = " (Designado como Director de Grupo)" if is_group_director else ""
+            messages.success(request, f'Docente {teacher.user.get_full_name()} asignado a {subject.name} en {section.name}{director_txt}.')
         except Exception as e:
             messages.error(request, f'Error al asignar docente: {str(e)}')
 

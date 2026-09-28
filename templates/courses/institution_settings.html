@@ -146,6 +146,39 @@
                 </div>
             </div>
 
+            {% if inst_settings.institution_type == 'COLEGIO' %}
+            <div class="card bg-light border-0 rounded-3 p-3 mb-4 border-start border-4 border-primary">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="bi bi-diagram-2-fill text-primary fs-5"></i>
+                    <h6 class="fw-bold text-dark mb-0">Enfoque y Niveles del Colegio:</h6>
+                </div>
+                <p class="text-muted small mb-2">
+                    Defina si su colegio imparte exclusivamente Primaria, Secundaria/Media, o todos los niveles completos. ACADEMIX ajustará automáticamente los grados escolares y cursos visibles.
+                </p>
+                <div class="row g-2">
+                    {% for scope_code, scope_name in school_scopes %}
+                    <div class="col-md-4">
+                        <div class="form-check p-3 bg-white rounded-3 border h-100">
+                            <input class="form-check-input ms-0 me-2" type="radio" name="school_scope" id="scope_{{ scope_code }}" value="{{ scope_code }}" {% if inst_settings.school_scope == scope_code %}checked{% endif %}>
+                            <label class="form-check-label fw-bold text-dark small" for="scope_{{ scope_code }}">
+                                {{ scope_name }}
+                            </label>
+                            <div class="form-text small text-muted" style="font-size:0.75rem;">
+                                {% if scope_code == 'PRIMARIA' %}
+                                Transición, 1°, 2°, 3°, 4° y 5° de Básica Primaria.
+                                {% elif scope_code == 'SECUNDARIA' %}
+                                6°, 7°, 8°, 9° de Secundaria y 10°, 11° de Media.
+                                {% else %}
+                                Todos los niveles regulares: Transición hasta 11°.
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
             <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Términos que rigen en toda la plataforma:</h6>
 
             <div class="row g-3">
