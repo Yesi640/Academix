@@ -471,3 +471,156 @@ def update_criterion_topic_view(request):
         'topic': criterion.topic,
     })
 
+
+@login_required
+def update_criterion_view(request):
+    """
+    Endpoint para actualizar tanto el nombre como el tema de una actividad/criterio.
+    Permite renombrar columnas (ej: "Evaluación 1: La Célula", "Taller 1: Fracciones").
+    """
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    if request.user.is_secretary or request.user.is_student or request.user.is_parent:
+        return JsonResponse({'status': 'error', 'message': 'Sin permisos.'}, status=403)
+
+    criterion_id = request.POST.get('criterion_id')
+    name = request.POST.get('name', '').strip()
+    topic = request.POST.get('topic', '').strip()
+
+    criterion = get_object_or_404(EvaluationCriterion, id=criterion_id)
+
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        has_assignment = TeachingAssignment.objects.filter(
+            teacher=request.user.teacher_profile,
+            course_section=criterion.course_section,
+            subject=criterion.subject,
+            academic_year=criterion.course_section.academic_year,
+            is_active=True
+        ).exists()
+        if not has_assignment and not (request.user.is_admin_role or request.user.is_rector):
+            return JsonResponse({'status': 'error', 'message': 'No está asignado a esta materia.'}, status=403)
+
+    update_fields = []
+    if name:
+        criterion.name = name[:100]
+        update_fields.append('name')
+    if topic is not None:
+        criterion.topic = topic[:200]
+        update_fields.append('topic')
+
+    if update_fields:
+        criterion.save(update_fields=update_fields)
+
+    return JsonResponse({
+        'status': 'success',
+        'criterion_id': criterion.id,
+        'name': criterion.name,
+        'topic': criterion.topic,
+    })
+
+
+@login_required
+def configure_criteria_view(request):
+    """
+    Permite configurar, renombrar o desglosar los criterios/actividades de una materia en un periodo.
+    Ej: Desglosar en 5 actividades estándar:
+        - Evaluación 1 (20%)
+        - Evaluación 2 (20%)
+        - Taller 1 (20%)
+        - Taller 2 (20%)
+        - Actitudinal (20%)
+    """
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    course_section_id = request.POST.get('course_section_id')
+    subject_id = request.POST.get('subject_id')
+    period_id = request.POST.get('period_id')
+    preset = request.POST.get('preset')
+
+    section = get_object_or_404(CourseSection, id=course_section_id)
+    subject = get_object_or_404(Subject, id=subject_id)
+    period = get_object_or_404(AcademicPeriod, id=period_id)
+
+    # Validar permisos
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        has_assignment = TeachingAssignment.objects.filter(
+            teacher=request.user.teacher_profile,
+            course_section=section,
+            subject=subject,
+            academic_year=section.academic_year,
+            is_active=True
+        ).exists()
+        if not has_assignment and not (request.user.is_admin_role or request.user.is_rector):
+            messages.error(request, 'No tienes permisos para modificar criterios en esta materia.')
+            return redirect('teachers:course_workspace', section_id=section.id)
+
+    if preset == 'standard_5':
+        # Definir las 5 actividades estándar
+        default_defs = [
+            ('Evaluación 1', Decimal('20.00'), 1),
+            ('Evaluación 2', Decimal('20.00'), 2),
+            ('Taller 1',     Decimal('20.00'), 3),
+            ('Taller 2',     Decimal('20.00'), 4),
+            ('Actitudinal',  Decimal('20.00'), 5),
+        ]
+        existing = list(EvaluationCriterion.objects.filter(
+            course_section=section,
+            subject=subject,
+            academic_period=period
+        ).order_by('order'))
+
+        # Si ya hay criterios, actualizamos los primeros o creamos los faltantes
+        for i, (name, pct, order) in enumerate(default_defs):
+            if i < len(existing):
+                c = existing[i]
+                c.name = name
+                c.percentage = pct
+                c.order = order
+                c.save()
+            else:
+                EvaluationCriterion.objects.create(
+                    course_section=section,
+                    subject=subject,
+                    academic_period=period,
+                    name=name,
+                    percentage=pct,
+                    order=order
+                )
+        # Si sobraban criterios más allá de 5 y no tienen notas, se eliminan
+        if len(existing) > len(default_defs):
+            for extra_crit in existing[len(default_defs):]:
+                if not extra_crit.grade_records.filter(score__isnull=False).exists():
+                    extra_crit.delete()
+
+        messages.success(request, '¡Estructura actualizada a 5 actividades (Evaluación 1, 2, Taller 1, 2, Actitudinal - 20% c/u)!')
+
+    elif preset == 'custom':
+        # Procesar formulario personalizado de criterios
+        criterion_ids = request.POST.getlist('criterion_id[]')
+        names = request.POST.getlist('name[]')
+        topics = request.POST.getlist('topic[]')
+        percentages = request.POST.getlist('percentage[]')
+
+        total_pct = sum(Decimal(p or '0') for p in percentages)
+        if total_pct != Decimal('100.00'):
+            messages.error(request, f'La suma de porcentajes debe ser exactamente 100%. (Suma actual: {total_pct}%)')
+            return redirect(f"{request.META.get('HTTP_REFERER', '/')}?subject={subject.id}&period={period.id}")
+
+        for cid, nm, top, pct in zip(criterion_ids, names, topics, percentages):
+            if cid:
+                c = EvaluationCriterion.objects.filter(id=cid, course_section=section, subject=subject, academic_period=period).first()
+                if c:
+                    c.name = nm.strip()[:100]
+                    c.topic = top.strip()[:200]
+                    c.percentage = Decimal(pct)
+                    c.save()
+
+        messages.success(request, '¡Actividades y criterios actualizados exitosamente!')
+
+    return redirect(f"{request.META.get('HTTP_REFERER', '/')}?subject={subject.id}&period={period.id}")
+
+
