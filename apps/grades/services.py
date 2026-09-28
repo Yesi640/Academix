@@ -41,10 +41,13 @@ def get_or_create_default_criteria(course_section, subject, academic_period):
                 ('Proyecto Final / Evaluación Asincrónica', Decimal('50.00'), 2),
             ]
         else:
+            # Colegio: criterios específicos por tipo de actividad
             default_defs = [
-                ('Evaluaciones y Quices', Decimal('40.00'), 1),
-                ('Talleres y Actividades', Decimal('40.00'), 2),
-                ('Actitudinal y Autoevaluación', Decimal('20.00'), 3),
+                ('Evaluación 1', Decimal('20.00'), 1),
+                ('Evaluación 2', Decimal('20.00'), 2),
+                ('Taller 1',     Decimal('20.00'), 3),
+                ('Taller 2',     Decimal('20.00'), 4),
+                ('Actitudinal',  Decimal('20.00'), 5),
             ]
 
         criteria = []

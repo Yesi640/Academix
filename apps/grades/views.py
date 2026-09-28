@@ -428,3 +428,46 @@ def update_score_inline_view(request):
         return render(request, 'grades/partials/grade_row.html', context)
 
     return HttpResponse(status=405)
+
+
+@login_required
+def update_criterion_topic_view(request):
+    """
+    Endpoint para guardar el tema/contenido de un criterio de evaluación.
+    El docente puede editar inline el tema de cada columna (Taller 1, Evaluación 2, etc.)
+    directamente desde el encabezado de la planilla de notas.
+    """
+    from django.http import JsonResponse
+
+    if request.method != 'POST':
+        return HttpResponse(status=405)
+
+    if request.user.is_secretary or request.user.is_student or request.user.is_parent:
+        return JsonResponse({'status': 'error', 'message': 'Sin permisos.'}, status=403)
+
+    criterion_id = request.POST.get('criterion_id')
+    topic = request.POST.get('topic', '').strip()
+
+    criterion = get_object_or_404(EvaluationCriterion, id=criterion_id)
+
+    # El docente solo puede editar criterios de los cursos/asignaturas que tiene asignados
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        has_assignment = TeachingAssignment.objects.filter(
+            teacher=request.user.teacher_profile,
+            course_section=criterion.course_section,
+            subject=criterion.subject,
+            academic_year=criterion.course_section.academic_year,
+            is_active=True
+        ).exists()
+        if not has_assignment and not (request.user.is_admin_role or request.user.is_rector):
+            return JsonResponse({'status': 'error', 'message': 'No está asignado a esta materia.'}, status=403)
+
+    criterion.topic = topic[:200]
+    criterion.save(update_fields=['topic'])
+
+    return JsonResponse({
+        'status': 'success',
+        'criterion_id': criterion.id,
+        'topic': criterion.topic,
+    })
+

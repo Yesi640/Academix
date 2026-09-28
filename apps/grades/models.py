@@ -28,6 +28,13 @@ class EvaluationCriterion(models.Model):
         verbose_name='Periodo Lectivo'
     )
     name = models.CharField(max_length=100, verbose_name='Nombre del Criterio')
+    topic = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Tema / Contenido de la Actividad',
+        help_text='Ej: Fracciones y decimales, Cuento corto, Revolución Industrial...'
+    )
     percentage = models.DecimalField(
         max_digits=5,
         decimal_places=2,

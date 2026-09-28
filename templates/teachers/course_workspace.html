@@ -236,14 +236,29 @@
                         <tr>
                             <th style="width: 120px;">Código</th>
                             <th>Estudiante</th>
-                            {% for crit in criteria %}
-                            <th class="text-center" style="min-width: 140px;">
+                        {% for crit in criteria %}
+                            <th class="text-center" style="min-width: 155px;">
                                 <div class="fw-bold">{{ crit.name }}</div>
-                                <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.7rem;">
+                                <span class="badge bg-primary-subtle text-primary font-monospace mb-1" style="font-size: 0.7rem;">
                                     {{ crit.percentage }}%
                                 </span>
+                                {% if is_editable %}
+                                <div class="mt-1">
+                                    <input type="text"
+                                           class="form-control form-control-sm text-center criterion-topic-input"
+                                           style="font-size:0.7rem; min-width:120px; border-color: #dee2e6; background: #f8f9fa;"
+                                           value="{{ crit.topic }}"
+                                           placeholder="Tema de la actividad..."
+                                           data-criterion-id="{{ crit.id }}"
+                                           data-topic-url="{% url 'grades:update_criterion_topic' %}"
+                                           title="Escribe el tema o contenido de esta actividad"
+                                           autocomplete="off">
+                                </div>
+                                {% elif crit.topic %}
+                                <div class="text-muted text-truncate" style="font-size:0.68rem; max-width:140px; margin: 0 auto;" title="{{ crit.topic }}">{{ crit.topic }}</div>
+                                {% endif %}
                             </th>
-                            {% endfor %}
+                        {% endfor %}
                             <th class="text-center text-primary" style="width: 120px;">
                                 <div>Definitiva</div>
                                 <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">100%</span>
@@ -595,63 +610,55 @@
                 </div>
             </div>
 
-            <!-- Tabla Abreviada y Limpia -->
+            <!-- Tabla Agrupada por Categorías -->
             {% if curriculum %}
+
+            {# ── PRINCIPALES ── #}
+            {% if principales %}
             <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden mb-3">
+                <div class="d-flex align-items-center gap-2 px-3 py-2" style="background: linear-gradient(90deg,#eff6ff,#dbeafe);">
+                    <i class="bi bi-star-fill text-primary"></i>
+                    <span class="fw-bold text-primary small text-uppercase">Áreas Principales</span>
+                    <span class="badge bg-primary text-white ms-1">{{ principales|length }}</span>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0 small">
                         <thead class="table-light text-muted text-uppercase" style="font-size:0.72rem;">
                             <tr>
                                 <th>Asignatura</th>
                                 <th>Área</th>
-                                <th>Categoría</th>
                                 <th class="text-center">Horas en {{ section.name }}</th>
                                 <th>Competencias</th>
                                 <th class="text-end">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in curriculum %}
+                            {% for item in principales %}
                             <tr>
                                 <td>
                                     <span class="fw-bold text-dark">{{ item.subject.name }}</span>
                                     <span class="badge bg-light text-muted font-monospace border ms-1">{{ item.subject.code }}</span>
                                     {% if item.is_assigned_to_me %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">
-                                        Tu materia
-                                    </span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">Tu materia</span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <span class="text-secondary small">{{ item.subject.area.name }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-light text-dark border">{{ item.subject.get_category_display }}</span>
-                                </td>
+                                <td><span class="text-secondary small">{{ item.subject.area.name }}</span></td>
                                 <td class="text-center font-monospace fw-bold">
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                                        {{ item.weekly_hours }}h / sem
-                                    </span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">{{ item.weekly_hours }}h / sem</span>
                                 </td>
                                 <td>
                                     {% if item.norms %}
-                                    <span class="badge bg-light text-secondary border font-monospace">
-                                        <i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA/Normas
-                                    </span>
+                                    <span class="badge bg-light text-secondary border font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA/Normas</span>
                                     {% else %}
                                     <span class="text-muted small">Sin normas</span>
                                     {% endif %}
                                 </td>
                                 <td class="text-end">
                                     <div class="d-flex gap-1 justify-content-end">
-                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" 
-                                                data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}"
-                                                title="Ver Ficha e Intensidad Abreviada">
+                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}" title="Ver Ficha e Intensidad">
                                             <i class="bi bi-clock-history me-1"></i>Ficha e Intensidad
                                         </button>
-                                        <button type="button" class="btn btn-outline-secondary btn-sm" 
-                                                data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" 
-                                                title="Agregar Norma">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" title="Agregar Norma">
                                             <i class="bi bi-plus-lg"></i>
                                         </button>
                                     </div>
@@ -662,7 +669,125 @@
                     </table>
                 </div>
             </div>
-            {% else %}
+            {% endif %}
+
+            {# ── HUMANÍSTICAS ── #}
+            {% if humanisticas %}
+            <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden mb-3">
+                <div class="d-flex align-items-center gap-2 px-3 py-2" style="background: linear-gradient(90deg,#faf5ff,#ede9fe);">
+                    <i class="bi bi-book-fill text-purple" style="color:#7c3aed;"></i>
+                    <span class="fw-bold small text-uppercase" style="color:#7c3aed;">Áreas Humanísticas</span>
+                    <span class="badge text-white ms-1" style="background:#7c3aed;">{{ humanisticas|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light text-muted text-uppercase" style="font-size:0.72rem;">
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Área</th>
+                                <th class="text-center">Horas en {{ section.name }}</th>
+                                <th>Competencias</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in humanisticas %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-dark">{{ item.subject.name }}</span>
+                                    <span class="badge bg-light text-muted font-monospace border ms-1">{{ item.subject.code }}</span>
+                                    {% if item.is_assigned_to_me %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">Tu materia</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="text-secondary small">{{ item.subject.area.name }}</span></td>
+                                <td class="text-center font-monospace fw-bold">
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">{{ item.weekly_hours }}h / sem</span>
+                                </td>
+                                <td>
+                                    {% if item.norms %}
+                                    <span class="badge bg-light text-secondary border font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA/Normas</span>
+                                    {% else %}
+                                    <span class="text-muted small">Sin normas</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}">
+                                            <i class="bi bi-clock-history me-1"></i>Ficha e Intensidad
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── ARTE / DEPORTE ── #}
+            {% if arte_deporte %}
+            <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden mb-3">
+                <div class="d-flex align-items-center gap-2 px-3 py-2" style="background: linear-gradient(90deg,#f0fdf4,#dcfce7);">
+                    <i class="bi bi-trophy-fill text-success"></i>
+                    <span class="fw-bold text-success small text-uppercase">Arte, Deporte e Informática</span>
+                    <span class="badge bg-success text-white ms-1">{{ arte_deporte|length }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light text-muted text-uppercase" style="font-size:0.72rem;">
+                            <tr>
+                                <th>Asignatura</th>
+                                <th>Área</th>
+                                <th class="text-center">Horas en {{ section.name }}</th>
+                                <th>Competencias</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in arte_deporte %}
+                            <tr>
+                                <td>
+                                    <span class="fw-bold text-dark">{{ item.subject.name }}</span>
+                                    <span class="badge bg-light text-muted font-monospace border ms-1">{{ item.subject.code }}</span>
+                                    {% if item.is_assigned_to_me %}
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle ms-1" style="font-size:0.65rem;">Tu materia</span>
+                                    {% endif %}
+                                </td>
+                                <td><span class="text-secondary small">{{ item.subject.area.name }}</span></td>
+                                <td class="text-center font-monospace fw-bold">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">{{ item.weekly_hours }}h / sem</span>
+                                </td>
+                                <td>
+                                    {% if item.norms %}
+                                    <span class="badge bg-light text-secondary border font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA/Normas</span>
+                                    {% else %}
+                                    <span class="text-muted small">Sin normas</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button type="button" class="btn btn-outline-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}">
+                                            <i class="bi bi-clock-history me-1"></i>Ficha e Intensidad
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}">
+                                            <i class="bi bi-plus-lg"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not principales and not humanisticas and not arte_deporte %}
             <div class="card ac-card border-0 shadow-sm p-4 text-center text-muted small">
                 No hay materias asignadas en este curso para mostrar.
             </div>
@@ -806,6 +931,55 @@ function getCsrfToken() {
     const cookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
     return cookie ? cookie.split('=')[1] : '';
 }
+
+// ─── Autosave de Tema de Criterio ─────────────────────────────────────────
+async function saveCriterionTopic(input) {
+    const criterionId = input.dataset.criterionId;
+    const topicUrl   = input.dataset.topicUrl;
+    const topic      = input.value.trim();
+
+    input.classList.add('border-warning');
+    input.setAttribute('readonly', true);
+
+    const fd = new FormData();
+    fd.append('csrfmiddlewaretoken', getCsrfToken());
+    fd.append('criterion_id', criterionId);
+    fd.append('topic', topic);
+
+    try {
+        const resp = await fetch(topicUrl, { method: 'POST', headers: { 'Accept': 'application/json' }, body: fd });
+        const data = await resp.json();
+        if (data.status === 'success') {
+            input.value = data.topic;
+            input.classList.remove('border-warning');
+            input.classList.add('border-success');
+            setTimeout(() => input.classList.remove('border-success'), 800);
+        } else {
+            input.classList.remove('border-warning');
+            input.classList.add('border-danger');
+            setTimeout(() => input.classList.remove('border-danger'), 1500);
+        }
+    } catch(err) {
+        input.classList.remove('border-warning');
+        input.classList.add('border-danger');
+        setTimeout(() => input.classList.remove('border-danger'), 1500);
+    } finally {
+        input.removeAttribute('readonly');
+    }
+}
+
+document.addEventListener('blur', function(e) {
+    if (!e.target.matches('.criterion-topic-input')) return;
+    const input = e.target;
+    saveCriterionTopic(input);
+}, true);
+
+document.addEventListener('keydown', function(e) {
+    if (!e.target.matches('.criterion-topic-input')) return;
+    if (e.key === 'Enter') { e.preventDefault(); e.target.blur(); }
+    if (e.key === 'Escape') { e.target.blur(); }
+});
+// ─────────────────────────────────────────────────────────────────────────────
 
 function getInputColorClasses(score) {
     const v = parseFloat(score);
