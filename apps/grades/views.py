@@ -250,7 +250,7 @@ def grades_matrix_view(request):
             scores_by_criterion.append({
                 'criterion': crit,
                 'record': rec,
-                'score': rec.score if rec else Decimal('1.00')
+                'score': rec.score if rec else None
             })
 
         final_grade = calculate_period_final_grade(student, section, subject, period)
@@ -262,13 +262,13 @@ def grades_matrix_view(request):
 
     # Cálculo del Área de Indicadores (KPIs en tiempo real)
     total_students = len(matrix_rows)
-    final_grades_list = [r['final_grade'].final_score for r in matrix_rows if r.get('final_grade')]
-    if final_grades_list and total_students > 0:
+    final_grades_list = [r['final_grade'].final_score for r in matrix_rows if r.get('final_grade') and r['final_grade'].final_score > Decimal('0.00')]
+    if final_grades_list and len(final_grades_list) > 0:
         from decimal import ROUND_HALF_UP
         group_average = (sum(final_grades_list) / Decimal(len(final_grades_list))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         approved_count = sum(1 for r in matrix_rows if r.get('final_grade') and r['final_grade'].is_approved)
-        failed_count = sum(1 for r in matrix_rows if r.get('final_grade') and not r['final_grade'].is_approved)
-        at_risk_count = sum(1 for r in matrix_rows if r.get('final_grade') and r['final_grade'].final_score < Decimal('3.00'))
+        failed_count = sum(1 for r in matrix_rows if r.get('final_grade') and not r['final_grade'].is_approved and r['final_grade'].final_score > Decimal('0.00'))
+        at_risk_count = sum(1 for r in matrix_rows if r.get('final_grade') and Decimal('0.00') < r['final_grade'].final_score < Decimal('3.00'))
     else:
         group_average = Decimal('0.00')
         approved_count = 0
@@ -302,22 +302,26 @@ def grades_matrix_view(request):
 @login_required
 def update_score_inline_view(request):
     """
-    Endpoint HTMX para autoguardado en línea de una nota individual.
-    Control estricto de roles:
-    - Secretaría y Estudiantes tienen prohibida la edición.
-    - Docentes solo pueden editar sus asignaturas asignadas.
+    Endpoint para autoguardado en línea de calificaciones individuales.
+    Soporta JSON para actualización reactiva fluida sin destruir inputs del DOM
+    y sin que los números se borren o desaparezcan.
     """
+    from django.http import JsonResponse
+
     if request.method == 'POST':
         # Bloquear inmediatamente roles no autorizados
         if request.user.is_secretary or request.user.is_student or request.user.is_parent:
-            return HttpResponse('<div class="text-danger small fw-bold">No tiene permisos para modificar calificaciones.</div>', status=403)
+            err_msg = 'No tiene permisos para modificar calificaciones.'
+            if request.headers.get('Accept') == 'application/json' or not request.headers.get('HX-Request'):
+                return JsonResponse({'status': 'error', 'message': err_msg}, status=403)
+            return HttpResponse(f'<div class="text-danger small fw-bold">{err_msg}</div>', status=403)
 
         student_id = request.POST.get('student_id')
         section_id = request.POST.get('section_id')
         subject_id = request.POST.get('subject_id')
         period_id = request.POST.get('period_id')
         criterion_id = request.POST.get('criterion_id')
-        score_val = request.POST.get('score')
+        score_val = request.POST.get('score', '').strip()
 
         student = get_object_or_404(StudentProfile, id=student_id)
         section = get_object_or_404(CourseSection, id=section_id)
@@ -335,8 +339,10 @@ def update_score_inline_view(request):
                 is_active=True
             ).exists()
             if not has_assignment and not (request.user.is_admin_role or request.user.is_rector):
-                return HttpResponse('<div class="text-danger small fw-bold">No está asignado como docente de esta materia.</div>', status=403)
-
+                err_msg = 'No está asignado como docente de esta materia.'
+                if request.headers.get('Accept') == 'application/json' or not request.headers.get('HX-Request'):
+                    return JsonResponse({'status': 'error', 'message': err_msg}, status=403)
+                return HttpResponse(f'<div class="text-danger small fw-bold">{err_msg}</div>', status=403)
 
         try:
             record, final_grade = save_or_update_grade(
@@ -349,9 +355,46 @@ def update_score_inline_view(request):
                 user=request.user
             )
         except Exception as e:
+            if request.headers.get('Accept') == 'application/json' or not request.headers.get('HX-Request'):
+                return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
             return HttpResponse(f'<div class="text-danger small">{str(e)}</div>', status=400)
 
-        # Reconstruir datos de la fila del estudiante
+        # Calcular métricas actualizadas del grupo
+        from decimal import Decimal, ROUND_HALF_UP
+        all_final_grades = PeriodFinalGrade.objects.filter(
+            course_section=section,
+            subject=subject,
+            academic_period=period
+        )
+        scores_list = [g.final_score for g in all_final_grades if g.final_score > Decimal('0.00')]
+        if scores_list:
+            group_avg = (sum(scores_list) / Decimal(len(scores_list))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            approved = sum(1 for g in all_final_grades if g.is_approved)
+            failed = sum(1 for g in all_final_grades if not g.is_approved and g.final_score > Decimal('0.00'))
+        else:
+            group_avg = Decimal('0.00')
+            approved = 0
+            failed = 0
+
+        # Respuesta JSON estándar para fetch / AJAX (evita parpadeos y desaparición de datos)
+        if request.headers.get('Accept') == 'application/json' or not request.headers.get('HX-Request'):
+            return JsonResponse({
+                'status': 'success',
+                'student_id': student.id,
+                'criterion_id': criterion.id,
+                'score': str(record.score) if record else '',
+                'final_score': str(final_grade.final_score) if final_grade and final_grade.final_score > Decimal('0.00') else '—',
+                'is_approved': final_grade.is_approved if final_grade else False,
+                'performance_level': final_grade.get_performance_level_display() if final_grade and final_grade.final_score > Decimal('0.00') else 'Sin Nota',
+                'badge_class': final_grade.badge_class if final_grade and final_grade.final_score > Decimal('0.00') else 'bg-secondary text-white',
+                'kpis': {
+                    'group_average': str(group_avg),
+                    'approved_count': approved,
+                    'failed_count': failed,
+                }
+            })
+
+        # Reconstruir datos de la fila si la petición fue hecha con HTMX puro
         criteria = get_or_create_default_criteria(section, subject, period)
         scores_by_criterion = []
         for crit in criteria:
@@ -365,7 +408,7 @@ def update_score_inline_view(request):
             scores_by_criterion.append({
                 'criterion': crit,
                 'record': rec,
-                'score': rec.score if rec else Decimal('1.00')
+                'score': rec.score if rec else None
             })
 
         row_data = {

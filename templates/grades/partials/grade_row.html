@@ -1,4 +1,6 @@
-<tr id="grade-row-{{ row.student.id }}" class="align-middle {% if not row.final_grade.is_approved %}table-danger-subtle{% endif %} animate__animated animate__fadeIn">
+<tr id="grade-row-{{ row.student.id }}"
+    class="align-middle {% if row.final_grade and not row.final_grade.is_approved and row.final_grade.final_score > 0 %}table-danger-subtle{% endif %}"
+    data-save-url="{% url 'grades:update_inline' %}">
     <td class="font-monospace small fw-bold text-primary">
         {{ row.student.student_code }}
     </td>
@@ -7,61 +9,48 @@
         <small class="text-muted">Doc: {{ row.student.user.document_number|default:"Sin doc" }}</small>
     </td>
     {% for score_item in row.scores %}
-    <td class="text-center" style="min-width: 120px;">
-        <!-- Visualización Fija y Persistente (No desaparece ni se borra) -->
-        <div class="score-display">
-            <span class="badge {% if score_item.score < 3.00 %}bg-danger text-white{% else %}bg-light text-dark border border-2 border-primary-subtle{% endif %} font-monospace fs-6 px-3 py-2 shadow-sm"
-                  title="{{ score_item.criterion.name }}: {{ score_item.score }}">
-                {{ score_item.score }}
-            </span>
-        </div>
-
+    <td class="text-center p-1" style="min-width: 105px;">
         {% if is_editable %}
-        <!-- Modo Edición para modificación controlada -->
-        <div class="score-input" style="display: none;">
-            <div class="input-group input-group-sm mx-auto" style="max-width: 95px;">
-                <input type="number" 
-                       class="form-control text-center font-monospace fw-bold {% if score_item.score < 3.00 %}text-danger border-danger{% else %}text-primary border-primary{% endif %}" 
-                       name="score" 
-                       value="{{ score_item.score }}" 
-                       step="0.01" 
-                       min="0.00" 
-                       max="10.00" 
-                       hx-post="{% url 'grades:update_inline' %}" 
-                       hx-vals='{"student_id": "{{ row.student.id }}", "section_id": "{{ section.id }}", "subject_id": "{{ subject.id }}", "period_id": "{{ period.id }}", "criterion_id": "{{ score_item.criterion.id }}"}' 
-                       hx-trigger="change, blur delay:200ms" 
-                       hx-target="#grade-row-{{ row.student.id }}" 
-                       hx-swap="outerHTML" 
-                       title="{{ score_item.criterion.name }} ({{ score_item.criterion.percentage }}%)">
-            </div>
+        <div class="input-group input-group-sm mx-auto" style="max-width: 90px;">
+            <input type="text"
+                   inputmode="decimal"
+                   class="form-control text-center font-monospace fw-bold grade-cell-input shadow-none {% if score_item.score and score_item.score < 3.00 %}text-danger border-danger-subtle bg-danger-subtle{% elif score_item.score %}text-primary border-primary-subtle{% else %}text-muted{% endif %}"
+                   value="{% if score_item.score is not None %}{{ score_item.score }}{% endif %}"
+                   placeholder="—"
+                   data-student-id="{{ row.student.id }}"
+                   data-section-id="{{ section.id }}"
+                   data-subject-id="{{ subject.id }}"
+                   data-period-id="{{ period.id }}"
+                   data-criterion-id="{{ score_item.criterion.id }}"
+                   data-original-val="{% if score_item.score is not None %}{{ score_item.score }}{% endif %}"
+                   title="{{ score_item.criterion.name }} ({{ score_item.criterion.percentage }}%)"
+                   autocomplete="off">
         </div>
+        {% else %}
+        <span class="badge {% if score_item.score and score_item.score < 3.00 %}bg-danger text-white{% elif score_item.score %}bg-light text-dark border border-2 border-primary-subtle{% else %}bg-light text-muted border{% endif %} font-monospace fs-6 px-3 py-2 shadow-sm"
+              title="{{ score_item.criterion.name }}: {{ score_item.score|default:'Sin nota' }}">
+            {% if score_item.score is not None %}{{ score_item.score }}{% else %}—{% endif %}
+        </span>
         {% endif %}
     </td>
     {% endfor %}
     <td class="text-center">
-        <span class="fs-6 fw-bold font-monospace {% if row.final_grade.is_approved %}text-success{% else %}text-danger{% endif %}">
-            {{ row.final_grade.final_score|default:"1.00" }}
+        <span id="final-score-{{ row.student.id }}" class="fs-6 fw-bold font-monospace {% if row.final_grade and row.final_grade.is_approved %}text-success{% elif row.final_grade and row.final_grade.final_score > 0 %}text-danger{% else %}text-muted{% endif %}">
+            {% if row.final_grade and row.final_grade.final_score > 0 %}{{ row.final_grade.final_score }}{% else %}—{% endif %}
         </span>
     </td>
     <td class="text-center">
-        <span class="badge {{ row.final_grade.badge_class }} py-2 px-3 small">
-            {{ row.final_grade.get_performance_level_display|default:"Bajo" }}
+        <span id="performance-badge-{{ row.student.id }}" class="badge {{ row.final_grade.badge_class|default:'bg-secondary text-white' }} py-2 px-3 small">
+            {% if row.final_grade and row.final_grade.final_score > 0 %}{{ row.final_grade.get_performance_level_display }}{% else %}Sin Calificar{% endif %}
         </span>
     </td>
     <td class="text-center">
-        {% if is_editable %}
-        <button type="button" 
-                class="btn btn-sm btn-outline-primary edit-toggle-btn shadow-sm" 
-                onclick="toggleRowEdit('{{ row.student.id }}')">
-            <i class="bi bi-pencil-square me-1"></i>Editar
-        </button>
-        {% else %}
-        <span class="badge bg-secondary-subtle text-secondary py-1 px-2 small">
-            <i class="bi bi-lock-fill me-1"></i>Fija
+        <span id="status-indicator-{{ row.student.id }}" class="small">
+            {% if is_editable %}
+            <i class="bi bi-pencil-fill text-primary opacity-75" title="Casilla activa para edición manual"></i>
+            {% else %}
+            <i class="bi bi-lock-fill text-muted" title="Periodo cerrado (solo lectura)"></i>
+            {% endif %}
         </span>
-        {% endif %}
-        <div id="indicator-{{ row.student.id }}" class="htmx-indicator text-primary small mt-1">
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-        </div>
     </td>
 </tr>

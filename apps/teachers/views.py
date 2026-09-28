@@ -341,7 +341,7 @@ def course_workspace_view(request, section_id):
                 scores_by_criterion.append({
                     'criterion': crit,
                     'record': rec,
-                    'score': rec.score if rec else Decimal('1.00')
+                    'score': rec.score if rec else None
                 })
 
             final_grade = calculate_period_final_grade(student, section, selected_subject, selected_period)
@@ -352,12 +352,12 @@ def course_workspace_view(request, section_id):
             })
 
         total_students = len(matrix_rows)
-        final_grades_list = [r['final_grade'].final_score for r in matrix_rows if r.get('final_grade')]
-        if final_grades_list and total_students > 0:
+        final_grades_list = [r['final_grade'].final_score for r in matrix_rows if r.get('final_grade') and r['final_grade'].final_score > Decimal('0.00')]
+        if final_grades_list and len(final_grades_list) > 0:
             group_average = (sum(final_grades_list) / Decimal(len(final_grades_list))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
             approved_count = sum(1 for r in matrix_rows if r.get('final_grade') and r['final_grade'].is_approved)
-            failed_count = sum(1 for r in matrix_rows if r.get('final_grade') and not r['final_grade'].is_approved)
-            at_risk_count = sum(1 for r in matrix_rows if r.get('final_grade') and r['final_grade'].final_score < Decimal('3.00'))
+            failed_count = sum(1 for r in matrix_rows if r.get('final_grade') and not r['final_grade'].is_approved and r['final_grade'].final_score > Decimal('0.00'))
+            at_risk_count = sum(1 for r in matrix_rows if r.get('final_grade') and Decimal('0.00') < r['final_grade'].final_score < Decimal('3.00'))
         else:
             group_average = Decimal('0.00')
             approved_count = 0

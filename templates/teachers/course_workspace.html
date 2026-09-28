@@ -217,9 +217,9 @@
                     </div>
                     <div class="d-flex align-items-center gap-2">
                         {% if is_editable %}
-                        <button type="button" id="btn-toggle-all-edit" class="btn btn-sm btn-primary shadow-sm" onclick="toggleAllRowsEdit()">
-                            <i class="bi bi-pencil-fill me-1"></i>Habilitar Edición de Todos
-                        </button>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle py-2 px-3 small">
+                            <i class="bi bi-pencil-fill me-1"></i>Edición activa — guarda al salir del campo
+                        </span>
                         {% else %}
                         <span class="badge bg-danger p-2"><i class="bi bi-lock-fill me-1"></i>Periodo Cerrado (Solo Lectura)</span>
                         {% endif %}
@@ -229,6 +229,8 @@
 
             <!-- Matriz de Notas del Curso -->
             <div class="table-responsive bg-white rounded-3 border shadow-sm mb-4">
+                {# CSRF token disponible para el autoguardado de notas (fetch) #}
+                <span hidden>{% csrf_token %}</span>
                 <table class="table table-hover align-middle mb-0">
                     <thead class="table-light small text-muted text-uppercase">
                         <tr>
@@ -793,87 +795,138 @@
 </div>
 
 <script>
-let globalEditMode = false;
+// ─── Autosave de Calificaciones ────────────────────────────────────────────
+// Guarda automáticamente al salir del campo (blur) o al presionar Enter.
+// Actualiza en el DOM: nota definitiva, nivel de desempeño y color de fila
+// sin recargar la página ni destruir los inputs.
 
-function toggleRowEdit(studentId) {
-    const row = document.getElementById('grade-row-' + studentId);
+function getCsrfToken() {
+    const el = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (el) return el.value;
+    const cookie = document.cookie.split(';').map(c => c.trim()).find(c => c.startsWith('csrftoken='));
+    return cookie ? cookie.split('=')[1] : '';
+}
+
+function getInputColorClasses(score) {
+    const v = parseFloat(score);
+    if (isNaN(v) || score === '') return 'text-muted';
+    if (v < 3.0) return 'text-danger border-danger-subtle bg-danger-subtle';
+    return 'text-primary border-primary-subtle';
+}
+
+async function saveGradeInput(input) {
+    const row = input.closest('tr[data-save-url]');
     if (!row) return;
-    const displays = row.querySelectorAll('.score-display');
-    const inputs = row.querySelectorAll('.score-input');
-    const btn = row.querySelector('.edit-toggle-btn');
-    
-    const isCurrentlyEditing = inputs.length > 0 && inputs[0].style.display !== 'none';
-    
-    if (isCurrentlyEditing) {
-        displays.forEach(d => d.style.display = '');
-        inputs.forEach(i => i.style.display = 'none');
-        if (btn) {
-            btn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Editar';
-            btn.className = 'btn btn-sm btn-outline-primary edit-toggle-btn shadow-sm';
+
+    const saveUrl = row.dataset.saveUrl;
+    const studentId = input.dataset.studentId;
+    const scoreVal  = input.value.trim();
+
+    // Indicador visual: guardando
+    input.classList.add('border-warning');
+    input.setAttribute('readonly', true);
+
+    const formData = new FormData();
+    formData.append('csrfmiddlewaretoken', getCsrfToken());
+    formData.append('student_id',   studentId);
+    formData.append('section_id',   input.dataset.sectionId);
+    formData.append('subject_id',   input.dataset.subjectId);
+    formData.append('period_id',    input.dataset.periodId);
+    formData.append('criterion_id', input.dataset.criterionId);
+    formData.append('score',        scoreVal);
+
+    try {
+        const resp = await fetch(saveUrl, {
+            method:  'POST',
+            headers: { 'Accept': 'application/json' },
+            body:    formData
+        });
+        const data = await resp.json();
+
+        if (data.status === 'success') {
+            // 1. Actualizar valor canónico del input
+            input.value = data.score;
+            input.dataset.originalVal = data.score;
+
+            // 2. Actualizar color del input según la nota
+            input.className = input.className.replace(/text-(danger|primary|muted)\s*/g, '').replace(/border-\S+\s*/g, '').replace(/bg-\S+-subtle\s*/g, '');
+            const colorClass = getInputColorClasses(data.score);
+            input.classList.add(...colorClass.split(' '));
+
+            // 3. Actualizar Definitiva
+            const finalEl = document.getElementById('final-score-' + studentId);
+            if (finalEl) {
+                finalEl.textContent = data.final_score;
+                finalEl.className = 'fs-6 fw-bold font-monospace ' + (data.is_approved ? 'text-success' : (data.final_score !== '—' ? 'text-danger' : 'text-muted'));
+            }
+
+            // 4. Actualizar badge de Desempeño
+            const badgeEl = document.getElementById('performance-badge-' + studentId);
+            if (badgeEl) {
+                badgeEl.textContent = data.performance_level;
+                badgeEl.className = 'badge py-2 px-3 small ' + data.badge_class;
+            }
+
+            // 5. Actualizar color de la fila completa
+            row.classList.remove('table-danger-subtle');
+            if (!data.is_approved && data.final_score !== '—') {
+                row.classList.add('table-danger-subtle');
+            }
+
+            // 6. Éxito visual brevísimo
+            input.classList.remove('border-warning');
+            input.classList.add('border-success');
+            setTimeout(() => input.classList.remove('border-success'), 800);
+        } else {
+            input.classList.remove('border-warning');
+            input.classList.add('border-danger');
+            setTimeout(() => input.classList.remove('border-danger'), 1500);
+            console.warn('Error guardando nota:', data.message);
         }
-    } else {
-        displays.forEach(d => d.style.display = 'none');
-        inputs.forEach(i => i.style.display = '');
-        if (btn) {
-            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Fijar';
-            btn.className = 'btn btn-sm btn-success edit-toggle-btn shadow-sm';
-        }
-        if (inputs.length > 0) {
-            const firstInput = inputs[0].querySelector('input');
-            if (firstInput) firstInput.focus();
-        }
+    } catch (err) {
+        input.classList.remove('border-warning');
+        input.classList.add('border-danger');
+        setTimeout(() => input.classList.remove('border-danger'), 1500);
+        console.error('Error de red al guardar nota:', err);
+    } finally {
+        input.removeAttribute('readonly');
     }
 }
 
-function toggleAllRowsEdit() {
-    globalEditMode = !globalEditMode;
-    const allRows = document.querySelectorAll('[id^="grade-row-"]');
-    const masterBtn = document.getElementById('btn-toggle-all-edit');
-    
-    allRows.forEach(row => {
-        const studentId = row.id.replace('grade-row-', '');
-        const displays = row.querySelectorAll('.score-display');
-        const inputs = row.querySelectorAll('.score-input');
-        const btn = row.querySelector('.edit-toggle-btn');
-        
-        if (globalEditMode) {
-            displays.forEach(d => d.style.display = 'none');
-            inputs.forEach(i => i.style.display = '');
-            if (btn) {
-                btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Fijar';
-                btn.className = 'btn btn-sm btn-success edit-toggle-btn shadow-sm';
-            }
+// Delegar eventos: blur guarda al salir; Enter mueve al siguiente input
+document.addEventListener('blur', function(e) {
+    if (!e.target.matches('.grade-cell-input')) return;
+    const input = e.target;
+    const current = input.value.trim();
+    const original = input.dataset.originalVal || '';
+    if (current !== original) {
+        saveGradeInput(input);
+    }
+}, true); // capture=true para blur
+
+document.addEventListener('keydown', function(e) {
+    if (!e.target.matches('.grade-cell-input')) return;
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const input = e.target;
+        const current = input.value.trim();
+        const original = input.dataset.originalVal || '';
+        if (current !== original) {
+            saveGradeInput(input).then(() => {
+                // Mover foco al siguiente input de la misma columna
+                const allInputs = Array.from(document.querySelectorAll('.grade-cell-input'));
+                const idx = allInputs.indexOf(input);
+                if (idx >= 0 && idx + 1 < allInputs.length) allInputs[idx + 1].focus();
+            });
         } else {
-            displays.forEach(d => d.style.display = '');
-            inputs.forEach(i => i.style.display = 'none');
-            if (btn) {
-                btn.innerHTML = '<i class="bi bi-pencil-square me-1"></i>Editar';
-                btn.className = 'btn btn-sm btn-outline-primary edit-toggle-btn shadow-sm';
-            }
-        }
-    });
-    
-    if (masterBtn) {
-        if (globalEditMode) {
-            masterBtn.innerHTML = '<i class="bi bi-lock-fill me-1"></i>Fijar Todas las Notas';
-            masterBtn.className = 'btn btn-sm btn-success shadow-sm';
-        } else {
-            masterBtn.innerHTML = '<i class="bi bi-pencil-fill me-1"></i>Habilitar Edición de Todos';
-            masterBtn.className = 'btn btn-sm btn-primary shadow-sm';
+            const allInputs = Array.from(document.querySelectorAll('.grade-cell-input'));
+            const idx = allInputs.indexOf(input);
+            if (idx >= 0 && idx + 1 < allInputs.length) allInputs[idx + 1].focus();
         }
     }
-}
-
-document.body.addEventListener('htmx:afterSwap', function(evt) {
-    if (globalEditMode && evt.detail.target && evt.detail.target.matches('[id^="grade-row-"]')) {
-        const r = evt.detail.target;
-        r.querySelectorAll('.score-display').forEach(d => d.style.display = 'none');
-        r.querySelectorAll('.score-input').forEach(i => i.style.display = '');
-        const b = r.querySelector('.edit-toggle-btn');
-        if (b) {
-            b.innerHTML = '<i class="bi bi-check-circle me-1"></i>Fijar';
-            b.className = 'btn btn-sm btn-success edit-toggle-btn shadow-sm';
-        }
+    if (e.key === 'Escape') {
+        e.target.value = e.target.dataset.originalVal || '';
+        e.target.blur();
     }
 });
 

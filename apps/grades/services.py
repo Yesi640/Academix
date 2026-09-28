@@ -81,6 +81,7 @@ def calculate_period_final_grade(student, course_section, subject, academic_peri
 
     weighted_sum = Decimal('0.00')
     total_percentage_applied = Decimal('0.00')
+    has_any_score = False
 
     for crit in criteria:
         record = GradeRecord.objects.filter(
@@ -91,59 +92,65 @@ def calculate_period_final_grade(student, course_section, subject, academic_peri
             criterion=crit
         ).first()
 
-        score = record.score if record else Decimal('1.00')
-        weighted_sum += (score * (crit.percentage / Decimal('100.00')))
+        if record is not None and record.score is not None:
+            has_any_score = True
+            weighted_sum += (record.score * (crit.percentage / Decimal('100.00')))
         total_percentage_applied += crit.percentage
 
-    p_score = weighted_sum.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    if not has_any_score:
+        final_score = Decimal('0.00')
+        is_approved = False
+        performance = PeriodFinalGrade.PerformanceLevel.BAJO
+    else:
+        p_score = weighted_sum.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-    # Fórmula especial para P4 (Cierre Definitivo Anual)
-    if academic_period.number == 4:
-        previous_grades = list(PeriodFinalGrade.objects.filter(
-            student=student,
-            course_section=course_section,
-            subject=subject,
-            academic_period__academic_year=academic_period.academic_year,
-            academic_period__number__in=[1, 2, 3]
-        ).values_list('final_score', flat=True))
+        # Fórmula especial para P4 (Cierre Definitivo Anual)
+        if academic_period.number == 4:
+            previous_grades = list(PeriodFinalGrade.objects.filter(
+                student=student,
+                course_section=course_section,
+                subject=subject,
+                academic_period__academic_year=academic_period.academic_year,
+                academic_period__number__in=[1, 2, 3]
+            ).values_list('final_score', flat=True))
 
-        if previous_grades:
-            accumulated_p1_p3 = sum(previous_grades) / Decimal(len(previous_grades))
-            final_score = (accumulated_p1_p3 * Decimal('0.75') + p_score * Decimal('0.25')).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
-            )
+            if previous_grades:
+                accumulated_p1_p3 = sum(previous_grades) / Decimal(len(previous_grades))
+                final_score = (accumulated_p1_p3 * Decimal('0.75') + p_score * Decimal('0.25')).quantize(
+                    Decimal('0.01'), rounding=ROUND_HALF_UP
+                )
+            else:
+                final_score = p_score
         else:
             final_score = p_score
-    else:
-        final_score = p_score
 
-    # Escala de Desempeño según Decreto 1290 (soporta escalas 0 a 5 y 0 a 10)
-    if final_score <= Decimal('5.00'):
-        if final_score < Decimal('3.00'):
-            performance = PeriodFinalGrade.PerformanceLevel.BAJO
-            is_approved = False
-        elif final_score < Decimal('4.00'):
-            performance = PeriodFinalGrade.PerformanceLevel.BASICO
-            is_approved = True
-        elif final_score < Decimal('4.60'):
-            performance = PeriodFinalGrade.PerformanceLevel.ALTO
-            is_approved = True
+        # Escala de Desempeño según Decreto 1290 (soporta escalas 0 a 5 y 0 a 10)
+        if final_score <= Decimal('5.00'):
+            if final_score < Decimal('3.00'):
+                performance = PeriodFinalGrade.PerformanceLevel.BAJO
+                is_approved = False
+            elif final_score < Decimal('4.00'):
+                performance = PeriodFinalGrade.PerformanceLevel.BASICO
+                is_approved = True
+            elif final_score < Decimal('4.60'):
+                performance = PeriodFinalGrade.PerformanceLevel.ALTO
+                is_approved = True
+            else:
+                performance = PeriodFinalGrade.PerformanceLevel.SUPERIOR
+                is_approved = True
         else:
-            performance = PeriodFinalGrade.PerformanceLevel.SUPERIOR
-            is_approved = True
-    else:
-        if final_score < Decimal('6.00'):
-            performance = PeriodFinalGrade.PerformanceLevel.BAJO
-            is_approved = False
-        elif final_score < Decimal('8.00'):
-            performance = PeriodFinalGrade.PerformanceLevel.BASICO
-            is_approved = True
-        elif final_score < Decimal('9.20'):
-            performance = PeriodFinalGrade.PerformanceLevel.ALTO
-            is_approved = True
-        else:
-            performance = PeriodFinalGrade.PerformanceLevel.SUPERIOR
-            is_approved = True
+            if final_score < Decimal('6.00'):
+                performance = PeriodFinalGrade.PerformanceLevel.BAJO
+                is_approved = False
+            elif final_score < Decimal('8.00'):
+                performance = PeriodFinalGrade.PerformanceLevel.BASICO
+                is_approved = True
+            elif final_score < Decimal('9.20'):
+                performance = PeriodFinalGrade.PerformanceLevel.ALTO
+                is_approved = True
+            else:
+                performance = PeriodFinalGrade.PerformanceLevel.SUPERIOR
+                is_approved = True
 
     final_grade, _ = PeriodFinalGrade.objects.update_or_create(
         student=student,
@@ -165,14 +172,32 @@ def save_or_update_grade(student, course_section, subject, academic_period, crit
     """
     Guarda o actualiza una nota garantizando persistencia y permitiendo edición al docente
     mientras el periodo académico se encuentre abierto (is_editable=True).
+    Soporta vaciar casilla (deleting record) y acepta comas o puntos.
     """
     if not academic_period.is_editable:
         raise PermissionDenied(f"El periodo {academic_period.name} está cerrado o bloqueado. No se pueden alterar calificaciones.")
 
-    score_str = str(score).strip().replace(',', '.')
-    score_dec = Decimal(score_str).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    score_str = str(score).strip().replace(',', '.') if score is not None else ''
+
+    # Si se envía vacío o whitespace, se elimina la calificación de esa casilla
+    if not score_str or score_str.lower() in ['none', 'null', '—', '-']:
+        GradeRecord.objects.filter(
+            student=student,
+            course_section=course_section,
+            subject=subject,
+            academic_period=academic_period,
+            criterion=criterion
+        ).delete()
+        final_grade = calculate_period_final_grade(student, course_section, subject, academic_period)
+        return None, final_grade
+
+    try:
+        score_dec = Decimal(score_str).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    except Exception:
+        raise ValidationError(f"Valor numérico no válido: {score_str}")
+
     if score_dec < Decimal('0.00') or score_dec > Decimal('10.00'):
-        raise ValidationError("La calificación debe encontrarse en el rango permitido (0.00 a 5.00 o hasta 10.00).")
+        raise ValidationError("La calificación debe encontrarse en el rango de 0.00 a 5.00 (o hasta 10.00).")
 
     record, created = GradeRecord.objects.select_for_update().get_or_create(
         student=student,
