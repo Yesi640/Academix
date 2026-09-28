@@ -1,108 +1,9 @@
 {% extends 'base.html' %}
 
-{% block title %}Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignaciones | ACADEMIX
-<script>
-(function () {
-    var sectionSelect = document.getElementById('assignSectionSelect');
-    var subjectSelect = document.getElementById('assignSubjectSelect');
-    var spinner       = document.getElementById('subjectLoadingSpinner');
-    var helpText      = document.getElementById('subjectHelp');
-    var gradeBadge    = document.getElementById('subjectGradeBadge');
-
-    /* Build the base URL: /teachers/api/section/<id>/subjects/ */
-    /* URL template: reemplaza /0/ con /<sectionId>/ en el momento del fetch */
-    var API_TMPL = "{% url 'teachers:api_subjects_for_section' section_id=0 %}";
-
-    function buildOption(value, text, disabled) {
-        var opt = document.createElement('option');
-        opt.value = value;
-        opt.textContent = text;
-        if (disabled) { opt.disabled = true; opt.style.color = '#888'; }
-        return opt;
-    }
-
-    function getApiUrl(sectionId) {
-        return API_TMPL.replace('/0/', '/' + sectionId + '/');
-    }
-
-    function loadSubjects(sectionId) {
-        subjectSelect.innerHTML = '';
-        spinner.style.display = 'block';
-        helpText.style.display = 'none';
-        gradeBadge.style.display = 'none';
-        subjectSelect.appendChild(buildOption('', 'Cargando...', true));
-
-        fetch(getApiUrl(sectionId), {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(function(r) { return r.json(); })
-        .then(function(data) {
-            spinner.style.display = 'none';
-            subjectSelect.innerHTML = '';
-
-            if (!data.subjects || data.subjects.length === 0) {
-                subjectSelect.appendChild(buildOption('', '- Sin asignaturas configuradas -', true));
-                return;
-            }
-
-            var groups = {};
-            data.subjects.forEach(function(s) {
-                if (!groups[s.category]) groups[s.category] = [];
-                groups[s.category].push(s);
-            });
-
-            var catOrder = ['Materia Principal', 'Materia Humanistica', 'Arte y Deporte'];
-            catOrder.forEach(function(cat) {
-                var list = groups[cat];
-                if (!list || list.length === 0) return;
-                var og = document.createElement('optgroup');
-                og.label = cat;
-                list.forEach(function(s) {
-                    var hours = s.weekly_hours ? ' (' + s.weekly_hours + 'h/sem)' : '';
-                    og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area + hours, false));
-                });
-                subjectSelect.appendChild(og);
-            });
-
-            Object.keys(groups).forEach(function(cat) {
-                if (catOrder.indexOf(cat) !== -1) return;
-                var og = document.createElement('optgroup');
-                og.label = cat;
-                groups[cat].forEach(function(s) {
-                    og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area, false));
-                });
-                subjectSelect.appendChild(og);
-            });
-
-            gradeBadge.textContent = data.grade_name;
-            gradeBadge.style.display = 'inline';
-            helpText.style.display = 'block';
-        })
-        .catch(function() {
-            spinner.style.display = 'none';
-            subjectSelect.innerHTML = '';
-            subjectSelect.appendChild(buildOption('', '- Error al cargar asignaturas -', true));
-        });
-    }
-
-    if (sectionSelect) {
-        sectionSelect.addEventListener('change', function () {
-            var sectionId = this.value;
-            if (sectionId) {
-                loadSubjects(sectionId);
-            } else {
-                subjectSelect.innerHTML = '';
-                subjectSelect.appendChild(buildOption('', '- Seleccione primero un curso -', true));
-                gradeBadge.style.display = 'none';
-                helpText.style.display = 'none';
-            }
-        });
-    }
-})();
-</script>
-{% endblock %}
+{% block title %}Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignaciones | ACADEMIX{% endblock %}
 
 {% block content %}
+{% if section_subjects_map_json %}<script type="application/json" id="sectionSubjectsData">{{ section_subjects_map_json }}</script>{% endif %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-bold text-dark mb-0">Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignación Académica</h3>
@@ -339,6 +240,104 @@
         </div>
     </div>
 </div>
+<script>
+(function () {
+    var dataEl = document.getElementById('sectionSubjectsData');
+    var SECTION_SUBJECTS = dataEl ? JSON.parse(dataEl.textContent) : {};
+
+    var sectionSelect = document.getElementById('assignSectionSelect');
+    var subjectSelect = document.getElementById('assignSubjectSelect');
+    var helpText      = document.getElementById('subjectHelp');
+    var gradeBadge    = document.getElementById('subjectGradeBadge');
+
+    function buildOption(value, text, disabled) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = text;
+        if (disabled) { opt.disabled = true; opt.style.color = '#aaa'; }
+        return opt;
+    }
+
+    function loadSubjectsForSection(sectionId) {
+        subjectSelect.innerHTML = '';
+        helpText.style.display = 'none';
+        gradeBadge.style.display = 'none';
+
+        var subjects = SECTION_SUBJECTS[String(sectionId)];
+
+        if (!subjects || subjects.length === 0) {
+            subjectSelect.appendChild(buildOption('', '-- Sin asignaturas configuradas --', true));
+            return;
+        }
+
+        var groups = {};
+        subjects.forEach(function(s) {
+            if (!groups[s.category]) groups[s.category] = [];
+            groups[s.category].push(s);
+        });
+
+        var catOrder = ['Materia Principal', 'Materia Humanistica', 'Arte y Deporte'];
+        catOrder.forEach(function(cat) {
+            var list = groups[cat];
+            if (!list || list.length === 0) return;
+            var og = document.createElement('optgroup');
+            og.label = cat;
+            list.forEach(function(s) {
+                var label = s.name + ' [' + s.code + '] - ' + s.area;
+                if (s.hours) label += ' (' + s.hours + 'h/sem)';
+                og.appendChild(buildOption(s.id, label, false));
+            });
+            subjectSelect.appendChild(og);
+        });
+
+        Object.keys(groups).forEach(function(cat) {
+            if (catOrder.indexOf(cat) !== -1) return;
+            var og = document.createElement('optgroup');
+            og.label = cat;
+            groups[cat].forEach(function(s) {
+                og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area, false));
+            });
+            subjectSelect.appendChild(og);
+        });
+
+        helpText.style.display = 'block';
+        var selOpt = sectionSelect.options[sectionSelect.selectedIndex];
+        if (selOpt && selOpt.dataset && selOpt.dataset.grade) {
+            gradeBadge.textContent = selOpt.dataset.grade;
+            gradeBadge.style.display = 'inline';
+        }
+    }
+
+    function resetSubjects() {
+        subjectSelect.innerHTML = '';
+        subjectSelect.appendChild(buildOption('', '-- Seleccione primero un curso --', true));
+        gradeBadge.style.display = 'none';
+        helpText.style.display = 'none';
+    }
+
+    if (sectionSelect) {
+        var modal = document.getElementById('assignTeacherModal');
+        if (modal) {
+            modal.addEventListener('shown.bs.modal', function () {
+                if (sectionSelect.value) {
+                    loadSubjectsForSection(sectionSelect.value);
+                } else {
+                    resetSubjects();
+                }
+            });
+            modal.addEventListener('hidden.bs.modal', function () {
+                sectionSelect.value = '';
+                resetSubjects();
+            });
+        }
+        sectionSelect.addEventListener('change', function () {
+            if (this.value) {
+                loadSubjectsForSection(this.value);
+            } else {
+                resetSubjects();
+            }
+        });
+    }
+})();
+</script>
 {% endblock %}
-
-

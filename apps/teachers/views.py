@@ -14,7 +14,9 @@ def teachers_list_view(request):
     """
     Lista de docentes institucionales y gestión de carga académica para la institución activa.
     """
+    import json
     from apps.courses.models import InstitutionSetting
+    from apps.subjects.models import GradeSubject
     inst_type = InstitutionSetting.get_settings().institution_type
 
     current_year = get_current_academic_year()
@@ -26,8 +28,49 @@ def teachers_list_view(request):
     sections = CourseSection.objects.filter(
         academic_year=current_year,
         grade_level__institution_type=inst_type
-    ) if current_year else []
+    ).select_related('grade_level') if current_year else []
     subjects = Subject.objects.filter(institution_type=inst_type)
+
+    # Mapa embebido: section_id -> lista de asignaturas del grado
+    # Se carga una vez en el servidor y se pasa como JSON al template (sin AJAX)
+    section_subjects_map = {}
+    for sec in sections:
+        gs_list = GradeSubject.objects.filter(
+            grade_level=sec.grade_level
+        ).select_related('subject__area').order_by(
+            'subject__category', 'subject__area__order', 'subject__name'
+        )
+        # Fallback: si no hay malla, usar todas las asignaturas de la institución
+        if not gs_list.exists():
+            gs_list = GradeSubject.objects.filter(
+                subject__institution_type=inst_type
+            ).select_related('subject__area').order_by('subject__name')
+
+        subj_data = []
+        for gs in gs_list:
+            s = gs.subject
+            subj_data.append({
+                'id': s.id,
+                'name': s.name,
+                'code': s.code,
+                'area': s.area.name,
+                'category': s.get_category_display(),
+                'hours': gs.weekly_hours,
+            })
+
+        # Si tampoco hay nada, usar todas las asignaturas sin filtro de malla
+        if not subj_data:
+            for s in subjects.select_related('area').order_by('category', 'area__order', 'name'):
+                subj_data.append({
+                    'id': s.id,
+                    'name': s.name,
+                    'code': s.code,
+                    'area': s.area.name,
+                    'category': s.get_category_display(),
+                    'hours': None,
+                })
+
+        section_subjects_map[str(sec.id)] = subj_data
 
     context = {
         'current_year': current_year,
@@ -35,6 +78,7 @@ def teachers_list_view(request):
         'assignments': assignments,
         'sections': sections,
         'subjects': subjects,
+        'section_subjects_map_json': json.dumps(section_subjects_map, ensure_ascii=True),
     }
     return render(request, 'teachers/list.html', context)
 
