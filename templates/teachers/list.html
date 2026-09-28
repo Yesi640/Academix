@@ -240,15 +240,26 @@
         </div>
     </div>
 </div>
+<!-- Datos embebidos de asignaturas por sección (evita peticiones de red fallidas) -->
+<script type="application/json" id="sectionSubjectsData">{{ section_subjects_map_json|safe }}</script>
+
 <script>
 (function () {
     var dataEl = document.getElementById('sectionSubjectsData');
-    var SECTION_SUBJECTS = dataEl ? JSON.parse(dataEl.textContent) : {};
+    var SECTION_SUBJECTS = {};
+    if (dataEl && dataEl.textContent.trim()) {
+        try {
+            SECTION_SUBJECTS = JSON.parse(dataEl.textContent);
+        } catch (e) {
+            console.error('Error parseando sectionSubjectsData:', e);
+        }
+    }
 
     var sectionSelect = document.getElementById('assignSectionSelect');
     var subjectSelect = document.getElementById('assignSubjectSelect');
     var helpText      = document.getElementById('subjectHelp');
     var gradeBadge    = document.getElementById('subjectGradeBadge');
+    var spinner       = document.getElementById('subjectLoadingSpinner');
 
     function buildOption(value, text, disabled) {
         var opt = document.createElement('option');
@@ -258,49 +269,60 @@
         return opt;
     }
 
-    function loadSubjectsForSection(sectionId) {
+    function renderSubjectOptions(subjects) {
         subjectSelect.innerHTML = '';
-        helpText.style.display = 'none';
-        gradeBadge.style.display = 'none';
-
-        var subjects = SECTION_SUBJECTS[String(sectionId)];
+        if (spinner) spinner.style.display = 'none';
 
         if (!subjects || subjects.length === 0) {
-            subjectSelect.appendChild(buildOption('', '-- Sin asignaturas configuradas --', true));
+            subjectSelect.appendChild(buildOption('', '-- Sin asignaturas configuradas para este curso --', true));
             return;
         }
 
+        subjectSelect.appendChild(buildOption('', '— Seleccione una asignatura —', false));
+
         var groups = {};
         subjects.forEach(function(s) {
-            if (!groups[s.category]) groups[s.category] = [];
-            groups[s.category].push(s);
+            var cat = s.category || 'Asignaturas';
+            if (!groups[cat]) groups[cat] = [];
+            groups[cat].push(s);
         });
 
-        var catOrder = ['Materia Principal', 'Materia Humanistica', 'Arte y Deporte'];
+        // Orden preferente de categorías
+        var catOrder = ['Materia Principal', 'Materia Humanística', 'Materia Humanistica', 'Arte y Deporte'];
+        var renderedCats = {};
+
         catOrder.forEach(function(cat) {
             var list = groups[cat];
             if (!list || list.length === 0) return;
+            renderedCats[cat] = true;
             var og = document.createElement('optgroup');
             og.label = cat;
             list.forEach(function(s) {
                 var label = s.name + ' [' + s.code + '] - ' + s.area;
-                if (s.hours) label += ' (' + s.hours + 'h/sem)';
+                var h = s.hours || s.weekly_hours;
+                if (h) label += ' (' + h + 'h/sem)';
                 og.appendChild(buildOption(s.id, label, false));
             });
             subjectSelect.appendChild(og);
         });
 
         Object.keys(groups).forEach(function(cat) {
-            if (catOrder.indexOf(cat) !== -1) return;
+            if (renderedCats[cat]) return;
+            var list = groups[cat];
+            if (!list || list.length === 0) return;
             var og = document.createElement('optgroup');
             og.label = cat;
-            groups[cat].forEach(function(s) {
-                og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area, false));
+            list.forEach(function(s) {
+                var label = s.name + ' [' + s.code + '] - ' + s.area;
+                var h = s.hours || s.weekly_hours;
+                if (h) label += ' (' + h + 'h/sem)';
+                og.appendChild(buildOption(s.id, label, false));
             });
             subjectSelect.appendChild(og);
         });
 
-        helpText.style.display = 'block';
+        if (helpText) helpText.style.display = 'block';
+
         var selOpt = sectionSelect.options[sectionSelect.selectedIndex];
         if (selOpt && selOpt.dataset && selOpt.dataset.grade) {
             gradeBadge.textContent = selOpt.dataset.grade;
@@ -308,11 +330,53 @@
         }
     }
 
+    function loadSubjectsForSection(sectionId) {
+        if (!sectionId) {
+            resetSubjects();
+            return;
+        }
+
+        subjectSelect.innerHTML = '';
+        if (helpText) helpText.style.display = 'none';
+        if (gradeBadge) gradeBadge.style.display = 'none';
+
+        // 1. Intentar datos embebidos instantáneos
+        var subjects = SECTION_SUBJECTS[String(sectionId)];
+        if (subjects && subjects.length > 0) {
+            renderSubjectOptions(subjects);
+            return;
+        }
+
+        // 2. Fallback vía API si no estuviera en el mapa embebido
+        if (spinner) spinner.style.display = 'block';
+        subjectSelect.appendChild(buildOption('', 'Cargando asignaturas...', true));
+
+        fetch('/teachers/api/section/' + encodeURIComponent(sectionId) + '/subjects/')
+            .then(function(res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function(data) {
+                if (spinner) spinner.style.display = 'none';
+                var list = data.subjects || [];
+                // Guardar en caché
+                SECTION_SUBJECTS[String(sectionId)] = list;
+                renderSubjectOptions(list);
+            })
+            .catch(function(err) {
+                console.error('Error cargando asignaturas:', err);
+                if (spinner) spinner.style.display = 'none';
+                subjectSelect.innerHTML = '';
+                subjectSelect.appendChild(buildOption('', '-- Error al cargar asignaturas --', true));
+            });
+    }
+
     function resetSubjects() {
         subjectSelect.innerHTML = '';
-        subjectSelect.appendChild(buildOption('', '-- Seleccione primero un curso --', true));
-        gradeBadge.style.display = 'none';
-        helpText.style.display = 'none';
+        subjectSelect.appendChild(buildOption('', '— Seleccione primero un curso —', true));
+        if (gradeBadge) gradeBadge.style.display = 'none';
+        if (helpText) helpText.style.display = 'none';
+        if (spinner) spinner.style.display = 'none';
     }
 
     if (sectionSelect) {

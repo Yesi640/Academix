@@ -29,42 +29,7 @@ def curriculum_view(request):
     else:
         active_grade = grades.first()
 
-    # Garantizar que todas las asignaturas tengan intensidad horaria en el grado activo
-    if active_grade:
-        existing_sub_ids = set(
-            GradeSubject.objects.filter(grade_level=active_grade).values_list('subject_id', flat=True)
-        )
-        all_subjects = Subject.objects.filter(institution_type=inst_type)
-        to_create = []
-        for s in all_subjects:
-            if s.id not in existing_sub_ids:
-                hours = 4
-                code_upper = (s.code or '').upper()
-                name_upper = (s.name or '').upper()
-                if 'MAT' in code_upper or 'ALGEBRA' in name_upper or 'MATEMÁTICAS' in name_upper:
-                    hours = 5
-                elif 'ESP' in code_upper or 'LENGUA' in name_upper or 'LENGUAJE' in name_upper:
-                    hours = 5
-                elif 'ING' in code_upper or 'INGLÉS' in name_upper:
-                    hours = 3
-                elif 'CN' in code_upper or 'CIENCIAS' in name_upper or 'BIOLOGÍA' in name_upper:
-                    hours = 4
-                elif 'CS' in code_upper or 'SOCIALES' in name_upper or 'HISTORIA' in name_upper:
-                    hours = 4
-                elif 'EF' in code_upper or 'FÍSICA' in name_upper:
-                    hours = 2
-                elif 'ART' in code_upper or 'ARTE' in name_upper:
-                    hours = 2
-                elif 'ETI' in code_upper or 'ÉTICA' in name_upper or 'REL' in code_upper:
-                    hours = 1
-                to_create.append(GradeSubject(
-                    grade_level=active_grade,
-                    subject=s,
-                    weekly_hours=hours,
-                    weight_percentage=Decimal('100.00')
-                ))
-        if to_create:
-            GradeSubject.objects.bulk_create(to_create, ignore_conflicts=True)
+
 
     grade_subjects = GradeSubject.objects.filter(
         grade_level=active_grade

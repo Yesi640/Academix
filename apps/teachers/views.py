@@ -40,26 +40,20 @@ def teachers_list_view(request):
         ).select_related('subject__area').order_by(
             'subject__category', 'subject__area__order', 'subject__name'
         )
-        # Fallback: si no hay malla, usar todas las asignaturas de la institución
-        if not gs_list.exists():
-            gs_list = GradeSubject.objects.filter(
-                subject__institution_type=inst_type
-            ).select_related('subject__area').order_by('subject__name')
-
         subj_data = []
-        for gs in gs_list:
-            s = gs.subject
-            subj_data.append({
-                'id': s.id,
-                'name': s.name,
-                'code': s.code,
-                'area': s.area.name,
-                'category': s.get_category_display(),
-                'hours': gs.weekly_hours,
-            })
-
-        # Si tampoco hay nada, usar todas las asignaturas sin filtro de malla
-        if not subj_data:
+        if gs_list.exists():
+            for gs in gs_list:
+                s = gs.subject
+                subj_data.append({
+                    'id': s.id,
+                    'name': s.name,
+                    'code': s.code,
+                    'area': s.area.name,
+                    'category': s.get_category_display(),
+                    'hours': gs.weekly_hours,
+                })
+        else:
+            # Fallback: si no hay malla para ese grado, mostrar asignaturas de la institución
             for s in subjects.select_related('area').order_by('category', 'area__order', 'name'):
                 subj_data.append({
                     'id': s.id,
