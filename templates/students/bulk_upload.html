@@ -59,7 +59,7 @@
                     <ul class="nav nav-pills mb-3" id="importTab" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active btn-sm" id="csv-file-tab" data-bs-toggle="pill" data-bs-target="#csv-file-pane" type="button" role="tab">
-                                <i class="bi bi-file-earmark-arrow-up me-1"></i> Opción A: Subir Archivo CSV
+                                <i class="bi bi-file-earmark-excel-fill text-success me-1"></i> Opción A: Subir Archivo Excel (.xlsx) o CSV
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -70,12 +70,12 @@
                     </ul>
 
                     <div class="tab-content border rounded p-3 bg-light mb-4" id="importTabContent">
-                        <!-- Opción A: Subir archivo CSV -->
+                        <!-- Opción A: Subir archivo Excel o CSV -->
                         <div class="tab-pane fade show active" id="csv-file-pane" role="tabpanel">
-                            <label class="form-label small fw-bold">Seleccione el archivo .csv estructurado:</label>
-                            <input type="file" name="csv_file" accept=".csv,text/csv" class="form-control">
+                            <label class="form-label small fw-bold">Seleccione el archivo de Excel (.xlsx) o CSV (.csv):</label>
+                            <input type="file" name="csv_file" accept=".xlsx,.xls,.csv,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" class="form-control">
                             <div class="form-text small mt-2">
-                                Soporta codificación UTF-8 y ANSI (Windows). Delimitadores automáticos: coma (,), punto y coma (;), tabulación.
+                                <i class="bi bi-check-circle-fill text-success me-1"></i>Soporta archivos directos de Excel (.xlsx) y archivos CSV (UTF-8, ANSI Windows con comas, punto y coma o tabulaciones).
                             </div>
                         </div>
 

@@ -342,26 +342,79 @@ def bulk_upload_students_view(request):
         rows_data = []
 
         if uploaded_file:
-            # Leer archivo subido
             content = uploaded_file.read()
-            for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
-                try:
-                    text_content = content.decode(encoding)
-                    break
-                except UnicodeDecodeError:
-                    continue
-            else:
-                text_content = content.decode('utf-8', errors='ignore')
+            is_xlsx = content.startswith(b'PK\x03\x04') or (hasattr(uploaded_file, 'name') and uploaded_file.name.lower().endswith('.xlsx'))
 
-            # Detectar delimitador
-            sample = text_content[:2048]
-            delimiter = ';' if ';' in sample and sample.count(';') > sample.count(',') else (',' if ',' in sample else '\t')
-            reader = csv.reader(io.StringIO(text_content), delimiter=delimiter)
-            rows_data = list(reader)
+            if is_xlsx:
+                # Procesar directamente archivo Excel .xlsx
+                try:
+                    import openpyxl
+                    wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
+                    ws = wb.active
+                    for row in ws.iter_rows(values_only=True):
+                        if not row or not any(row):
+                            continue
+                        row_strings = [str(c).strip() if c is not None else '' for c in row]
+                        if any(row_strings):
+                            rows_data.append(row_strings)
+                except Exception as xlsx_err:
+                    messages.error(request, f"Error al procesar el archivo Excel (.xlsx): {str(xlsx_err)}")
+                    return redirect(f"{request.path}?section={selected_section.id}")
+            else:
+                # Procesar archivo de texto plano CSV
+                for encoding in ['utf-8-sig', 'utf-8', 'latin-1', 'cp1252']:
+                    try:
+                        text_content = content.decode(encoding)
+                        break
+                    except UnicodeDecodeError:
+                        continue
+                else:
+                    text_content = content.decode('utf-8', errors='ignore')
+
+                # Normalizar saltos de línea Windows (\r\n) y clásicos Mac (\r)
+                text_content = text_content.replace('\r\n', '\n').replace('\r', '\n')
+
+                # Detectar delimitador analizando la primera línea no vacía
+                first_line = ''
+                for l in text_content.split('\n'):
+                    if l.strip():
+                        first_line = l
+                        break
+
+                if '\t' in first_line:
+                    delimiter = '\t'
+                elif ';' in first_line:
+                    delimiter = ';'
+                elif ',' in first_line:
+                    delimiter = ','
+                else:
+                    delimiter = ';'
+
+                # Parsear líneas de forma segura sin riesgo de error de saltos de línea
+                clean_lines = [l for l in text_content.splitlines() if l.strip()]
+                reader = csv.reader(clean_lines, delimiter=delimiter)
+                rows_data = list(reader)
+
         elif raw_text:
             # Procesar texto pegado de Excel o tabla
-            delimiter = '\t' if '\t' in raw_text else (';' if ';' in raw_text else ',')
-            reader = csv.reader(io.StringIO(raw_text), delimiter=delimiter)
+            raw_text = raw_text.replace('\r\n', '\n').replace('\r', '\n')
+            first_line = ''
+            for l in raw_text.split('\n'):
+                if l.strip():
+                    first_line = l
+                    break
+
+            if '\t' in first_line:
+                delimiter = '\t'
+            elif ';' in first_line:
+                delimiter = ';'
+            elif ',' in first_line:
+                delimiter = ','
+            else:
+                delimiter = '\t'
+
+            clean_lines = [l for l in raw_text.splitlines() if l.strip()]
+            reader = csv.reader(clean_lines, delimiter=delimiter)
             rows_data = list(reader)
 
         if not rows_data:
