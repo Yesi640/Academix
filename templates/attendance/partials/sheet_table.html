@@ -6,7 +6,7 @@
             <strong>{{ enriched_records|length }}</strong> estudiante{{ enriched_records|length|pluralize }} en lista
         </div>
         <div class="d-flex gap-2">
-            <a href="?section_id={{ session.course_section.id }}&subject_id={{ session.subject.id }}&date={{ session.date|date:'Y-m-d' }}&export=csv"
+            <a href="{% url 'attendance:sheet' %}?section_id={{ session.course_section.id }}&subject_id={{ session.subject.id }}&date={{ session.date|date:'Y-m-d' }}&export=csv"
                class="btn btn-outline-success btn-sm d-flex align-items-center gap-1 shadow-sm"
                title="Descargar lista en Excel/CSV">
                 <i class="bi bi-file-earmark-spreadsheet-fill"></i>
@@ -19,12 +19,12 @@
         <table class="table table-hover align-middle mb-0">
             <thead class="table-light small text-muted text-uppercase">
                 <tr>
-                    <th style="width: 130px;">Código</th>
+                    <th style="width: 120px;">Código</th>
                     <th>Estudiante</th>
-                    <th style="width: 220px;">Asistencia</th>
-                    <th style="width: 160px;">Semáforo</th>
+                    <th style="width: 240px;">Asistencia</th>
+                    <th style="width: 150px;">Semáforo</th>
                     <th>Desglose</th>
-                    <th class="text-end" style="width: 70px;">Soporte</th>
+                    <th class="text-end" style="width: 80px;">Soporte / Motivo</th>
                 </tr>
             </thead>
             {% for item in enriched_records %}

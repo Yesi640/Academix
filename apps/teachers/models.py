@@ -55,6 +55,11 @@ class TeachingAssignment(models.Model):
         verbose_name='Año Lectivo'
     )
     is_active = models.BooleanField(default=True, verbose_name='¿Asignación Activa?')
+    is_group_director = models.BooleanField(
+        default=False,
+        verbose_name='¿Director de Grupo?',
+        help_text='Si está marcado, este docente es el director de grupo del curso y puede acceder a los boletines.'
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

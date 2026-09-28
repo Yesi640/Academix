@@ -263,8 +263,8 @@ def update_record_inline_view(request, record_id):
         return HttpResponse('<div class="text-danger small fw-bold">No tiene permisos para modificar asistencia.</div>', status=403)
 
     record = get_object_or_404(AttendanceRecord.objects.select_related('session__academic_period', 'session__subject', 'student__user'), id=record_id)
-    new_status = request.POST.get('status')
-    justification = request.POST.get('justification', '').strip()
+    new_status = request.POST.get('status') or record.status
+    justification = request.POST.get('justification', record.justification or '').strip()
 
     if new_status in AttendanceRecord.Status.values:
         try:
@@ -408,8 +408,12 @@ def save_session_view(request, session_id):
         id=session_id
     )
 
+    next_url = request.POST.get('next') or request.GET.get('next')
+
     if not session.academic_period.is_editable:
         messages.error(request, f'El periodo lectivo "{session.academic_period.name}" se encuentra cerrado o en solo lectura.')
+        if next_url:
+            return redirect(next_url)
         return redirect(
             reverse('attendance:sheet') + f'?section_id={session.course_section_id}&subject_id={session.subject_id}&date={session.date.isoformat()}'
         )
@@ -447,6 +451,8 @@ def save_session_view(request, session_id):
             f'✓ Lista de asistencia del {session.date.strftime("%d/%m/%Y")} guardada con éxito ({updated_count} estudiantes registrados).'
         )
 
+    if next_url:
+        return redirect(next_url)
     return redirect(
         reverse('attendance:sheet') + f'?section_id={session.course_section_id}&subject_id={session.subject_id}&date={session.date.isoformat()}'
     )

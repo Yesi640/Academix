@@ -84,6 +84,20 @@ def student_bulletin_view(request, student_id, period_id):
         return redirect('reports:index')
 
     section = enrollment.course_section
+
+    # Docentes que NO son director de grupo de este estudiante no pueden ver boletines
+    if user.is_teacher and hasattr(user, 'teacher_profile'):
+        from apps.teachers.models import TeachingAssignment
+        is_dir = TeachingAssignment.objects.filter(
+            teacher=user.teacher_profile,
+            course_section=section,
+            is_group_director=True,
+            is_active=True
+        ).exists()
+        if not is_dir:
+            messages.error(request, 'Solo el Director de Grupo puede consultar los boletines de este curso.')
+            return redirect('teachers:my_courses')
+
     bulletin_data = build_student_bulletin_data(student, section, period)
 
     context = {
@@ -100,6 +114,19 @@ def section_bulletins_bulk_view(request, section_id, period_id):
     user = request.user
     if user.is_student:
         return HttpResponseForbidden("Acceso denegado.")
+
+    # Docentes: solo el director de grupo de ese curso puede ver/imprimir boletines masivos
+    if user.is_teacher and hasattr(user, 'teacher_profile'):
+        from apps.teachers.models import TeachingAssignment as TA
+        is_dir = TA.objects.filter(
+            teacher=user.teacher_profile,
+            course_section_id=section_id,
+            is_group_director=True,
+            is_active=True
+        ).exists()
+        if not is_dir:
+            messages.error(request, 'Solo el Director de Grupo puede imprimir boletines masivos de este curso.')
+            return redirect('teachers:my_courses')
 
     section = get_object_or_404(CourseSection, id=section_id)
     period = get_object_or_404(AcademicPeriod, id=period_id)

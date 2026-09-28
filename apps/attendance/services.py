@@ -95,25 +95,32 @@ def get_or_create_attendance_session(course_section, subject, session_date, reco
     Obtiene o crea una sesión de clase y asegura que todos los alumnos matriculados
     tengan su registro individual inicializado.
     """
-    academic_period = get_current_active_period(course_section.academic_year)
-    if not academic_period:
-        raise ValidationError("No existe ningún periodo académico activo para registrar asistencia.")
-
-    if not academic_period.is_editable:
-        raise PermissionDenied(f"El periodo {academic_period.name} se encuentra cerrado o bloqueado.")
-
-    session, created = AttendanceSession.objects.get_or_create(
+    session = AttendanceSession.objects.filter(
         course_section=course_section,
         subject=subject,
-        date=session_date,
-        academic_period=academic_period,
-        defaults={
-            'hours_count': hours_count,
-            'recorded_by': recorded_by,
-        }
-    )
+        date=session_date
+    ).select_related('academic_period').first()
 
-    # Poblar registros para todos los alumnos matriculados
+    if not session:
+        academic_period = get_current_active_period(course_section.academic_year)
+        if not academic_period:
+            raise ValidationError("No existe ningún periodo académico activo para registrar asistencia.")
+
+        if not academic_period.is_editable:
+            raise PermissionDenied(f"El periodo {academic_period.name} se encuentra cerrado o bloqueado.")
+
+        session, created = AttendanceSession.objects.get_or_create(
+            course_section=course_section,
+            subject=subject,
+            date=session_date,
+            academic_period=academic_period,
+            defaults={
+                'hours_count': hours_count,
+                'recorded_by': recorded_by,
+            }
+        )
+
+    # Poblar registros para todos los alumnos matriculados que falten
     enrolled_students = StudentProfile.objects.filter(
         enrollments__course_section=course_section,
         enrollments__academic_year=course_section.academic_year,

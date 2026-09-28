@@ -193,7 +193,7 @@ def course_workspace_view(request, section_id):
     from apps.subjects.models import Subject, SubjectNorm, GradeSubject
     from apps.periods.models import AcademicPeriod
     from apps.periods.services import get_current_active_period
-    from apps.attendance.models import AttendanceSheet, AttendanceRecord
+    from apps.attendance.models import AttendanceSession, AttendanceRecord
     import datetime
 
     section = get_object_or_404(CourseSection.objects.select_related('grade_level', 'academic_year'), id=section_id)
@@ -338,7 +338,8 @@ def course_workspace_view(request, section_id):
         grade_level=section.grade_level
     ).select_related('subject__area').prefetch_related('subject__norms')
 
-    # 3. Control de Asistencia del Curso
+    # 3. Control de Asistencia del Curso - Llamado de Lista Completo e Interactivo
+    from apps.attendance.services import get_or_create_attendance_session, calculate_student_absence_stats
     active_enrollments = section.enrollments.filter(status='ACTIVE').select_related('student__user').order_by('student__user__last_name')
     date_str = request.GET.get('date', datetime.date.today().isoformat())
     try:
@@ -346,21 +347,82 @@ def course_workspace_view(request, section_id):
     except ValueError:
         current_date = datetime.date.today()
 
-    first_subj = selected_subject or subjects_in_course.first()
-    sheet = None
-    records_by_student = {}
-    if first_subj:
-        sheet = AttendanceSheet.objects.filter(
-            course_section=section,
-            subject=first_subj,
-            date=current_date
-        ).first()
-        if sheet:
-            records = AttendanceRecord.objects.filter(sheet=sheet).select_related('student')
-            records_by_student = {r.student_id: r for r in records}
+    # Asignatura seleccionada para el llamado (puede ser distinta a la de notas)
+    att_subject_id = request.GET.get('att_subject_id')
+    if att_subject_id:
+        att_subject = subjects_in_course.filter(id=att_subject_id).first() or subjects_in_course.first()
+    else:
+        att_subject = selected_subject or subjects_in_course.first()
+
+    # Crear o recuperar la sesión de asistencia del día
+    attendance_session = None
+    enriched_records = []
+    is_att_editable = False
+
+    if att_subject and active_period:
+        try:
+            attendance_session = get_or_create_attendance_session(
+                course_section=section,
+                subject=att_subject,
+                session_date=current_date,
+                recorded_by=user
+            )
+            is_att_editable = attendance_session.academic_period.is_editable
+            if user.is_secretary:
+                is_att_editable = False
+            elif user.is_teacher and hasattr(user, 'teacher_profile'):
+                has_att_assignment = TeachingAssignment.objects.filter(
+                    teacher=user.teacher_profile,
+                    course_section=section,
+                    subject=att_subject,
+                    academic_year=current_year,
+                    is_active=True
+                ).exists()
+                if not has_att_assignment and not (user.is_admin_role or user.is_rector):
+                    is_att_editable = False
+
+            # Enriquecer registros con estadísticas de ausentismo
+            for rec in attendance_session.records.select_related('student__user').all():
+                stats = calculate_student_absence_stats(rec.student, att_subject, attendance_session.academic_period)
+                enriched_records.append({
+                    'record': rec,
+                    'student': rec.student,
+                    'stats': stats,
+                })
+        except Exception:
+            attendance_session = None
+            enriched_records = []
 
     # Pestaña activa: por defecto 'planilla' (Planilla de Notas al entrar)
     active_tab = request.GET.get('tab', 'planilla')
+
+    # ¿Es el docente director de grupo de este curso? Solo director de grupo ve boletines.
+    is_group_director = False
+    if user.is_teacher and hasattr(user, 'teacher_profile'):
+        from apps.teachers.models import TeachingAssignment as TA
+        is_group_director = TA.objects.filter(
+            teacher=user.teacher_profile,
+            course_section=section,
+            is_group_director=True,
+            is_active=True
+        ).exists()
+    elif user.is_admin_role or user.is_rector or user.is_secretary:
+        is_group_director = True  # Directivos siempre pueden ver boletines
+
+    # Sábana de notas del curso (consolidado)
+    from apps.reports.services import build_section_consolidated_data
+    sabana_period_id = request.GET.get('sabana_period_id')
+    sabana_period = None
+    sabana_data = None
+    if sabana_period_id:
+        sabana_period = AcademicPeriod.objects.filter(id=sabana_period_id).first()
+    if not sabana_period:
+        sabana_period = selected_period
+    if sabana_period:
+        try:
+            sabana_data = build_section_consolidated_data(section, sabana_period)
+        except Exception:
+            sabana_data = None
 
     context = {
         'section': section,
@@ -378,14 +440,20 @@ def course_workspace_view(request, section_id):
         'curriculum': curriculum,
         'active_enrollments': active_enrollments,
         'current_date': current_date,
-        'sheet': sheet,
-        'records_by_student': records_by_student,
-        'first_subject': first_subj,
+        # Llamado de lista completo
+        'attendance_session': attendance_session,
+        'session': attendance_session,
+        'enriched_records': enriched_records,
+        'is_att_editable': is_att_editable,
+        'att_subject': att_subject,
         'active_tab': active_tab,
         'matrix_rows': matrix_rows,
         'criteria': criteria,
         'kpis': kpis,
         'is_editable': is_editable,
+        'is_group_director': is_group_director,
+        'sabana_data': sabana_data,
+        'sabana_period': sabana_period,
     }
     return render(request, 'teachers/course_workspace.html', context)
 

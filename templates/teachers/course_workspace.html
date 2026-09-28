@@ -58,14 +58,31 @@
             <button class="nav-link fw-bold d-flex align-items-center gap-2 {% if active_tab == 'asistencia' %}active{% endif %}"
                     id="tab-asistencia-btn" data-bs-toggle="pill" data-bs-target="#tab-asistencia" type="button" role="tab">
                 <i class="bi bi-calendar2-check-fill fs-5 text-success"></i>
-                <span>2. Asistencia</span>
+                <span>2. Llamado de Lista (Asistencia)</span>
             </button>
         </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold d-flex align-items-center gap-2 {% if active_tab == 'sabana' %}active{% endif %}"
+                    id="tab-sabana-btn" data-bs-toggle="pill" data-bs-target="#tab-sabana" type="button" role="tab">
+                <i class="bi bi-table fs-5 text-danger"></i>
+                <span>3. Sábana de Notas</span>
+            </button>
+        </li>
+        {% if is_group_director %}
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold d-flex align-items-center gap-2 {% if active_tab == 'boletines' %}active{% endif %}"
+                    id="tab-boletines-btn" data-bs-toggle="pill" data-bs-target="#tab-boletines" type="button" role="tab">
+                <i class="bi bi-file-earmark-text-fill fs-5 text-purple" style="color: #8b5cf6;"></i>
+                <span>4. Boletines</span>
+                <span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">Director</span>
+            </button>
+        </li>
+        {% endif %}
         <li class="nav-item" role="presentation">
             <button class="nav-link fw-bold d-flex align-items-center gap-2 {% if active_tab == 'malla' %}active{% endif %}"
                     id="tab-malla-btn" data-bs-toggle="pill" data-bs-target="#tab-malla" type="button" role="tab">
                 <i class="bi bi-diagram-3-fill fs-5 text-info"></i>
-                <span>3. Malla Curricular y Asignaturas</span>
+                <span>{% if is_group_director %}5{% else %}4{% endif %}. Malla Curricular y Asignaturas</span>
             </button>
         </li>
     </ul>
@@ -257,75 +274,277 @@
              ========================================== -->
         <div class="tab-pane fade {% if active_tab == 'asistencia' %}show active{% endif %}" id="tab-asistencia" role="tabpanel">
             <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4">
-                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
                     <div>
                         <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
                             <i class="bi bi-calendar2-check-fill text-success"></i>
                             <span>Llamado de Lista y Asistencia</span>
                         </h4>
-                        <p class="text-muted small mb-0">El docente puede modificar y guardar el llamado de lista para cualquier fecha del año lectivo.</p>
+                        <p class="text-muted small mb-0">Control diario interactivo: pase lista, justifique inasistencias y guarde cambios en cualquier momento.</p>
                     </div>
 
-                    <!-- Selector de Fecha -->
-                    <form method="get" class="d-flex align-items-center gap-2">
+                    <!-- Selector de Fecha y Materia para Asistencia -->
+                    <form method="get" class="d-flex align-items-center gap-2 flex-wrap">
                         <input type="hidden" name="tab" value="asistencia">
                         <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
-                        <label class="small fw-bold text-muted text-nowrap">Fecha de Clase:</label>
-                        <input type="date" name="date" class="form-control form-control-sm" value="{{ current_date|date:'Y-m-d' }}" onchange="this.form.submit()">
-                        <button type="submit" class="btn btn-outline-primary btn-sm">Cargar</button>
+                        
+                        {% if subjects_in_course|length > 1 %}
+                        <div class="d-flex align-items-center gap-1">
+                            <label class="small fw-bold text-muted text-nowrap">Asignatura:</label>
+                            <select name="att_subject_id" class="form-select form-select-sm" style="min-width: 170px;" onchange="this.form.submit()">
+                                {% for s in subjects_in_course %}
+                                <option value="{{ s.id }}" {% if att_subject.id == s.id %}selected{% endif %}>{{ s.name }} ({{ s.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% else %}
+                        <input type="hidden" name="att_subject_id" value="{{ att_subject.id }}">
+                        {% endif %}
+
+                        <div class="d-flex align-items-center gap-1">
+                            <label class="small fw-bold text-muted text-nowrap">Fecha de Clase:</label>
+                            <input type="date" name="date" class="form-control form-control-sm" value="{{ current_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+                        </div>
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-repeat me-1"></i>Cargar
+                        </button>
                     </form>
                 </div>
 
-                <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-3">
-                    <i class="bi bi-info-circle-fill fs-5"></i>
-                    <span><strong>Estados oficiales:</strong> <span class="badge bg-success">Presente</span> <span class="badge bg-danger">Falla</span> <span class="badge bg-warning text-dark">Falta Justificada</span>. La asistencia se puede actualizar libremente en cualquier momento.</span>
+                {% if attendance_session %}
+                <!-- Barra superior de estados y acciones rápidas -->
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-3 p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center gap-3 flex-wrap small">
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="badge bg-success text-white px-2 py-1"><i class="bi bi-check-lg me-1"></i>P</span>
+                            <span class="text-muted fw-semibold">Presente</span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger text-white px-2 py-1 fw-bold"><i class="bi bi-x-lg me-1"></i>F</span>
+                            <span class="text-muted fw-semibold">Falta Injustificada</span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="badge bg-warning text-dark px-2 py-1"><i class="bi bi-file-earmark-medical me-1"></i>FJ</span>
+                            <span class="text-muted fw-semibold">Falta Justificada</span>
+                        </span>
+                        <span class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary text-white px-2 py-1"><i class="bi bi-clock-history me-1"></i>T</span>
+                            <span class="text-muted fw-semibold">Tardanza</span>
+                        </span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        {% if is_att_editable %}
+                        <button class="btn btn-success btn-sm d-flex align-items-center gap-1 shadow-sm fw-bold"
+                                hx-post="{% url 'attendance:mark_all_present' attendance_session.id %}"
+                                hx-target="#attendance-sheet-table-container"
+                                hx-swap="outerHTML"
+                                title="Marcar a todos los alumnos como presentes en esta sesión">
+                            <i class="bi bi-check-all fs-6"></i>
+                            <span>Todos Presentes</span>
+                        </button>
+
+                        <form method="POST" action="{% url 'attendance:save_session' attendance_session.id %}" id="saveAttendanceWorkspaceForm" class="d-inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{% url 'teachers:course_workspace' section.id %}?tab=asistencia&att_subject_id={{ att_subject.id }}&date={{ current_date|date:'Y-m-d' }}">
+                            <div id="attendance-workspace-hidden-inputs"></div>
+                            <button type="submit" class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm fw-bold" id="saveAttendanceWorkspaceBtn">
+                                <i class="bi bi-floppy-fill me-1"></i>
+                                <span>Guardar Lista del Día</span>
+                            </button>
+                        </form>
+                        {% else %}
+                        <span class="badge bg-danger p-2"><i class="bi bi-lock-fill me-1"></i>Periodo Cerrado / Solo Lectura</span>
+                        {% endif %}
+                    </div>
                 </div>
 
-                {% if first_subject %}
-                <div class="table-responsive bg-white rounded-3 border">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light small text-uppercase text-muted">
-                            <tr>
-                                <th style="width: 50px;">#</th>
-                                <th>Código</th>
-                                <th>{{ institution.term_student|default:'Estudiante' }}</th>
-                                <th class="text-center" style="width: 280px;">Estado en Lista ({{ current_date|date:"d/m/Y" }})</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for enr in active_enrollments %}
-                            {% with rec=records_by_student|get_item:enr.student.id %}
-                            <tr>
-                                <td class="text-muted small">{{ forloop.counter }}</td>
-                                <td class="font-monospace fw-bold text-primary small">{{ enr.student.student_code }}</td>
-                                <td class="fw-bold text-dark">{{ enr.student.user.get_full_name }}</td>
-                                <td class="text-center">
-                                    <span class="badge {% if rec.status == 'PRESENT' %}bg-success{% elif rec.status == 'ABSENT' %}bg-danger{% elif rec.status == 'JUSTIFIED' %}bg-warning text-dark{% else %}bg-secondary{% endif %} px-3 py-2">
-                                        {{ rec.get_status_display|default:"Sin Marcar" }}
-                                    </span>
-                                </td>
-                            </tr>
-                            {% endwith %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                <!-- Tabla de Asistencia Interactiva HTMX -->
+                {% include 'attendance/partials/sheet_table.html' with enriched_records=enriched_records session=attendance_session is_editable=is_att_editable %}
 
-                <div class="text-end mt-3">
-                    <a href="{% url 'attendance:sheet' %}?section_id={{ section.id }}&subject_id={{ first_subject.id }}&date={{ current_date|date:'Y-m-d' }}"
-                       class="btn btn-success fw-bold shadow-sm px-4">
-                        <i class="bi bi-pencil-square me-1"></i>Modificar / Tomar Lista Completa
-                    </a>
+                {% if is_att_editable %}
+                <div class="d-flex justify-content-end mt-3">
+                    <button form="saveAttendanceWorkspaceForm" type="submit" class="btn btn-primary shadow-sm fw-bold d-flex align-items-center gap-2 px-4 py-2">
+                        <i class="bi bi-floppy-fill"></i>
+                        <span>Guardar Lista del Día</span>
+                    </button>
                 </div>
+                {% endif %}
+
                 {% else %}
-                <div class="alert alert-warning small">No hay asignaturas asociadas para gestionar la asistencia.</div>
+                <div class="alert alert-warning d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                    <div>
+                        No se pudo inicializar la sesión de asistencia para la fecha <strong>{{ current_date|date:'d/m/Y' }}</strong> y la asignatura <strong>{{ att_subject.name|default:'seleccionada' }}</strong>. Verifique que exista un periodo académico activo para este año lectivo.
+                    </div>
+                </div>
                 {% endif %}
             </div>
         </div>
 
         <!-- ==========================================
-             PESTAÑA 3: MALLA CURRICULAR Y NORMAS
+             PESTAÑA 3: SÁBANA DE NOTAS (CONSOLIDADO)
              ========================================== -->
+        <div class="tab-pane fade {% if active_tab == 'sabana' %}show active{% endif %}" id="tab-sabana" role="tabpanel">
+            <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-table text-danger"></i>
+                            <span>Sábana de Notas — {{ section.name }}</span>
+                        </h4>
+                        <p class="text-muted small mb-0">Consolidado de todas las asignaturas para el periodo seleccionado.</p>
+                    </div>
+                    <form method="get" class="d-flex align-items-center gap-2">
+                        <input type="hidden" name="tab" value="sabana">
+                        <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
+                        <label class="small fw-bold text-muted text-nowrap">Periodo:</label>
+                        <select name="sabana_period_id" class="form-select form-select-sm" style="min-width:170px;" onchange="this.form.submit()">
+                            {% for p in periods %}
+                            <option value="{{ p.id }}" {% if p.id == sabana_period.id %}selected{% endif %}>{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if sabana_data %}
+                        <a href="{% url 'reports:export_consolidated_csv' section.id sabana_period.id %}" class="btn btn-sm btn-success shadow-sm text-nowrap">
+                            <i class="bi bi-download me-1"></i>Exportar CSV
+                        </a>
+                        {% endif %}
+                    </form>
+                </div>
+
+                {% if sabana_data and sabana_data.rows %}
+                <div class="table-responsive bg-white rounded-3 border shadow-sm">
+                    <table class="table table-sm table-hover align-middle mb-0" style="font-size:0.82rem;">
+                        <thead class="table-dark small text-uppercase">
+                            <tr>
+                                <th style="width:40px;">#</th>
+                                <th>Estudiante</th>
+                                {% for sub in sabana_data.subjects %}
+                                <th class="text-center" style="min-width:80px;" title="{{ sub.name }}">{{ sub.code }}</th>
+                                {% endfor %}
+                                <th class="text-center">Promedio</th>
+                                <th class="text-center">Pérdidas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in sabana_data.rows %}
+                            <tr class="{% if row.failed_count > 0 %}table-warning{% endif %}">
+                                <td class="text-muted fw-bold font-monospace">{{ row.rank }}</td>
+                                <td>
+                                    <div class="fw-bold text-dark">{{ row.student.user.get_full_name }}</div>
+                                    <small class="text-muted font-monospace">{{ row.student.student_code }}</small>
+                                </td>
+                                {% for score_item in row.scores_list %}
+                                <td class="text-center">
+                                    <span class="badge {{ score_item.badge }} font-monospace py-1 px-2" style="font-size:0.78rem;">
+                                        {{ score_item.score }}
+                                    </span>
+                                </td>
+                                {% endfor %}
+                                <td class="text-center fw-bold font-monospace {% if row.average >= 3.0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ row.average }}
+                                </td>
+                                <td class="text-center">
+                                    {% if row.failed_count > 0 %}
+                                    <span class="badge bg-danger">{{ row.failed_count }}</span>
+                                    {% else %}
+                                    <span class="badge bg-success">0</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light small fw-bold">
+                            <tr>
+                                <td colspan="2">Total: {{ sabana_data.total_students }} estudiantes</td>
+                                {% for sub in sabana_data.subjects %}
+                                <td class="text-center text-muted">—</td>
+                                {% endfor %}
+                                <td colspan="2"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-light border text-muted small">
+                    <i class="bi bi-info-circle me-2"></i>Seleccione un periodo para cargar la sábana de notas.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ==========================================
+             PESTAÑA 4: BOLETINES (SOLO DIRECTOR DE GRUPO)
+             ========================================== -->
+        {% if is_group_director %}
+        <div class="tab-pane fade {% if active_tab == 'boletines' %}show active{% endif %}" id="tab-boletines" role="tabpanel">
+            <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+                    <div>
+                        <h4 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                            <i class="bi bi-file-earmark-text-fill" style="color:#8b5cf6;"></i>
+                            <span>Boletines de Calificaciones</span>
+                        </h4>
+                        <p class="text-muted small mb-0">Acceso exclusivo para el Director de Grupo. Genere los boletines individuales o el reporte masivo del curso.</p>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning py-2 px-3 small d-flex align-items-center gap-2 mb-3">
+                    <i class="bi bi-shield-lock-fill fs-5"></i>
+                    <span><strong>Acceso restringido:</strong> Solo el docente Director de Grupo puede visualizar e imprimir los boletines de este curso.</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    {% for p in periods %}
+                    <div class="col-md-3">
+                        <div class="card border shadow-sm h-100 p-3">
+                            <div class="fw-bold text-dark mb-1"><i class="bi bi-calendar-event me-1 text-primary"></i>{{ p.name }}</div>
+                            <div class="d-flex flex-column gap-2 mt-2">
+                                <a href="{% url 'reports:section_bulletins_bulk' section.id p.id %}" 
+                                   class="btn btn-sm btn-outline-primary fw-bold">
+                                    <i class="bi bi-printer me-1"></i>Imprimir Todos
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h6 class="fw-bold text-dark mb-3"><i class="bi bi-people-fill me-2 text-primary"></i>Boletín Individual por Estudiante</h6>
+                <div class="table-responsive bg-white rounded-3 border shadow-sm">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-light text-uppercase text-muted">
+                            <tr>
+                                <th>#</th>
+                                <th>Estudiante</th>
+                                <th>Código</th>
+                                <th class="text-center">Acciones por Periodo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for enr in active_enrollments %}
+                            <tr>
+                                <td class="text-muted">{{ forloop.counter }}</td>
+                                <td class="fw-bold text-dark">{{ enr.student.user.get_full_name }}</td>
+                                <td class="font-monospace text-primary">{{ enr.student.student_code }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-1 justify-content-center flex-wrap">
+                                        {% for p in periods %}
+                                        <a href="{% url 'reports:student_bulletin' enr.student.id p.id %}" 
+                                           class="btn btn-xs btn-outline-secondary py-0 px-2" style="font-size:0.72rem;" target="_blank">
+                                            P{{ p.number }}
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <div class="tab-pane fade {% if active_tab == 'malla' %}show active{% endif %}" id="tab-malla" role="tabpanel">
             
             <!-- Asignaturas organizadas en categorías -->
@@ -586,6 +805,53 @@ document.body.addEventListener('htmx:afterSwap', function(evt) {
             b.className = 'btn btn-sm btn-success edit-toggle-btn shadow-sm';
         }
     }
+});
+
+// Recolectar datos de asistencia al enviar el formulario del espacio de trabajo
+document.addEventListener('DOMContentLoaded', function () {
+    var form = document.getElementById('saveAttendanceWorkspaceForm');
+    if (!form) return;
+
+    function populateWorkspaceAttendanceData() {
+        var hiddenContainer = document.getElementById('attendance-workspace-hidden-inputs');
+        if (!hiddenContainer) return;
+        hiddenContainer.innerHTML = '';
+
+        // Recolectar todos los radio buttons marcados
+        var radios = document.querySelectorAll('input[type="radio"][name="status"]:checked');
+        radios.forEach(function (radio) {
+            var m = radio.id.match(/^btn-[a-z]+-(\d+)$/);
+            if (m) {
+                var recordId = m[1];
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'attendance_' + recordId;
+                input.value = radio.value;
+                hiddenContainer.appendChild(input);
+            }
+        });
+
+        // Recolectar motivos de justificación si existen
+        var justificationInputs = document.querySelectorAll('input[name="justification"]');
+        justificationInputs.forEach(function (justInput) {
+            var collapseRow = justInput.closest('tr[id^="justification-collapse-"]');
+            if (collapseRow && justInput.value.trim()) {
+                var recordId = collapseRow.id.replace('justification-collapse-', '');
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'justification_' + recordId;
+                input.value = justInput.value.trim();
+                hiddenContainer.appendChild(input);
+            }
+        });
+    }
+
+    form.addEventListener('submit', populateWorkspaceAttendanceData);
+
+    var saveButtons = document.querySelectorAll('#saveAttendanceWorkspaceBtn, button[form="saveAttendanceWorkspaceForm"]');
+    saveButtons.forEach(function(btn) {
+        btn.addEventListener('click', populateWorkspaceAttendanceData);
+    });
 });
 </script>
 {% endblock %}

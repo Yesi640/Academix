@@ -12,31 +12,43 @@
             <form class="d-inline-flex gap-1" hx-post="{% url 'attendance:update_record' item.record.id %}" hx-trigger="change" hx-target="#student-row-{{ item.student.id }}" hx-swap="outerHTML">
                 {% csrf_token %}
                 <div class="btn-group btn-group-sm" role="group" aria-label="Asistencia de {{ item.student.user.username }}">
-                    <!-- Solo: Presente y Falta Justificada -->
+                    <!-- Presente (P) -->
                     <input type="radio" class="btn-check" name="status" id="btn-p-{{ item.record.id }}" value="PRESENT" autocomplete="off" {% if item.record.status == 'PRESENT' %}checked{% endif %}>
-                    <label class="btn btn-outline-success" for="btn-p-{{ item.record.id }}" title="Presente">
+                    <label class="btn btn-outline-success fw-bold" for="btn-p-{{ item.record.id }}" title="Presente">
                         <i class="bi bi-check-lg"></i> P
                     </label>
 
+                    <!-- Falta Injustificada (F) -->
+                    <input type="radio" class="btn-check" name="status" id="btn-u-{{ item.record.id }}" value="UNJUSTIFIED" autocomplete="off" {% if item.record.status == 'UNJUSTIFIED' %}checked{% endif %}>
+                    <label class="btn btn-outline-danger fw-bold" for="btn-u-{{ item.record.id }}" title="Falta Injustificada / Inasistencia">
+                        <i class="bi bi-x-lg"></i> F
+                    </label>
+
+                    <!-- Falta Justificada (FJ) -->
                     <input type="radio" class="btn-check" name="status" id="btn-j-{{ item.record.id }}" value="JUSTIFIED" autocomplete="off" {% if item.record.status == 'JUSTIFIED' %}checked{% endif %}>
-                    <label class="btn btn-outline-info" for="btn-j-{{ item.record.id }}" title="Falta Justificada">
+                    <label class="btn btn-outline-warning text-dark fw-bold" for="btn-j-{{ item.record.id }}" title="Falta Justificada (con soporte o excusa)">
                         <i class="bi bi-file-earmark-medical"></i> FJ
+                    </label>
+
+                    <!-- Tardanza (T) -->
+                    <input type="radio" class="btn-check" name="status" id="btn-l-{{ item.record.id }}" value="LATE" autocomplete="off" {% if item.record.status == 'LATE' %}checked{% endif %}>
+                    <label class="btn btn-outline-primary fw-bold" for="btn-l-{{ item.record.id }}" title="Tardanza / Retardo">
+                        <i class="bi bi-clock-history"></i> T
                     </label>
                 </div>
             </form>
             {% else %}
             {# Solo lectura #}
             {% if item.record.status == 'PRESENT' %}
-                <span class="badge bg-success text-white py-2 px-3">✔ Presente</span>
+                <span class="badge bg-success text-white py-2 px-3"><i class="bi bi-check-lg me-1"></i>Presente</span>
+            {% elif item.record.status == 'UNJUSTIFIED' %}
+                <span class="badge bg-danger text-white py-2 px-3 fw-bold"><i class="bi bi-x-lg me-1"></i>Falta</span>
             {% elif item.record.status == 'JUSTIFIED' %}
-                <span class="badge bg-info text-dark py-2 px-3">FJ Justificada</span>
+                <span class="badge bg-warning text-dark py-2 px-3"><i class="bi bi-file-earmark-medical me-1"></i>F. Justificada</span>
+            {% elif item.record.status == 'LATE' %}
+                <span class="badge bg-primary text-white py-2 px-3"><i class="bi bi-clock-history me-1"></i>Tardanza</span>
             {% else %}
-                <span class="badge bg-danger text-white py-2 px-3 fw-bold" title="{{ item.record.get_status_display }}">✕</span>
-            {% endif %}
-            {% endif %}
-            {% if is_editable %}
-            {% if item.record.status != 'PRESENT' and item.record.status != 'JUSTIFIED' %}
-            <span class="badge bg-danger text-white ms-1 fw-bold" title="Falta sin registrar (ni Presente ni Justificada)">✕</span>
+                <span class="badge bg-secondary text-white py-2 px-3">Sin Marcar</span>
             {% endif %}
             {% endif %}
         </td>
@@ -51,38 +63,51 @@
         <td>
             <div class="small font-monospace d-flex flex-column gap-1">
                 <span class="text-success fw-bold">
-                    <i class="bi bi-check-circle-fill me-1"></i>
-                    Presente: {{ item.stats.present_count }}
+                    <i class="bi bi-check-circle-fill me-1"></i>P: {{ item.stats.present_count }}
                 </span>
-                <span class="text-info fw-bold">
-                    <i class="bi bi-file-earmark-medical-fill me-1"></i>
-                    F. Justificada: {{ item.stats.justified_hours }}h
+                <span class="text-danger fw-bold">
+                    <i class="bi bi-x-circle-fill me-1"></i>F: {{ item.stats.unjustified_hours }}h
+                </span>
+                <span class="text-warning text-dark fw-bold">
+                    <i class="bi bi-file-earmark-medical-fill me-1"></i>FJ: {{ item.stats.justified_hours }}h
                 </span>
             </div>
             <small class="text-secondary" style="font-size: 0.65rem;">de {{ item.stats.total_hours }}h totales</small>
         </td>
         <td class="text-end">
-            {% if item.record.status == 'JUSTIFIED' %}
-                <button class="btn btn-sm btn-outline-info" type="button" data-bs-toggle="collapse" data-bs-target="#justification-collapse-{{ item.record.id }}" aria-expanded="{% if item.record.justification %}false{% else %}true{% endif %}" title="Ver / Editar Justificación">
-                    <i class="bi bi-file-earmark-text-fill"></i>
-                </button>
+            {% if is_editable %}
+            <button class="btn btn-sm {% if item.record.justification %}btn-warning text-dark{% else %}btn-outline-secondary{% endif %}" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#justification-collapse-{{ item.record.id }}" 
+                    aria-expanded="{% if item.record.status == 'JUSTIFIED' and not item.record.justification %}true{% else %}false{% endif %}" 
+                    title="{% if item.record.justification %}Ver / Editar Justificación: {{ item.record.justification }}{% else %}Añadir motivo / justificación{% endif %}">
+                <i class="bi bi-pencil-square"></i>
+            </button>
             {% else %}
+                {% if item.record.justification %}
+                <span class="badge bg-light text-dark border" title="{{ item.record.justification }}">
+                    <i class="bi bi-info-circle text-info"></i> Motivo
+                </span>
+                {% else %}
                 <span class="text-muted small">-</span>
+                {% endif %}
             {% endif %}
         </td>
     </tr>
-    {% if item.record.status == 'JUSTIFIED' %}
-    <tr class="collapse {% if not item.record.justification %}show{% endif %} bg-light" id="justification-collapse-{{ item.record.id }}">
+    <!-- Fila colapsable para editar motivo/justificación -->
+    <tr class="collapse {% if item.record.status == 'JUSTIFIED' and not item.record.justification %}show{% endif %} bg-light" id="justification-collapse-{{ item.record.id }}">
         <td colspan="6" class="p-3 small border-0">
+            {% if is_editable %}
             <form hx-post="{% url 'attendance:update_record' item.record.id %}" hx-target="#student-row-{{ item.student.id }}" hx-swap="outerHTML" class="d-flex gap-2 align-items-center">
                 {% csrf_token %}
-                <input type="hidden" name="status" value="JUSTIFIED">
-                <span class="fw-semibold text-info d-flex align-items-center gap-1 text-nowrap">
-                    <i class="bi bi-info-circle-fill"></i> Motivo:
+                <input type="hidden" name="status" value="{{ item.record.status }}">
+                <span class="fw-semibold text-primary d-flex align-items-center gap-1 text-nowrap">
+                    <i class="bi bi-file-earmark-text-fill"></i> Justificación / Motivo:
                 </span>
-                <input type="text" name="justification" class="form-control form-control-sm shadow-sm" placeholder="Escriba el motivo o soporte médico de justificación..." value="{{ item.record.justification|default:'' }}">
+                <input type="text" name="justification" class="form-control form-control-sm shadow-sm" placeholder="Escriba el motivo, excusa médica o soporte de la falta..." value="{{ item.record.justification|default:'' }}">
                 <button type="submit" class="btn btn-primary btn-sm text-nowrap d-flex align-items-center gap-1 shadow-sm">
-                    <i class="bi bi-check2-circle"></i>
+                    <i class="bi bi-floppy2-fill"></i>
                     <span>Guardar Motivo</span>
                 </button>
                 {% if item.record.justification %}
@@ -91,7 +116,12 @@
                 </span>
                 {% endif %}
             </form>
+            {% else %}
+            <div class="d-flex align-items-center gap-2 text-muted">
+                <strong class="text-dark"><i class="bi bi-file-earmark-medical me-1"></i>Motivo Registrado:</strong>
+                <span>{{ item.record.justification|default:"Sin justificación." }}</span>
+            </div>
+            {% endif %}
         </td>
     </tr>
-    {% endif %}
 </tbody>

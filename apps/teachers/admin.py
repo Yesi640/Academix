@@ -8,6 +8,7 @@ class TeacherProfileAdmin(admin.ModelAdmin):
 
 @admin.register(TeachingAssignment)
 class TeachingAssignmentAdmin(admin.ModelAdmin):
-    list_display = ('teacher', 'subject', 'course_section', 'academic_year', 'is_active')
-    list_filter = ('academic_year', 'is_active', 'course_section__grade_level')
+    list_display = ('teacher', 'subject', 'course_section', 'academic_year', 'is_active', 'is_group_director')
+    list_filter = ('academic_year', 'is_active', 'is_group_director', 'course_section__grade_level')
+    list_editable = ('is_active', 'is_group_director')
     search_fields = ('teacher__user__username', 'subject__name', 'course_section__name')

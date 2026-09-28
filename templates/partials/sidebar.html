@@ -89,13 +89,15 @@
             </a>
         </li>
         {% endif %}
-        {% if user.is_teacher or user.is_admin_role or user.is_rector or user.is_secretary %}
+        {% if user.is_admin_role or user.is_rector or user.is_secretary %}
         <li class="sidebar-item">
             <a href="{% url 'attendance:index' %}" class="sidebar-link {% if 'attendance' in request.path %}active{% endif %}">
                 <i class="bi bi-calendar2-check-fill text-success"></i>
                 <span>Llamado de Lista</span>
             </a>
         </li>
+        {% endif %}
+        {% if user.is_teacher or user.is_admin_role or user.is_rector or user.is_secretary %}
         <li class="sidebar-item">
             <a href="{% url 'homework:index' %}" class="sidebar-link {% if 'homework' in request.path %}active{% endif %}">
                 <i class="bi bi-folder-symlink-fill text-warning"></i>
