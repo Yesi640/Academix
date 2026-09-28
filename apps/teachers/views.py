@@ -377,10 +377,70 @@ def course_workspace_view(request, section_id):
             'completion_percentage': completion_percentage,
         }
 
-    # 2. Malla Curricular del Grado
-    curriculum = GradeSubject.objects.filter(
-        grade_level=section.grade_level
-    ).select_related('subject__area').prefetch_related('subject__norms')
+    # ¿Es el docente director de grupo de este curso? Solo director de grupo ve toda la malla y boletines/sábana.
+    is_group_director = False
+    if user.is_teacher and hasattr(user, 'teacher_profile'):
+        is_group_director = (
+            section.homeroom_teacher == user or
+            TeachingAssignment.objects.filter(
+                teacher=user.teacher_profile,
+                course_section=section,
+                is_group_director=True,
+                is_active=True
+            ).exists()
+        )
+    elif user.is_admin_role or user.is_rector or user.is_secretary or getattr(user, 'is_coordinator', False):
+        is_group_director = True
+
+    # 2. Malla Curricular del Grado y Control de Acceso:
+    # - El Director de Grupo o Directivo puede ver toda la malla del grado.
+    # - Los demás docentes solo pueden ver su área asignada, sus asignaturas, las horas que les tocan y el contenido.
+    if is_group_director:
+        curriculum_qs = GradeSubject.objects.filter(
+            grade_level=section.grade_level
+        ).select_related('subject__area').prefetch_related(
+            'subject__norms',
+            'subject__curriculum_grades__grade_level'
+        ).order_by('subject__area__order', 'subject__category', 'subject__name')
+    else:
+        curriculum_qs = GradeSubject.objects.filter(
+            grade_level=section.grade_level,
+            subject_id__in=assigned_subject_ids
+        ).select_related('subject__area').prefetch_related(
+            'subject__norms',
+            'subject__curriculum_grades__grade_level'
+        ).order_by('subject__area__order', 'subject__category', 'subject__name')
+
+    curriculum_data = []
+    for gs in curriculum_qs:
+        s = gs.subject
+        # Intensidades de esta materia en todos los grados escolares
+        intensities = []
+        for cg in s.curriculum_grades.all().select_related('grade_level').order_by('grade_level__order'):
+            intensities.append({
+                'grade_name': cg.grade_level.name,
+                'grade_code': cg.grade_level.code,
+                'weekly_hours': cg.weekly_hours,
+                'weight_percentage': cg.weight_percentage,
+                'is_current': cg.grade_level_id == section.grade_level_id,
+            })
+
+        curriculum_data.append({
+            'grade_subject': gs,
+            'subject': s,
+            'weekly_hours': gs.weekly_hours,
+            'weight_percentage': gs.weight_percentage,
+            'description': s.description or 'Contenido curricular conforme a los lineamientos del MEN.',
+            'norms': s.norms.all().order_by('order', 'code'),
+            'intensities': intensities,
+            'is_assigned_to_me': s.id in assigned_subject_ids,
+        })
+
+    # Asignaturas para las tarjetas superiores de categorías en la pestaña Malla
+    malla_subjects = [item['subject'] for item in curriculum_data]
+    principales = [s for s in malla_subjects if s.category == Subject.Category.PRINCIPAL]
+    humanisticas = [s for s in malla_subjects if s.category == Subject.Category.HUMANISTICA]
+    arte_deporte = [s for s in malla_subjects if s.category == Subject.Category.ARTE_DEPORTE]
 
     # 3. Control de Asistencia del Curso - Llamado de Lista Completo e Interactivo
     from apps.attendance.services import get_or_create_attendance_session, calculate_student_absence_stats
@@ -440,19 +500,6 @@ def course_workspace_view(request, section_id):
     # Pestaña activa: por defecto 'planilla' (Planilla de Notas al entrar)
     active_tab = request.GET.get('tab', 'planilla')
 
-    # ¿Es el docente director de grupo de este curso? Solo director de grupo ve boletines.
-    is_group_director = False
-    if user.is_teacher and hasattr(user, 'teacher_profile'):
-        from apps.teachers.models import TeachingAssignment as TA
-        is_group_director = TA.objects.filter(
-            teacher=user.teacher_profile,
-            course_section=section,
-            is_group_director=True,
-            is_active=True
-        ).exists()
-    elif user.is_admin_role or user.is_rector or user.is_secretary:
-        is_group_director = True  # Directivos siempre pueden ver boletines
-
     # Sábana de notas del curso (consolidado) - Solo accesible para el Director de Grupo de este salón o Directivos/Secretaría
     sabana_period = None
     sabana_data = None
@@ -485,7 +532,8 @@ def course_workspace_view(request, section_id):
         'principales': principales,
         'humanisticas': humanisticas,
         'arte_deporte': arte_deporte,
-        'curriculum': curriculum,
+        'curriculum': curriculum_data,
+        'curriculum_data': curriculum_data,
         'active_enrollments': active_enrollments,
         'current_date': current_date,
         # Llamado de lista completo

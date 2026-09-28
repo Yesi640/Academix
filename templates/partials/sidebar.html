@@ -70,12 +70,6 @@
                 <span>Mis Asignaciones</span>
             </a>
         </li>
-        <li class="sidebar-item">
-            <a href="{% url 'subjects:curriculum' %}" class="sidebar-link {% if 'subjects' in request.path %}active{% endif %}">
-                <i class="bi bi-book-half"></i>
-                <span>Malla Curricular ({{ institution.term_subjects|default:'Asignaturas' }})</span>
-            </a>
-        </li>
         {% endif %}
 
         <!-- Evaluación y Seguimiento Escolar (Sprint 3 y 4 Activos) -->
