@@ -136,7 +136,16 @@ def homework_index_view(request):
             'hw_count': hw_count,
         })
 
-    subjects = Subject.objects.filter(institution_type=inst_type)
+    # Asignaturas filtradas: docente solo ve las suyas; admin/rector ve todas las del tipo institucional
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        teacher_subject_ids = TeachingAssignment.objects.filter(
+            teacher=request.user.teacher_profile,
+            academic_year=current_year,
+            is_active=True
+        ).values_list('subject_id', flat=True)
+        subjects = Subject.objects.filter(id__in=teacher_subject_ids, institution_type=inst_type).order_by('name')
+    else:
+        subjects = Subject.objects.filter(institution_type=inst_type).order_by('name')
 
     context = {
         'current_year': current_year,
@@ -218,7 +227,27 @@ def homework_course_matrix_view(request, section_id):
             'items': items,
         })
 
-    subjects = Subject.objects.all()
+    # Filtrar asignaturas según el rol del usuario:
+    # - Docente: solo las áreas/asignaturas que tiene asignadas en este curso
+    # - Admin / Rector / Directivo: todas las asignaturas con asignación activa en el curso
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        teacher_subject_ids = TeachingAssignment.objects.filter(
+            teacher=request.user.teacher_profile,
+            course_section=section,
+            academic_year=section.academic_year,
+            is_active=True
+        ).values_list('subject_id', flat=True)
+        subjects = Subject.objects.filter(id__in=teacher_subject_ids).order_by('name')
+    else:
+        # Rector / Admin: mostrar asignaturas con asignación activa en el curso
+        all_assigned_ids = TeachingAssignment.objects.filter(
+            course_section=section,
+            academic_year=section.academic_year,
+            is_active=True
+        ).values_list('subject_id', flat=True)
+        subjects = Subject.objects.filter(id__in=all_assigned_ids).order_by('name')
+        if not subjects.exists():
+            subjects = Subject.objects.all().order_by('name')
 
     context = {
         'section': section,
