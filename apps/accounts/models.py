@@ -101,6 +101,26 @@ class CustomUser(AbstractUser):
     def is_parent(self):
         return self.role == self.Role.PARENT
 
+    @property
+    def is_group_director(self):
+        """Indica si el usuario es docente y director de grupo de al menos un curso activo."""
+        if not self.is_teacher or not hasattr(self, 'teacher_profile'):
+            return False
+        return self.teacher_profile.assignments.filter(is_group_director=True, is_active=True).exists()
+
+    @property
+    def can_view_sabana(self):
+        """
+        Indica si el usuario tiene permiso para ver la sábana de notas:
+        - Coordinador / Directivo / Rector
+        - Administrador
+        - Secretaría Académica
+        - Docente Director de Grupo
+        """
+        if self.is_admin_role or self.is_rector or self.is_secretary:
+            return True
+        return self.is_group_director
+
     def get_role_badge_class(self):
         """Retorna la clase CSS de Bootstrap para badges según rol."""
         badge_map = {

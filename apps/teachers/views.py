@@ -409,20 +409,24 @@ def course_workspace_view(request, section_id):
     elif user.is_admin_role or user.is_rector or user.is_secretary:
         is_group_director = True  # Directivos siempre pueden ver boletines
 
-    # Sábana de notas del curso (consolidado)
-    from apps.reports.services import build_section_consolidated_data
-    sabana_period_id = request.GET.get('sabana_period_id')
+    # Sábana de notas del curso (consolidado) - Solo accesible para el Director de Grupo de este salón o Directivos/Secretaría
     sabana_period = None
     sabana_data = None
-    if sabana_period_id:
-        sabana_period = AcademicPeriod.objects.filter(id=sabana_period_id).first()
-    if not sabana_period:
-        sabana_period = selected_period
-    if sabana_period:
-        try:
-            sabana_data = build_section_consolidated_data(section, sabana_period)
-        except Exception:
-            sabana_data = None
+    if is_group_director:
+        from apps.reports.services import build_section_consolidated_data
+        sabana_period_id = request.GET.get('sabana_period_id')
+        if sabana_period_id:
+            sabana_period = AcademicPeriod.objects.filter(id=sabana_period_id).first()
+        if not sabana_period:
+            sabana_period = selected_period
+        if sabana_period:
+            try:
+                sabana_data = build_section_consolidated_data(section, sabana_period)
+            except Exception:
+                sabana_data = None
+    else:
+        if active_tab in ['sabana', 'boletines']:
+            active_tab = 'planilla'
 
     context = {
         'section': section,

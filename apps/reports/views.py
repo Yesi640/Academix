@@ -34,11 +34,19 @@ def reports_index_view(request):
     inst_type = InstitutionSetting.get_settings().institution_type
 
     if user.is_teacher and hasattr(user, 'teacher_profile'):
-        assignments = TeachingAssignment.objects.filter(teacher=user.teacher_profile, academic_year=current_year, is_active=True)
-        sections = CourseSection.objects.filter(
-            id__in=assignments.values_list('course_section_id', flat=True),
-            grade_level__institution_type=inst_type
-        ).distinct()
+        if user.is_group_director:
+            director_assignments = TeachingAssignment.objects.filter(
+                teacher=user.teacher_profile,
+                academic_year=current_year,
+                is_active=True,
+                is_group_director=True
+            )
+            sections = CourseSection.objects.filter(
+                id__in=director_assignments.values_list('course_section_id', flat=True),
+                grade_level__institution_type=inst_type
+            ).distinct()
+        else:
+            sections = CourseSection.objects.none()
     else:
         sections = CourseSection.objects.filter(
             academic_year=current_year,
@@ -154,7 +162,16 @@ def section_bulletins_bulk_view(request, section_id, period_id):
 def section_consolidated_view(request):
     """
     Sábana consolidada de calificaciones de una sección escolar para el periodo seleccionado.
+    Acceso restringido a:
+    - Coordinador / Directivo / Rector
+    - Administrador
+    - Secretaría Académica
+    - Docente Director de Grupo (únicamente de su propio salón asignado)
     """
+    if not request.user.can_view_sabana:
+        messages.error(request, "Acceso restringido: La sábana de notas solo puede ser consultada por el Director de Grupo del salón, Coordinación y Secretaría.")
+        return redirect('dashboard')
+
     from apps.courses.models import InstitutionSetting
     inst_type = InstitutionSetting.get_settings().institution_type
 
@@ -162,18 +179,53 @@ def section_consolidated_view(request):
     period_id = request.GET.get('period_id')
     current_year = get_current_academic_year()
     periods = AcademicPeriod.objects.filter(academic_year=current_year).order_by('number') if current_year else []
-    sections = CourseSection.objects.filter(
+
+    all_sections = CourseSection.objects.filter(
         academic_year=current_year,
         grade_level__institution_type=inst_type
-    ).select_related('grade_level') if current_year else []
+    ).select_related('grade_level') if current_year else CourseSection.objects.none()
+
+    # Si es docente, solo puede consultar las secciones donde es Director de Grupo
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        directed_section_ids = request.user.teacher_profile.assignments.filter(
+            academic_year=current_year,
+            is_active=True,
+            is_group_director=True
+        ).values_list('course_section_id', flat=True)
+        sections = all_sections.filter(id__in=directed_section_ids)
+        if not sections.exists():
+            messages.warning(request, "Actualmente no tienes ningún salón asignado como Director de Grupo.")
+            return redirect('dashboard')
+    else:
+        sections = all_sections
 
     if not section_id or not period_id:
+        # Preseleccionar primer salón si es director de grupo
+        initial_section = sections.first()
+        initial_period = get_current_active_period(current_year) or (periods.first() if periods else None)
+        if initial_section and initial_period:
+            data = build_section_consolidated_data(initial_section, initial_period)
+            selected_section = initial_section
+            selected_period = initial_period
+        else:
+            data = None
+            selected_section = None
+            selected_period = None
+
         context = {
             'periods': periods,
             'sections': sections,
-            'data': None,
+            'selected_section': selected_section,
+            'selected_period': selected_period,
+            'data': data,
         }
         return render(request, 'reports/consolidated.html', context)
+
+    # Validar que si es docente, el section_id pertenezca a sus cursos como director
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        if not sections.filter(id=section_id).exists():
+            messages.error(request, "Solo puedes consultar la sábana de notas del salón donde eres Director de Grupo.")
+            return redirect('reports:consolidated')
 
     section = get_object_or_404(CourseSection, id=section_id, grade_level__institution_type=inst_type)
     period = get_object_or_404(AcademicPeriod, id=period_id)
@@ -192,7 +244,20 @@ def section_consolidated_view(request):
 def export_consolidated_csv_view(request, section_id, period_id):
     """
     Descarga la sábana consolidada en formato CSV con soporte UTF-8 BOM para Excel.
+    Acceso restringido a Director de Grupo del salón, Coordinación y Secretaría.
     """
+    if not request.user.can_view_sabana:
+        return HttpResponseForbidden("Acceso restringido: Solo el Director de Grupo de este salón, Coordinación y Secretaría pueden exportar la sábana de notas.")
+
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        is_director = request.user.teacher_profile.assignments.filter(
+            course_section_id=section_id,
+            is_active=True,
+            is_group_director=True
+        ).exists()
+        if not is_director:
+            return HttpResponseForbidden("Solo puedes exportar la sábana de notas del salón donde eres Director de Grupo.")
+
     section = get_object_or_404(CourseSection, id=section_id)
     period = get_object_or_404(AcademicPeriod, id=period_id)
 
@@ -206,36 +271,9 @@ def export_consolidated_csv_view(request, section_id, period_id):
 @login_required
 def honor_roll_view(request):
     """
-    Cuadro de honor con los mejores promedios y estadísticas directivas de rendimiento.
+    El Cuadro de Honor ha sido deshabilitado del sistema.
+    Redirecciona de manera segura al panel principal de reportes.
     """
-    from apps.courses.models import InstitutionSetting
-    inst_type = InstitutionSetting.get_settings().institution_type
+    messages.info(request, "El Cuadro de Honor ha sido deshabilitado.")
+    return redirect('reports:index')
 
-    section_id = request.GET.get('section_id')
-    period_id = request.GET.get('period_id')
-    current_year = get_current_academic_year()
-    periods = AcademicPeriod.objects.filter(academic_year=current_year).order_by('number') if current_year else []
-    sections = CourseSection.objects.filter(
-        academic_year=current_year,
-        grade_level__institution_type=inst_type
-    ).select_related('grade_level') if current_year else []
-
-    if not section_id or not period_id:
-        # Por defecto seleccionar primera sección y periodo activo
-        active_period = get_current_active_period(current_year)
-        section = sections.first() if sections.exists() else None
-        period = active_period if active_period else (periods.first() if periods.exists() else None)
-    else:
-        section = get_object_or_404(CourseSection, id=section_id, grade_level__institution_type=inst_type)
-        period = get_object_or_404(AcademicPeriod, id=period_id)
-
-    data = build_honor_roll_data(section, period) if (section and period) else None
-
-    context = {
-        'periods': periods,
-        'sections': sections,
-        'selected_section': section,
-        'selected_period': period,
-        'data': data,
-    }
-    return render(request, 'reports/honor_roll.html', context)

@@ -148,26 +148,23 @@
         </li>
         {% endif %}
 
-        <!-- Reportes y Cierres (Sprint 5) -->
+        <!-- Reportes y Cierres -->
+        {% if user.can_view_sabana or user.is_admin_role or user.is_rector or user.is_secretary %}
         <li class="sidebar-menu-header">Reportes y Cierres</li>
         <li class="sidebar-item">
-            <a href="{% url 'reports:index' %}" class="sidebar-link {% if 'reports' in request.path and not 'consolidated' in request.path and not 'honor' in request.path %}active{% endif %}">
+            <a href="{% url 'reports:index' %}" class="sidebar-link {% if 'reports' in request.path and not 'consolidated' in request.path %}active{% endif %}">
                 <i class="bi bi-file-earmark-text-fill text-primary"></i>
                 <span>Boletines Oficiales</span>
             </a>
         </li>
+        {% if user.can_view_sabana %}
         <li class="sidebar-item">
             <a href="{% url 'reports:consolidated' %}" class="sidebar-link {% if 'consolidated' in request.path %}active{% endif %}">
                 <i class="bi bi-grid-3x3-gap text-success"></i>
                 <span>Sábanas de Notas</span>
             </a>
         </li>
-        <li class="sidebar-item">
-            <a href="{% url 'reports:honor_roll' %}" class="sidebar-link {% if 'honor-roll' in request.path %}active{% endif %}">
-                <i class="bi bi-trophy-fill text-warning"></i>
-                <span>Cuadro de Honor</span>
-            </a>
-        </li>
+        {% endif %}
         {% if user.is_admin_role or user.is_rector %}
         <li class="sidebar-item">
             <a href="{% url 'rules:closing_manager' %}" class="sidebar-link {% if 'rules' in request.path %}active{% endif %}">
@@ -175,6 +172,7 @@
                 <span>Cierres y Promoción</span>
             </a>
         </li>
+        {% endif %}
         {% endif %}
 
         <!-- Accesos para Administrador -->

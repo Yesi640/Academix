@@ -11,7 +11,7 @@
                 <i class="bi bi-file-earmark-bar-graph-fill text-primary me-2"></i>Centro de Reportes y Boletines Oficiales
             </h1>
             <p class="text-muted small mb-0">
-                Emisión de boletines periódicos, sábanas consolidadas y cuadros de honor institucional (Decreto 1290).
+                Emisión de boletines periódicos y sábanas consolidadas (Decreto 1290).
             </p>
         </div>
         <div>
@@ -24,7 +24,7 @@
     <!-- Tarjetas de Acceso a Reportes -->
     <div class="row g-4 mb-4">
         <!-- 1. Emisión de Boletines -->
-        <div class="col-md-4">
+        <div class="{% if user.can_view_sabana %}col-md-6{% else %}col-md-12{% endif %}">
             <div class="card border-0 shadow-sm rounded-3 h-100 border-top border-4 border-primary">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
@@ -47,6 +47,8 @@
                             <select id="bulk_section" class="form-select form-select-sm">
                                 {% for sec in sections %}
                                 <option value="{{ sec.id }}">{{ sec.name }} ({{ sec.grade_level.name }})</option>
+                                {% empty %}
+                                <option value="">Sin cursos disponibles</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -65,8 +67,9 @@
             </div>
         </div>
 
-        <!-- 2. Sábana Consolidada -->
-        <div class="col-md-4">
+        {% if user.can_view_sabana %}
+        <!-- 2. Sábana Consolidada (Solo Director de Grupo, Coordinación y Secretaría) -->
+        <div class="col-md-6">
             <div class="card border-0 shadow-sm rounded-3 h-100 border-top border-4 border-success">
                 <div class="card-body p-4 d-flex flex-column">
                     <div class="d-flex align-items-center mb-3">
@@ -74,8 +77,11 @@
                             <i class="bi bi-grid-3x3-gap-fill fs-3"></i>
                         </div>
                         <div>
-                            <h5 class="fw-bold text-dark mb-0">Sábanas Consolidadas</h5>
-                            <small class="text-muted">Matriz grupal de calificaciones</small>
+                            <div class="d-flex align-items-center gap-2">
+                                <h5 class="fw-bold text-dark mb-0">Sábanas Consolidadas</h5>
+                                <span class="badge bg-success-subtle text-success border border-success" style="font-size:0.68rem;">Autorizado</span>
+                            </div>
+                            <small class="text-muted">Matriz grupal de calificaciones por salón</small>
                         </div>
                     </div>
                     <p class="text-muted small mb-4 flex-grow-1">
@@ -87,29 +93,7 @@
                 </div>
             </div>
         </div>
-
-        <!-- 3. Cuadro de Honor y Estadísticas -->
-        <div class="col-md-4">
-            <div class="card border-0 shadow-sm rounded-3 h-100 border-top border-4 border-warning">
-                <div class="card-body p-4 d-flex flex-column">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="rounded-3 bg-warning-subtle text-warning p-3 me-3">
-                            <i class="bi bi-trophy-fill fs-3"></i>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold text-dark mb-0">Cuadro de Honor</h5>
-                            <small class="text-muted">Ranking y analítica académica</small>
-                        </div>
-                    </div>
-                    <p class="text-muted small mb-4 flex-grow-1">
-                        Consulte los 5 mejores promedios del grupo, índices de aprobación, asignaturas críticas con alta reprobación y estadísticas de supervisión directiva.
-                    </p>
-                    <a href="{% url 'reports:honor_roll' %}" class="btn btn-warning text-dark btn-sm w-100 fw-bold py-2 mt-auto">
-                        <i class="bi bi-award-fill me-1"></i>Ver Cuadro de Honor
-                    </a>
-                </div>
-            </div>
-        </div>
+        {% endif %}
     </div>
 
     <!-- Guía Institucional del Decreto 1290 -->

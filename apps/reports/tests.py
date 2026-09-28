@@ -125,3 +125,48 @@ class ReportsAndBulletinsTestCase(TestCase):
         url = reverse('reports:student_bulletin', kwargs={'student_id': self.student2.id, 'period_id': self.period.id})
         response = self.client.get(url)
         self.assertEqual(response.status_code, 403)
+
+    def test_sabana_access_permissions(self):
+        """Prueba permisos de acceso a la sábana de notas consolidada."""
+        # 1. Estudiante no puede acceder a la sábana
+        self.client.force_login(self.student_user1)
+        res_est = self.client.get(reverse('reports:consolidated'))
+        self.assertEqual(res_est.status_code, 302)  # Redirige a dashboard
+
+        # 2. Docente normal (NO director de grupo) no puede acceder
+        self.client.force_login(self.docente_user)
+        res_doc = self.client.get(reverse('reports:consolidated'))
+        self.assertEqual(res_doc.status_code, 302)
+
+        # 3. Docente cuando es asignado como Director de Grupo de la sección 6-A
+        self.assignment.is_group_director = True
+        self.assignment.save()
+        res_director = self.client.get(reverse('reports:consolidated'), {
+            'section_id': self.section.id,
+            'period_id': self.period.id
+        })
+        self.assertEqual(res_director.status_code, 200)
+
+        # 4. Secretaría puede ver la sábana
+        sec_user = CustomUser.objects.create_user('sec_test', 'sec@test.com', 'Pass123*', role=CustomUser.Role.SECRETARIA)
+        self.client.force_login(sec_user)
+        res_sec = self.client.get(reverse('reports:consolidated'), {
+            'section_id': self.section.id,
+            'period_id': self.period.id
+        })
+        self.assertEqual(res_sec.status_code, 200)
+
+        # 5. Rector puede ver la sábana
+        rec_user = CustomUser.objects.create_user('rec_test', 'rec@test.com', 'Pass123*', role=CustomUser.Role.RECTOR)
+        self.client.force_login(rec_user)
+        res_rec = self.client.get(reverse('reports:consolidated'), {
+            'section_id': self.section.id,
+            'period_id': self.period.id
+        })
+        self.assertEqual(res_rec.status_code, 200)
+
+    def test_honor_roll_disabled_redirects(self):
+        """Prueba que la vista de Cuadro de Honor redirige al índice al haber sido deshabilitada."""
+        self.client.force_login(self.admin)
+        res = self.client.get(reverse('reports:honor_roll'))
+        self.assertRedirects(res, reverse('reports:index'))
