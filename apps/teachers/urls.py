@@ -10,5 +10,6 @@ urlpatterns = [
     path('subject/<int:subject_id>/norm/add/', views.add_subject_norm_view, name='add_norm'),
     path('assign/', views.assign_teacher_view, name='assign'),
     path('create/', views.create_teacher_view, name='create'),
+    path('api/section/<int:section_id>/subjects/', views.api_subjects_for_section, name='api_subjects_for_section'),
 ]
 

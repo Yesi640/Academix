@@ -1,6 +1,101 @@
 {% extends 'base.html' %}
 
-{% block title %}Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignaciones | ACADEMIX{% endblock %}
+{% block title %}Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignaciones | ACADEMIX
+<script>
+(function () {
+    var sectionSelect = document.getElementById('assignSectionSelect');
+    var subjectSelect = document.getElementById('assignSubjectSelect');
+    var spinner       = document.getElementById('subjectLoadingSpinner');
+    var helpText      = document.getElementById('subjectHelp');
+    var gradeBadge    = document.getElementById('subjectGradeBadge');
+
+    /* Build the base URL: /teachers/api/section/<id>/subjects/ */
+    var API_BASE = "{% url 'teachers:api_subjects_for_section' section_id=0 %}".replace('/0/', '/');
+
+    function buildOption(value, text, disabled) {
+        var opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = text;
+        if (disabled) { opt.disabled = true; opt.style.color = '#888'; }
+        return opt;
+    }
+
+    function loadSubjects(sectionId) {
+        subjectSelect.innerHTML = '';
+        spinner.style.display = 'block';
+        helpText.style.display = 'none';
+        gradeBadge.style.display = 'none';
+        subjectSelect.appendChild(buildOption('', 'Cargando...', true));
+
+        fetch(API_BASE + sectionId + '/subjects/', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            spinner.style.display = 'none';
+            subjectSelect.innerHTML = '';
+
+            if (!data.subjects || data.subjects.length === 0) {
+                subjectSelect.appendChild(buildOption('', '- Sin asignaturas configuradas -', true));
+                return;
+            }
+
+            var groups = {};
+            data.subjects.forEach(function(s) {
+                if (!groups[s.category]) groups[s.category] = [];
+                groups[s.category].push(s);
+            });
+
+            var catOrder = ['Materia Principal', 'Materia Humanistica', 'Arte y Deporte'];
+            catOrder.forEach(function(cat) {
+                var list = groups[cat];
+                if (!list || list.length === 0) return;
+                var og = document.createElement('optgroup');
+                og.label = cat;
+                list.forEach(function(s) {
+                    var hours = s.weekly_hours ? ' (' + s.weekly_hours + 'h/sem)' : '';
+                    og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area + hours, false));
+                });
+                subjectSelect.appendChild(og);
+            });
+
+            Object.keys(groups).forEach(function(cat) {
+                if (catOrder.indexOf(cat) !== -1) return;
+                var og = document.createElement('optgroup');
+                og.label = cat;
+                groups[cat].forEach(function(s) {
+                    og.appendChild(buildOption(s.id, s.name + ' [' + s.code + '] - ' + s.area, false));
+                });
+                subjectSelect.appendChild(og);
+            });
+
+            gradeBadge.textContent = data.grade_name;
+            gradeBadge.style.display = 'inline';
+            helpText.style.display = 'block';
+        })
+        .catch(function() {
+            spinner.style.display = 'none';
+            subjectSelect.innerHTML = '';
+            subjectSelect.appendChild(buildOption('', '- Error al cargar asignaturas -', true));
+        });
+    }
+
+    if (sectionSelect) {
+        sectionSelect.addEventListener('change', function () {
+            var sectionId = this.value;
+            if (sectionId) {
+                loadSubjects(sectionId);
+            } else {
+                subjectSelect.innerHTML = '';
+                subjectSelect.appendChild(buildOption('', '- Seleccione primero un curso -', true));
+                gradeBadge.style.display = 'none';
+                helpText.style.display = 'none';
+            }
+        });
+    }
+})();
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -131,19 +226,27 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-semibold text-secondary">{{ institution.term_section|default:'Curso / Grupo' }}</label>
-                        <select name="section_id" class="form-select" required>
+                        <select name="section_id" id="assignSectionSelect" class="form-select" required>
+                            <option value="">— Seleccione un curso —</option>
                             {% for s in sections %}
-                            <option value="{{ s.id }}">{{ s.name }} ({{ institution.term_grade|default:'Grado' }} {{ s.grade_level.name }})</option>
+                            <option value="{{ s.id }}" data-grade="{{ s.grade_level.name }}">{{ s.name }} ({{ institution.term_grade|default:'Grado' }} {{ s.grade_level.name }})</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label small fw-semibold text-secondary">{{ institution.term_subject|default:'Asignatura' }}</label>
-                        <select name="subject_id" class="form-select" required>
-                            {% for subj in subjects %}
-                            <option value="{{ subj.id }}">{{ subj.name }} ({{ subj.area.name }})</option>
-                            {% endfor %}
+                        <label class="form-label small fw-semibold text-secondary" id="subjectLabel">
+                            {{ institution.term_subject|default:'Asignatura' }}
+                            <span id="subjectGradeBadge" class="badge bg-primary-subtle text-primary border border-primary-subtle ms-1" style="display:none;font-size:0.7rem;"></span>
+                        </label>
+                        <select name="subject_id" id="assignSubjectSelect" class="form-select" required>
+                            <option value="">— Seleccione primero un curso —</option>
                         </select>
+                        <div id="subjectLoadingSpinner" class="text-muted small mt-1" style="display:none;">
+                            <span class="spinner-border spinner-border-sm me-1" role="status"></span>Cargando asignaturas del grado...
+                        </div>
+                        <div id="subjectHelp" class="form-text small text-muted mt-1" style="display:none;">
+                            Solo se muestran las asignaturas de la malla curricular del grado seleccionado.
+                        </div>
                     </div>
                     <div class="mb-3">
                         <div class="form-check form-switch p-3 bg-light rounded-3 border">

@@ -1,3 +1,5 @@
+import json
+from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -500,3 +502,53 @@ def add_subject_norm_view(request, subject_id):
     return redirect(request.META.get('HTTP_REFERER', 'teachers:my_courses'))
 
 
+@login_required
+def api_subjects_for_section(request, section_id):
+    """
+    API JSON: Retorna las asignaturas disponibles para la sección (según la malla curricular
+    del grado) agrupadas por categoría. Usado en el modal de asignación para filtrado dinámico.
+    """
+    from apps.subjects.models import Subject, GradeSubject
+    from apps.courses.models import InstitutionSetting
+
+    section = get_object_or_404(CourseSection, id=section_id)
+    inst_type = InstitutionSetting.get_settings().institution_type
+
+    # Asignaturas del plan de estudios del grado de la sección
+    curriculum_qs = GradeSubject.objects.filter(
+        grade_level=section.grade_level,
+        subject__institution_type=inst_type
+    ).select_related('subject__area').order_by(
+        'subject__category', 'subject__area__order', 'subject__name'
+    )
+
+    subjects_data = []
+    for gs in curriculum_qs:
+        s = gs.subject
+        subjects_data.append({
+            'id': s.id,
+            'name': s.name,
+            'code': s.code,
+            'area': s.area.name,
+            'category': s.get_category_display(),
+            'weekly_hours': gs.weekly_hours,
+        })
+
+    # Si no hay malla para ese grado, devuelve todas las asignaturas de la institución
+    if not subjects_data:
+        for s in Subject.objects.filter(institution_type=inst_type).select_related('area').order_by('name'):
+            subjects_data.append({
+                'id': s.id,
+                'name': s.name,
+                'code': s.code,
+                'area': s.area.name,
+                'category': s.get_category_display(),
+                'weekly_hours': None,
+            })
+
+    return JsonResponse({
+        'section_id': section_id,
+        'section_name': section.name,
+        'grade_name': section.grade_level.name,
+        'subjects': subjects_data,
+    })
