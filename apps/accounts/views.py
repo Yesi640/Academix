@@ -53,6 +53,14 @@ def login_view(request):
 
             messages.success(request, f'¡Bienvenido a ACADEMIX, {user.get_full_name() or user.username}!')
 
+            if user.must_change_password:
+                messages.warning(request, 'Por motivos de seguridad institucional en tu primer acceso, debes cambiar tu contraseña temporal.')
+                if request.headers.get('HX-Request'):
+                    response = HttpResponse(status=200)
+                    response['HX-Redirect'] = '/accounts/change-password/'
+                    return response
+                return redirect('accounts:change_password')
+
             # Si la petición viene de HTMX, enviamos cabecera de redirección
             if request.headers.get('HX-Request'):
                 response = HttpResponse(status=200)
@@ -292,6 +300,10 @@ def dashboard_view(request):
     user = request.user
     role = user.role
 
+    if user.must_change_password:
+        messages.warning(request, 'Por motivos de seguridad institucional en tu primer acceso, debes cambiar tu contraseña temporal antes de ingresar al panel.')
+        return redirect('accounts:change_password')
+
     current_year = get_current_academic_year()
     active_period = get_current_active_period(current_year) if current_year else None
 
@@ -487,3 +499,51 @@ def profile_view(request):
         form = UserProfileForm(instance=user)
 
     return render(request, 'accounts/profile.html', {'form': form, 'user': user})
+
+
+@login_required
+def change_password_view(request):
+    """
+    Permite al usuario autenticado cambiar su contraseña temporal o voluntariamente.
+    Si tenía must_change_password=True, se desactiva tras el cambio exitoso.
+    Preserva la sesión activa y registra el evento en auditoría inmutable.
+    """
+    from django.contrib.auth import update_session_auth_hash
+    from django.contrib.auth.forms import PasswordChangeForm
+
+    user = request.user
+    must_change = user.must_change_password
+
+    if request.method == 'POST':
+        form = PasswordChangeForm(user=user, data=request.POST)
+        if form.is_valid():
+            user = form.save()
+            if user.must_change_password:
+                user.must_change_password = False
+                user.save(update_fields=['must_change_password'])
+
+            # Evitar que la sesión expire al cambiar la contraseña
+            update_session_auth_hash(request, user)
+
+            log_audit(
+                user=user,
+                action='UPDATE',
+                table_name='CustomUser',
+                record_id=user.id,
+                reason='Cambio de contraseña realizado por el usuario',
+                request=request
+            )
+
+            messages.success(request, '¡Tu contraseña ha sido actualizada exitosamente! Ya puedes continuar con seguridad.')
+            return redirect('accounts:dashboard')
+        else:
+            for error in form.non_field_errors():
+                messages.error(request, error)
+    else:
+        form = PasswordChangeForm(user=user)
+
+    return render(request, 'accounts/change_password.html', {
+        'form': form,
+        'must_change': must_change,
+        'user': user,
+    })

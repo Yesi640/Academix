@@ -70,21 +70,24 @@ class LoginForm(forms.Form):
 
         # 1. Validación para ALUMNO
         if role == 'STUDENT':
-            if not student_id:
-                raise ValidationError("El ID ÚNICO del alumno es obligatorio para iniciar sesión.")
+            ident = (student_id or username).strip()
+            if not ident:
+                raise ValidationError("Debe ingresar su ID ÚNICO, Usuario institucional o Documento para iniciar sesión.")
 
-            # Buscar perfil de estudiante por su ID ÚNICO o documento
-            student_profile = StudentProfile.objects.filter(student_code__iexact=student_id).select_related('user').first()
-            if not student_profile:
-                # Búsqueda alternativa por documento de usuario
-                student_profile = StudentProfile.objects.filter(user__document_number=student_id).select_related('user').first()
+            # Buscar perfil de estudiante por su ID ÚNICO, documento, username o correo
+            student_profile = (
+                StudentProfile.objects.filter(student_code__iexact=ident).select_related('user').first()
+                or StudentProfile.objects.filter(user__document_number=ident).select_related('user').first()
+                or StudentProfile.objects.filter(user__username__iexact=ident).select_related('user').first()
+                or StudentProfile.objects.filter(user__email__iexact=ident).select_related('user').first()
+            )
 
             if not student_profile:
-                raise ValidationError(f"No se encontró ningún alumno con el ID ÚNICO '{student_id}'.")
+                raise ValidationError(f"No se encontró ningún alumno con la identificación '{ident}'. Verifique su ID ÚNICO, documento o usuario.")
 
             user = authenticate(self.request, username=student_profile.user.username, password=password)
             if not user:
-                raise ValidationError("Contraseña incorrecta para el alumno con este ID ÚNICO.")
+                raise ValidationError("Contraseña incorrecta para el alumno.")
 
             if user.role != CustomUser.Role.STUDENT:
                 raise ValidationError("El usuario no corresponde al rol de Alumno seleccionado.")

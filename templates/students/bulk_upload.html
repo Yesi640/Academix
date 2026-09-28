@@ -121,11 +121,16 @@
                     <li><strong>Código:</strong> Código de folio institucional (opcional)</li>
                 </ol>
 
-                <div class="p-2 bg-warning-subtle rounded border border-warning-subtle mb-3">
-                    <strong class="text-warning-emphasis d-block mb-1">
-                        <i class="bi bi-shield-lock me-1"></i>Credenciales Automáticas:
+                <div class="p-3 bg-primary-subtle rounded border border-primary-subtle mb-3">
+                    <strong class="text-primary-emphasis d-block mb-1">
+                        <i class="bi bi-envelope-check-fill me-1"></i>Creación y Envío Automático de Cuentas:
                     </strong>
-                    El sistema generará el usuario con el formato <code>est_documento</code> y su contraseña inicial será el mismo número de documento.
+                    <ul class="ps-3 mb-0 small text-dark">
+                        <li><strong>Cuenta:</strong> Se crea el usuario con formato <code>est_documento</code>.</li>
+                        <li><strong>Contraseña Inicial:</strong> El mismo número de documento del estudiante.</li>
+                        <li><strong>Envío al Correo:</strong> Cada estudiante recibe automáticamente un correo con su usuario, clave y enlace directo.</li>
+                        <li><strong>Cambio de Clave:</strong> Al ingresar, el sistema le solicitará cambiar su contraseña temporal por una personal y segura.</li>
+                    </ul>
                 </div>
 
                 <a href="{% url 'students:download_template' %}" class="btn btn-success btn-sm w-100 shadow-sm">

@@ -371,10 +371,11 @@ def bulk_upload_students_view(request):
         created_count = 0
         enrolled_count = 0
         errors = []
+        credentials_to_send = []
 
-        # Analizar encabezados: Si la primera columna no es numérica y contiene palabras clave, es encabezado
+        # Analizar encabezados: Si la primera celda no es numérica, es fila de encabezados
         first_col = rows_data[0][0].strip().lower() if rows_data and rows_data[0] else ''
-        has_headers = not first_col.isdigit() and any(h in first_col for h in ['doc', 'cedula', 'ident', 'nom', 'estud', 'ti', 'cc'])
+        has_headers = not first_col.isdigit()
         start_idx = 1 if has_headers else 0
 
         for row_num, row in enumerate(rows_data[start_idx:], start=start_idx + 1):
@@ -417,8 +418,7 @@ def bulk_upload_students_view(request):
                     student_code = f"EST-{doc_num[-6:] if len(doc_num)>=6 else doc_num}"
 
                 username = f"est_{doc_num}"
-                if not email:
-                    email = f"{username}@academix.edu.co"
+                user_email = email if email else f"{username}@academix.edu.co"
                 password = doc_num
 
                 # 1. Buscar o crear usuario
@@ -426,10 +426,11 @@ def bulk_upload_students_view(request):
                 if not user:
                     user = CustomUser.objects.filter(username=username).first()
 
+                is_new_user = False
                 if not user:
                     user = create_institutional_user(
                         username=username,
-                        email=email,
+                        email=user_email,
                         password=password,
                         role=CustomUser.Role.STUDENT,
                         document_type=doc_type,
@@ -440,6 +441,12 @@ def bulk_upload_students_view(request):
                         must_change_password=True
                     )
                     created_count += 1
+                    is_new_user = True
+                else:
+                    # Si ya existía y se proporcionó correo real nuevo, actualizarlo
+                    if email and user.email != email:
+                        user.email = email
+                        user.save(update_fields=['email'])
 
                 # 2. Perfil de estudiante
                 profile = get_or_create_student_profile(user, student_code=student_code)
@@ -453,25 +460,52 @@ def bulk_upload_students_view(request):
                 )
                 enrolled_count += 1
 
+                # 4. Encolar para envío de credenciales por correo
+                if is_new_user or user.must_change_password:
+                    credentials_to_send.append({
+                        'user': user,
+                        'password': password,
+                        'student_code': student_code,
+                        'section_name': selected_section.name,
+                        'academic_year': current_year.year if current_year else '',
+                        'email': email or user.email,
+                    })
+
             except Exception as ex:
                 errors.append(f"Fila {row_num} ({cleaned[0]}): {str(ex)}")
+
+        # Envío automático de credenciales por correo electrónico
+        from apps.students.services import send_bulk_student_credentials
+        login_url = request.build_absolute_uri('/accounts/login/')
+        email_stats = send_bulk_student_credentials(credentials_to_send, login_url=login_url)
 
         log_audit(
             user=request.user,
             action='BULK_ENROLL_STUDENTS',
             table_name='Enrollment',
             record_id=selected_section.id,
-            new_values={'section': selected_section.name, 'enrolled': enrolled_count, 'created_users': created_count},
+            new_values={
+                'section': selected_section.name,
+                'enrolled': enrolled_count,
+                'created_users': created_count,
+                'emails_sent': email_stats['sent'],
+                'emails_failed': email_stats['failed'],
+            },
             reason=f'Carga masiva de lista de estudiantes en {selected_section.name}',
             request=request
         )
 
         if enrolled_count > 0:
-            messages.success(
-                request,
+            success_msg = (
                 f'¡Éxito! Se matricularon {enrolled_count} estudiantes en {selected_section.name}. '
-                f'({created_count} nuevos usuarios creados).'
+                f'({created_count} nuevas cuentas de usuario creadas).'
             )
+            if email_stats['sent'] > 0:
+                success_msg += f' Se enviaron automáticamente {email_stats["sent"]} correos con el usuario, contraseña inicial y enlace para cambio de contraseña.'
+            if email_stats['skipped'] > 0:
+                success_msg += f' ({email_stats["skipped"]} estudiantes no tenían correo electrónico válido registrado).'
+            messages.success(request, success_msg)
+
         if errors:
             messages.warning(request, f'Se presentaron {len(errors)} advertencias durante la carga: ' + ' | '.join(errors[:3]))
 
