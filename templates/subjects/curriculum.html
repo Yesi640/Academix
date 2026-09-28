@@ -5,103 +5,452 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
-        <h3 class="fw-bold text-dark mb-0">Malla Curricular y {{ institution.term_subjects|default:'Asignaturas' }}</h3>
-        <p class="text-muted small mb-0">Áreas fundamentales de conocimiento, {{ institution.term_subjects|lower|default:'asignaturas' }} e intensidades horarias</p>
+        <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+            <h3 class="fw-bold text-dark mb-0">Malla Curricular y {{ institution.term_subjects|default:'Asignaturas' }}</h3>
+            {% if is_group_director %}
+            <span class="badge bg-warning-subtle text-dark border border-warning px-3 py-1 rounded-pill small">
+                <i class="bi bi-star-fill text-warning me-1"></i>Profesor(a) de Grupo: <strong>{{ homeroom_section.name }}</strong> (Malla Completa)
+            </span>
+            {% elif is_admin_or_rector %}
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1 rounded-pill small">
+                <i class="bi bi-shield-check me-1"></i>Equipo Directivo / Coordinación (Acceso Total)
+            </span>
+            {% else %}
+            <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-1 rounded-pill small">
+                <i class="bi bi-person-check-fill me-1"></i>Docente de Asignatura: <strong>{{ total_teacher_hours }} hrs/semana</strong> asignadas
+            </span>
+            {% endif %}
+        </div>
+        <p class="text-muted small mb-0">
+            {% if is_full_curriculum_viewer %}
+            Plan de estudios institucional, intensidades horarias por grado escolar y contenidos curriculares.
+            {% else %}
+            Tus áreas, asignaturas asignadas, carga horaria semanal y contenidos curriculares correspondientes.
+            {% endif %}
+        </p>
     </div>
+
+    {% if is_full_curriculum_viewer %}
+    <div class="btn-group shadow-sm" role="group">
+        <button type="button" class="btn btn-sm {% if view_mode != 'grade' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewSubject">
+            <i class="bi bi-journal-bookmark-fill me-1"></i>Por Asignaturas
+        </button>
+        <button type="button" class="btn btn-sm {% if view_mode == 'grade' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewGrade">
+            <i class="bi bi-calendar3 me-1"></i>Matriz por Grado
+        </button>
+    </div>
+    {% endif %}
 </div>
 
-<div class="row g-4">
-    <!-- Listado de Áreas y Asignaturas Generales -->
-    <div class="col-lg-5">
-        <div class="card ac-card p-4 h-100">
-            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                <i class="bi bi-book-half text-primary"></i> Áreas y {{ institution.term_subjects|default:'Asignaturas' }}
-            </h5>
-            <div class="accordion" id="accordionAreas">
-                {% for area in areas %}
+{% if not subjects_list %}
+<div class="card ac-card p-5 text-center">
+    <div class="py-4">
+        <i class="bi bi-journal-x text-muted display-4"></i>
+        <h5 class="fw-bold text-dark mt-3">Sin asignaturas para mostrar</h5>
+        <p class="text-muted small mb-0">
+            No tienes asignaciones académicas activas registradas en el sistema. Consulta con Rectoría o Coordinación Académica.
+        </p>
+    </div>
+</div>
+{% else %}
+
+<!-- ========================================== -->
+<!-- MODO 1: EXPLORADOR POR ASIGNATURA (PRINCIPAL) -->
+<!-- ========================================== -->
+<div id="subjectViewSection" class="row g-4" {% if view_mode == 'grade' %}style="display:none;"{% endif %}>
+    <!-- Columna Izquierda: Áreas y Asignaturas -->
+    <div class="col-lg-4 col-md-5">
+        <div class="card ac-card p-3 shadow-sm h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-folder2-open text-primary"></i> Áreas y Asignaturas
+                </h6>
+                <span class="badge bg-light text-muted border font-monospace">{{ subjects_list|length }} materias</span>
+            </div>
+
+            <div class="accordion" id="accordionCurriculumAreas">
+                {% for area in areas_data %}
                 <div class="accordion-item border-0 mb-2 rounded-3 shadow-sm overflow-hidden">
                     <h2 class="accordion-header" id="headingArea{{ area.id }}">
-                        <button class="accordion-button collapsed py-2 px-3 fw-bold small bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#collapseArea{{ area.id }}" aria-expanded="false">
+                        <button class="accordion-button {% if forloop.first %}show{% else %}collapsed{% endif %} py-2 px-3 fw-bold small bg-light" 
+                                type="button" data-bs-toggle="collapse" data-bs-target="#collapseArea{{ area.id }}" 
+                                aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}">
                             <i class="bi bi-folder2 text-secondary me-2"></i>{{ area.name }}
-                            <span class="badge bg-primary-subtle text-primary ms-auto me-2">{{ area.subjects.count }}</span>
+                            <span class="badge bg-primary-subtle text-primary ms-auto me-2">{{ area.subjects_count }}</span>
                         </button>
                     </h2>
-                    <div id="collapseArea{{ area.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionAreas">
-                        <div class="accordion-body p-2 bg-white small">
-                            <ul class="list-group list-group-flush">
-                                {% for subj in area.subjects.all %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center px-2 py-1">
-                                    <span>{{ subj.name }}</span>
-                                    <span class="badge bg-light text-muted font-monospace border">{{ subj.code }}</span>
-                                </li>
-                                {% empty %}
-                                <li class="list-group-item text-muted py-1 small">Sin {{ institution.term_subjects|lower|default:'asignaturas' }} vinculadas.</li>
+                    <div id="collapseArea{{ area.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionCurriculumAreas">
+                        <div class="accordion-body p-1 bg-white">
+                            <div class="list-group list-group-flush">
+                                {% for s in area.subjects %}
+                                <a href="javascript:void(0);" 
+                                   class="list-group-item list-group-item-action subject-nav-btn py-2 px-3 border-0 rounded-2 mb-1 d-flex justify-content-between align-items-center {% if s.id == active_subject.id %}active bg-primary text-white shadow-sm{% endif %}"
+                                   data-subject-id="{{ s.id }}">
+                                    <div>
+                                        <div class="fw-semibold small">{{ s.name }}</div>
+                                        <div class="d-flex gap-1 align-items-center mt-1">
+                                            <span class="badge {% if s.id == active_subject.id %}bg-white text-primary{% else %}bg-light text-muted border{% endif %} font-monospace" style="font-size:0.65rem;">
+                                                {{ s.code }}
+                                            </span>
+                                            {% if s.is_assigned_to_me %}
+                                            <span class="badge {% if s.id == active_subject.id %}bg-warning text-dark{% else %}bg-warning-subtle text-dark border border-warning-subtle{% endif %}" style="font-size:0.65rem;">
+                                                <i class="bi bi-pin-angle-fill me-1"></i>{{ s.assigned_info.total_hours }}h/sem
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <i class="bi bi-chevron-right small opacity-75"></i>
+                                </a>
                                 {% endfor %}
-                            </ul>
+                            </div>
                         </div>
                     </div>
                 </div>
-                {% empty %}
-                <p class="text-muted small">No hay áreas de conocimiento registradas.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <!-- Malla Curricular por Grado Escolar -->
-    <div class="col-lg-7">
-        <div class="card ac-card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
-                    <i class="bi bi-clock-history text-success"></i> Intensidad Horaria por {{ institution.term_grade|default:'Grado' }}
-                </h5>
-                <div class="d-flex gap-2">
-                    {% for grade in grades %}
-                    <a href="?grade={{ grade.id }}" class="btn btn-sm {% if grade == active_grade %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        {{ grade.name }}
-                    </a>
+    <!-- Columna Derecha: Detalle de la Asignatura Seleccionada -->
+    <div class="col-lg-8 col-md-7">
+        {% for s in subjects_list %}
+        <div class="subject-detail-pane card ac-card p-4 shadow-sm h-100" 
+             id="subjectPane{{ s.id }}" 
+             {% if s.id != active_subject.id %}style="display:none;"{% endif %}>
+
+            <!-- Encabezado de la Asignatura -->
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 pb-3 mb-3 border-bottom">
+                <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="badge bg-secondary-subtle text-secondary border font-monospace">{{ s.code }}</span>
+                        <span class="badge bg-light text-dark border">{{ s.category_display }}</span>
+                        <span class="badge bg-info-subtle text-info border border-info-subtle">{{ s.area_name }}</span>
+                    </div>
+                    <h4 class="fw-bold text-dark mb-0">{{ s.name }}</h4>
+                </div>
+
+                {% if is_full_curriculum_viewer or s.is_assigned_to_me %}
+                <button type="button" class="btn btn-outline-primary btn-sm fw-bold" 
+                        data-bs-toggle="modal" data-bs-target="#addNormModal" data-subject-id="{{ s.id }}" data-subject-name="{{ s.name }}">
+                    <i class="bi bi-plus-circle me-1"></i>Agregar Norma / DBA
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- Bloque Destacado: Carga Asignada al Docente (si la dicta) -->
+            {% if s.is_assigned_to_me %}
+            <div class="alert alert-primary bg-primary-subtle border-primary-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 rounded-3 mb-4 shadow-sm">
+                <div>
+                    <div class="fw-bold text-primary mb-1 d-flex align-items-center gap-2">
+                        <i class="bi bi-person-workspace fs-5"></i>
+                        <span>Tu Carga Asignada en esta Asignatura</span>
+                    </div>
+                    <div class="small text-secondary">
+                        Tienes asignadas <strong>{{ s.assigned_info.total_hours }} horas semanales</strong> distribuidas en <strong>{{ s.assigned_info.sections|length }} grupo(s)</strong>:
+                    </div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap">
+                    {% for sec in s.assigned_info.sections %}
+                    <span class="badge bg-white text-dark border border-primary-subtle shadow-sm px-3 py-2 small">
+                        <strong>{{ sec.section_name }}</strong> ({{ sec.grade_name }}): <span class="text-primary fw-bold">{{ sec.hours }}h/sem</span>
+                        {% if sec.is_group_director %}
+                        <span class="badge bg-warning text-dark ms-1" title="Eres Director de Grupo"><i class="bi bi-star-fill"></i> Dir. Grupo</span>
+                        {% endif %}
+                    </span>
                     {% endfor %}
                 </div>
             </div>
+            {% endif %}
 
-            <div class="table-responsive bg-white rounded-3 border">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light small text-muted text-uppercase">
-                        <tr>
-                            <th>Asignatura</th>
-                            <th>Área</th>
-                            <th class="text-center">Horas / Semana</th>
-                            <th class="text-end">Peso Área</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for gs in grade_subjects %}
-                        <tr>
-                            <td class="fw-bold text-dark small">
-                                {{ gs.subject.name }}
-                                <span class="badge bg-light text-muted font-monospace border ms-1">{{ gs.subject.code }}</span>
-                            </td>
-                            <td class="small text-muted">{{ gs.subject.area.name }}</td>
-                            <td class="text-center">
-                                <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace">
-                                    {{ gs.weekly_hours }} hrs
-                                </span>
-                            </td>
-                            <td class="text-end font-monospace small fw-bold text-secondary">
-                                {{ gs.weight_percentage }}%
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center py-4 text-muted small">
-                                No se ha configurado la malla horaria para este grado.
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Sección: Intensidad Horaria por Grado (La clave pedida) -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-clock-history text-success"></i> Intensidad Horaria por Grado Escolar
+                    </h6>
+                    <span class="text-muted small">{{ s.curriculum|length }} grados con esta asignatura</span>
+                </div>
+
+                <div class="table-responsive bg-light rounded-3 border">
+                    <table class="table table-hover align-middle mb-0 small">
+                        <thead class="table-white text-muted text-uppercase" style="font-size:0.75rem;">
+                            <tr>
+                                <th>Grado Escolar</th>
+                                <th class="text-center">Intensidad Semanal</th>
+                                <th class="text-center">Peso en el Área</th>
+                                <th class="text-end">Estado en tu Carga</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for c in s.curriculum %}
+                            <tr {% if c.is_my_grade %}class="table-primary-subtle"{% endif %}>
+                                <td class="fw-bold text-dark">
+                                    {{ c.grade_name }}
+                                    <span class="badge bg-light text-muted font-monospace border ms-1">{{ c.grade_code }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace px-2 py-1">
+                                        {{ c.weekly_hours }} hrs / semana
+                                    </span>
+                                </td>
+                                <td class="text-center text-muted font-monospace">
+                                    {{ c.weight_percentage }}%
+                                </td>
+                                <td class="text-end">
+                                    {% if c.is_my_grade %}
+                                    <span class="badge bg-success text-white px-2 py-1">
+                                        <i class="bi bi-check-circle-fill me-1"></i>Asignado a ti
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted small">Plan General</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3 text-muted small">
+                                    Sin intensidades horarias configuradas para este plan.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
+
+            <!-- Sección: Contenido Curricular y Competencias MEN -->
+            <div class="mb-3">
+                <h6 class="fw-bold text-dark mb-2 d-flex align-items-center gap-2">
+                    <i class="bi bi-card-text text-primary"></i> Contenido y Enfoque Curricular
+                </h6>
+                <div class="p-3 bg-light rounded-3 border text-secondary small leading-relaxed mb-4">
+                    {{ s.description }}
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                        <i class="bi bi-award-fill text-warning"></i> Estándares Básicos de Competencias y DBA (MEN)
+                    </h6>
+                    <span class="badge bg-light text-muted border font-monospace">{{ s.norms|length }} competencias</span>
+                </div>
+
+                {% if s.norms %}
+                <div class="row g-2">
+                    {% for n in s.norms %}
+                    <div class="col-12">
+                        <div class="card border p-3 rounded-3 shadow-none bg-white">
+                            <div class="d-flex align-items-start gap-2">
+                                <span class="badge bg-primary-subtle text-primary border font-monospace mt-1">{{ n.code }}</span>
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold text-dark small mb-1">{{ n.title }}</div>
+                                    <div class="text-muted small">{{ n.description }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-4 text-center border rounded-3 bg-light text-muted small">
+                    <i class="bi bi-info-circle me-1"></i>No hay competencias o normas MEN registradas aún para esta materia.
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODO 2: MATRIZ POR GRADO (SOLO DIRECTIVOS/GRUPO) -->
+<!-- ========================================== -->
+{% if is_full_curriculum_viewer %}
+<div id="gradeViewSection" class="card ac-card p-4 shadow-sm" {% if view_mode != 'grade' %}style="display:none;"{% endif %}>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-table text-success"></i> Matriz Completa de Horas por Grado
+            </h5>
+            <div class="text-muted small">Malla de asignaturas para el grado {{ active_grade.name }}</div>
+        </div>
+        <div class="d-flex gap-1 flex-wrap">
+            {% for g in grades %}
+            <a href="?mode=grade&grade={{ g.id }}" class="btn btn-sm {% if g == active_grade %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}">
+                {{ g.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="table-responsive bg-white rounded-3 border">
+        <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light text-muted text-uppercase" style="font-size:0.75rem;">
+                <tr>
+                    <th>Asignatura</th>
+                    <th>Área</th>
+                    <th>Categoría</th>
+                    <th class="text-center">Horas / Semana</th>
+                    <th class="text-end">Peso Área</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for gs in grade_subjects %}
+                <tr>
+                    <td class="fw-bold text-dark">
+                        {{ gs.subject.name }}
+                        <span class="badge bg-light text-muted font-monospace border ms-1">{{ gs.subject.code }}</span>
+                    </td>
+                    <td class="text-muted">{{ gs.subject.area.name }}</td>
+                    <td>
+                        <span class="badge bg-light text-secondary border">{{ gs.subject.get_category_display }}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace px-2 py-1">
+                            {{ gs.weekly_hours }} hrs
+                        </span>
+                    </td>
+                    <td class="text-end font-monospace fw-bold text-secondary">
+                        {{ gs.weight_percentage }}%
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted small">
+                        No hay asignaturas configuradas para este grado escolar.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para Registrar Nueva Norma / Competencia -->
+<div class="modal fade" id="addNormModal" tabindex="-1" aria-labelledby="addNormModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form method="POST" action="{% url 'subjects:curriculum' %}">
+                {% csrf_token %}
+                <input type="hidden" name="subject_id" id="modalSubjectId" value="">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="addNormModalLabel">
+                        <i class="bi bi-award-fill me-2"></i>Nueva Norma / Competencia MEN
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Asignatura</label>
+                        <input type="text" id="modalSubjectName" class="form-control bg-light" readonly>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">Código / Estándar *</label>
+                            <input type="text" name="code" class="form-control" placeholder="Ej: MAT-DBA4" required>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label small fw-semibold text-secondary">Orden</label>
+                            <input type="number" name="order" class="form-control" value="1" min="1" max="50">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Título de la Competencia *</label>
+                        <input type="text" name="title" class="form-control" placeholder="Ej: Pensamiento Numérico y Variacional" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Descripción / Criterio de Desempeño</label>
+                        <textarea name="description" class="form-control" rows="3" placeholder="Describe los logros esperados según los DBA o lineamientos curriculares..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Guardar Competencia</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    // Manejo de cambio interactivo de asignatura
+    var navBtns = document.querySelectorAll('.subject-nav-btn');
+    var panes = document.querySelectorAll('.subject-detail-pane');
+
+    navBtns.forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var subjId = this.dataset.subjectId;
+            if (!subjId) return;
+
+            // Actualizar botones de navegación
+            navBtns.forEach(function(b) {
+                b.classList.remove('active', 'bg-primary', 'text-white', 'shadow-sm');
+                var badges = b.querySelectorAll('.badge');
+                badges.forEach(function(bg) {
+                    if (bg.classList.contains('font-monospace')) {
+                        bg.className = 'badge bg-light text-muted border font-monospace';
+                    }
+                });
+            });
+            this.classList.add('active', 'bg-primary', 'text-white', 'shadow-sm');
+            var activeBadges = this.querySelectorAll('.badge');
+            activeBadges.forEach(function(bg) {
+                if (bg.classList.contains('font-monospace')) {
+                    bg.className = 'badge bg-white text-primary font-monospace';
+                }
+            });
+
+            // Mostrar el panel de la asignatura correspondiente
+            panes.forEach(function(pane) {
+                pane.style.display = 'none';
+            });
+            var targetPane = document.getElementById('subjectPane' + subjId);
+            if (targetPane) {
+                targetPane.style.display = 'block';
+            }
+        });
+    });
+
+    // Conmutador entre vista por Asignaturas y Matriz por Grado
+    var btnSubject = document.getElementById('btnViewSubject');
+    var btnGrade = document.getElementById('btnViewGrade');
+    var secSubject = document.getElementById('subjectViewSection');
+    var secGrade = document.getElementById('gradeViewSection');
+
+    if (btnSubject && btnGrade && secSubject && secGrade) {
+        btnSubject.addEventListener('click', function() {
+            secSubject.style.display = 'flex';
+            secGrade.style.display = 'none';
+            btnSubject.className = 'btn btn-sm btn-primary fw-bold';
+            btnGrade.className = 'btn btn-sm btn-outline-secondary';
+        });
+
+        btnGrade.addEventListener('click', function() {
+            secSubject.style.display = 'none';
+            secGrade.style.display = 'block';
+            btnGrade.className = 'btn btn-sm btn-primary fw-bold';
+            btnSubject.className = 'btn btn-sm btn-outline-secondary';
+        });
+    }
+
+    // Modal para agregar norma: llenar subject_id dinámicamente
+    var normModal = document.getElementById('addNormModal');
+    if (normModal) {
+        normModal.addEventListener('show.bs.modal', function(e) {
+            var button = e.relatedTarget;
+            if (button) {
+                var sId = button.getAttribute('data-subject-id');
+                var sName = button.getAttribute('data-subject-name');
+                var inputId = document.getElementById('modalSubjectId');
+                var inputName = document.getElementById('modalSubjectName');
+                if (inputId) inputId.value = sId || '';
+                if (inputName) inputName.value = sName || '';
+            }
+        });
+    }
+})();
+</script>
+{% endif %}
 {% endblock %}
