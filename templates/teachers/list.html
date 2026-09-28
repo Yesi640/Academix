@@ -10,7 +10,8 @@
     var gradeBadge    = document.getElementById('subjectGradeBadge');
 
     /* Build the base URL: /teachers/api/section/<id>/subjects/ */
-    var API_BASE = "{% url 'teachers:api_subjects_for_section' section_id=0 %}".replace('/0/', '/');
+    /* URL template: reemplaza /0/ con /<sectionId>/ en el momento del fetch */
+    var API_TMPL = "{% url 'teachers:api_subjects_for_section' section_id=0 %}";
 
     function buildOption(value, text, disabled) {
         var opt = document.createElement('option');
@@ -20,6 +21,10 @@
         return opt;
     }
 
+    function getApiUrl(sectionId) {
+        return API_TMPL.replace('/0/', '/' + sectionId + '/');
+    }
+
     function loadSubjects(sectionId) {
         subjectSelect.innerHTML = '';
         spinner.style.display = 'block';
@@ -27,7 +32,7 @@
         gradeBadge.style.display = 'none';
         subjectSelect.appendChild(buildOption('', 'Cargando...', true));
 
-        fetch(API_BASE + sectionId + '/subjects/', {
+        fetch(getApiUrl(sectionId), {
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function(r) { return r.json(); })

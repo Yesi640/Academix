@@ -508,6 +508,10 @@ def api_subjects_for_section(request, section_id):
     API JSON: Retorna las asignaturas disponibles para la sección (según la malla curricular
     del grado) agrupadas por categoría. Usado en el modal de asignación para filtrado dinámico.
     """
+    # Si la sesión expiró durante la petición AJAX, retornar 401 en lugar de redirigir
+    if not request.user.is_authenticated:
+        return JsonResponse({'error': 'No autenticado'}, status=401)
+
     from apps.subjects.models import Subject, GradeSubject
     from apps.courses.models import InstitutionSetting
 
@@ -515,12 +519,21 @@ def api_subjects_for_section(request, section_id):
     inst_type = InstitutionSetting.get_settings().institution_type
 
     # Asignaturas del plan de estudios del grado de la sección
+    # Se busca primero con filtro institution_type, luego sin él como fallback
     curriculum_qs = GradeSubject.objects.filter(
         grade_level=section.grade_level,
         subject__institution_type=inst_type
     ).select_related('subject__area').order_by(
         'subject__category', 'subject__area__order', 'subject__name'
     )
+
+    # Fallback: si no hay malla con inst_type, buscar sin ese filtro
+    if not curriculum_qs.exists():
+        curriculum_qs = GradeSubject.objects.filter(
+            grade_level=section.grade_level
+        ).select_related('subject__area').order_by(
+            'subject__category', 'subject__area__order', 'subject__name'
+        )
 
     subjects_data = []
     for gs in curriculum_qs:
@@ -534,9 +547,11 @@ def api_subjects_for_section(request, section_id):
             'weekly_hours': gs.weekly_hours,
         })
 
-    # Si no hay malla para ese grado, devuelve todas las asignaturas de la institución
+    # Último fallback: si tampoco hay malla, devuelve TODAS las asignaturas de la institución
     if not subjects_data:
-        for s in Subject.objects.filter(institution_type=inst_type).select_related('area').order_by('name'):
+        for s in Subject.objects.filter(
+            institution_type=inst_type
+        ).select_related('area').order_by('category', 'area__order', 'name'):
             subjects_data.append({
                 'id': s.id,
                 'name': s.name,
@@ -545,6 +560,17 @@ def api_subjects_for_section(request, section_id):
                 'category': s.get_category_display(),
                 'weekly_hours': None,
             })
+        # Si aun así no hay nada, retorna todas sin filtro de institution_type
+        if not subjects_data:
+            for s in Subject.objects.all().select_related('area').order_by('name'):
+                subjects_data.append({
+                    'id': s.id,
+                    'name': s.name,
+                    'code': s.code,
+                    'area': s.area.name,
+                    'category': s.get_category_display(),
+                    'weekly_hours': None,
+                })
 
     return JsonResponse({
         'section_id': section_id,
