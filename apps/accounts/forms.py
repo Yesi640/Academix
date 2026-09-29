@@ -70,9 +70,10 @@ class LoginForm(forms.Form):
 
         # 1. Validación para ALUMNO
         if role == 'STUDENT':
-            ident = (student_id or username).strip()
-            if not ident:
-                raise ValidationError("Debe ingresar su ID ÚNICO, Usuario institucional o Documento para iniciar sesión.")
+            if not student_id:
+                raise ValidationError("El ID ÚNICO del alumno es obligatorio para iniciar sesión.")
+
+            ident = student_id.strip()
 
             # Buscar perfil de estudiante por su ID ÚNICO, documento, username o correo
             student_profile = (

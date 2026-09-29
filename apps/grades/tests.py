@@ -56,13 +56,18 @@ class GradesTests(TestCase):
         self.assertEqual(total_percentage, Decimal('100.00'))
 
     def test_grade_calculation_and_decimal_precision(self):
-        # Criterio 1 (40%): 4.50 -> 1.80
-        # Criterio 2 (40%): 3.50 -> 1.40
-        # Criterio 3 (20%): 5.00 -> 1.00
-        # Definitiva esperada = 1.80 + 1.40 + 1.00 = 4.20 (Desempeño ALTO)
+        # 5 Criterios de 20% cada uno (Evaluación 1 y 2, Taller 1 y 2, Actitudinal):
+        # Criterio 0 (20%): 4.50 -> 0.90
+        # Criterio 1 (20%): 4.50 -> 0.90
+        # Criterio 2 (20%): 3.50 -> 0.70
+        # Criterio 3 (20%): 3.50 -> 0.70
+        # Criterio 4 (20%): 5.00 -> 1.00
+        # Definitiva esperada = 0.90 + 0.90 + 0.70 + 0.70 + 1.00 = 4.20 (Desempeño ALTO)
         save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[0], '4.50')
-        save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[1], '3.50')
-        record, final_grade = save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[2], '5.00')
+        save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[1], '4.50')
+        save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[2], '3.50')
+        save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[3], '3.50')
+        record, final_grade = save_or_update_grade(self.student_profile, self.section, self.subject, self.period, self.criteria[4], '5.00')
 
         self.assertEqual(final_grade.final_score, Decimal('4.20'))
         self.assertEqual(final_grade.performance_level, PeriodFinalGrade.PerformanceLevel.ALTO)
