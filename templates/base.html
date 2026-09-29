@@ -26,9 +26,24 @@
     (function() {
         try {
             var saved = localStorage.getItem('academix_user_theme');
+            var r = document.documentElement;
             if (saved) {
                 var t = JSON.parse(saved);
-                var r = document.documentElement;
+                var isDark = (t.key === 'dark');
+                
+                // Si NO es modo oscuro, las letras NUNCA deben ser blancas
+                if (!isDark) {
+                    if (!t.textHeadings || t.textHeadings === '#ffffff' || t.textHeadings === '#f8fafc' || t.textHeadings === '#f1f5f9') {
+                        t.textHeadings = '#1e1b4b';
+                    }
+                    if (!t.textMain || t.textMain === '#ffffff' || t.textMain === '#f8fafc' || t.textMain === '#f1f5f9') {
+                        t.textMain = '#1e1b4b';
+                    }
+                    if (!t.cardBg || t.cardBg === '#1e293b' || t.cardBg === '#0b1120') {
+                        t.cardBg = '#ffffff';
+                    }
+                }
+
                 if (t.primary) r.style.setProperty('--ac-primary', t.primary);
                 if (t.primaryDark) r.style.setProperty('--ac-primary-dark', t.primaryDark);
                 if (t.primaryLight) r.style.setProperty('--ac-primary-light', t.primaryLight);
@@ -39,19 +54,19 @@
                 if (t.sidebarGradient) r.style.setProperty('--ac-sidebar-gradient', t.sidebarGradient);
                 if (t.shadow) r.style.setProperty('--ac-primary-shadow', t.shadow);
                 if (t.shadowHover) r.style.setProperty('--ac-primary-shadow-hover', t.shadowHover);
-                // Adaptación de Letras (color de textos, títulos, fuente y escala)
                 if (t.textMain) r.style.setProperty('--ac-text-main', t.textMain);
                 if (t.textHeadings) r.style.setProperty('--ac-text-headings', t.textHeadings);
                 if (t.textMuted) r.style.setProperty('--ac-text-muted', t.textMuted);
                 if (t.fontFamily) r.style.setProperty('--ac-font-family', t.fontFamily);
                 if (t.fontSize) r.style.setProperty('--ac-font-scale', t.fontSize);
-                // Adaptación de Modo Oscuro / Blanco
-                var isDark = (t.key === 'dark');
+
                 r.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
                 r.setAttribute('data-theme', isDark ? 'dark' : 'light');
             } else {
-                document.documentElement.setAttribute('data-bs-theme', 'light');
-                document.documentElement.setAttribute('data-theme', 'light');
+                r.setAttribute('data-bs-theme', 'light');
+                r.setAttribute('data-theme', 'light');
+                r.style.setProperty('--ac-text-main', '#1e1b4b');
+                r.style.setProperty('--ac-text-headings', '#2e1065');
             }
         } catch(e) {}
     })();

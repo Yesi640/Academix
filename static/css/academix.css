@@ -497,6 +497,82 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 /* 3. TEMA OSCURO / NEGRO ([data-theme="dark"] y [data-bs-theme="dark"])
       Todas las letras oscuras se adaptan a BLANCO y los colores se iluminan */
+/* 3. TEMA CLARO Y POR DEFECTO: GARANTÍA ABSOLUTA DE CONTRASTE OSCURO */
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]),
+[data-theme="light"],
+[data-bs-theme="light"] {
+    --ac-bg: #faf7fd;
+    --ac-card-bg: #ffffff;
+    --ac-border: #ede9fe;
+    --ac-text-main: #1e1b4b;
+    --ac-text-headings: #1e1b4b;
+    --ac-text-muted: #64748b;
+}
+
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) body,
+[data-theme="light"] body,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) #main-content,
+[data-theme="light"] #main-content,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .content-body,
+[data-theme="light"] .content-body {
+    background-color: var(--ac-bg, #faf7fd) !important;
+    color: #1e1b4b !important;
+}
+
+/* En tema claro: Títulos, etiquetas y textos oscuros SIEMPRE visibles */
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h1,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h2,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h3,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h4,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h5,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) h6,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h1,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h2,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h3,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h4,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h5,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .h6,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .card-title,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .form-label,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) label,
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .text-dark,
+[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3,
+[data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6,
+[data-theme="light"] .h1, [data-theme="light"] .h2, [data-theme="light"] .h3,
+[data-theme="light"] .card-title,
+[data-theme="light"] .form-label,
+[data-theme="light"] label,
+[data-theme="light"] .text-dark {
+    color: var(--ac-text-headings, #1e1b4b) !important;
+}
+
+/* En tema claro: Tablas y tarjetas siempre con texto oscuro */
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .table,
+[data-theme="light"] .table {
+    color: #1e1b4b !important;
+}
+
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .table th,
+[data-theme="light"] .table th {
+    color: var(--ac-text-headings, #1e1b4b) !important;
+    background-color: #f8fafc !important;
+}
+
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .table td,
+[data-theme="light"] .table td {
+    color: #1e1b4b !important;
+}
+
+/* Evitar texto blanco involuntario sobre fondos blancos */
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .table-responsive .text-white:not(.badge):not(.btn),
+:root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .table .text-white:not(.badge):not(.btn),
+[data-theme="light"] .table-responsive .text-white:not(.badge):not(.btn),
+[data-theme="light"] .table .text-white:not(.badge):not(.btn) {
+    color: #1e1b4b !important;
+}
+
+/* 4. TEMA OSCURO / NEGRO ([data-theme="dark"] y [data-bs-theme="dark"])
+      Todas las letras oscuras se adaptan a BLANCO y los fondos pasan a oscuro */
 [data-theme="dark"],
 [data-bs-theme="dark"] {
     --ac-bg: #0b1120;

@@ -400,6 +400,20 @@ window.AcademixTheme = (function() {
         if (!tokens) return;
 
         const isDark = (tokens.key === 'dark');
+        
+        // Si NO es modo oscuro, las letras NUNCA deben ser blancas
+        if (!isDark) {
+            if (!tokens.textHeadings || tokens.textHeadings === '#ffffff' || tokens.textHeadings === '#f8fafc' || tokens.textHeadings === '#f1f5f9') {
+                tokens.textHeadings = '#1e1b4b';
+            }
+            if (!tokens.textMain || tokens.textMain === '#ffffff' || tokens.textMain === '#f8fafc' || tokens.textMain === '#f1f5f9') {
+                tokens.textMain = '#1e1b4b';
+            }
+            if (!tokens.cardBg || tokens.cardBg === '#1e293b' || tokens.cardBg === '#0b1120') {
+                tokens.cardBg = '#ffffff';
+            }
+        }
+
         root.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
         root.setAttribute('data-theme', isDark ? 'dark' : 'light');
         if (document.body) {
