@@ -21,27 +21,44 @@
     <link rel="stylesheet" href="{% static 'css/academix.css' %}">
     <meta name="csrf-token" content="{{ csrf_token }}">
 
-    <!-- Precarga de Tema y Tipografía en el Head para evitar parpadeos visuales -->
+    <!-- Contexto del Usuario y Rol para Personalización Aislada -->
+    <script>
+    window.ACADEMIX_CURRENT_USER = {
+        id: "{{ user.id|default:'guest' }}",
+        role: "{{ user.role|default:'guest' }}",
+        roleName: "{{ user.get_role_display|default:'Usuario' }}"
+    };
+    </script>
+
+    <!-- Precarga de Tema, Rol y Tipografía en el Head para evitar parpadeos visuales -->
     <script>
     (function() {
         try {
-            var saved = localStorage.getItem('academix_user_theme');
+            var userKey = (window.ACADEMIX_CURRENT_USER && window.ACADEMIX_CURRENT_USER.id !== 'guest') 
+                ? ('academix_theme_user_' + window.ACADEMIX_CURRENT_USER.id) 
+                : 'academix_user_theme';
+            var saved = localStorage.getItem(userKey) || localStorage.getItem('academix_user_theme');
             var r = document.documentElement;
+
             if (saved) {
                 var t = JSON.parse(saved);
+                var isSystem = (t.key === 'system' || t.isSystemTheme);
                 var isDark = (t.key === 'dark');
-                
-                // Si NO es modo oscuro, las letras NUNCA deben ser blancas
-                if (!isDark) {
-                    if (!t.textHeadings || t.textHeadings === '#ffffff' || t.textHeadings === '#f8fafc' || t.textHeadings === '#f1f5f9') {
-                        t.textHeadings = '#1e1b4b';
-                    }
-                    if (!t.textMain || t.textMain === '#ffffff' || t.textMain === '#f8fafc' || t.textMain === '#f1f5f9') {
-                        t.textMain = '#1e1b4b';
-                    }
-                    if (!t.cardBg || t.cardBg === '#1e293b' || t.cardBg === '#0b1120') {
-                        t.cardBg = '#ffffff';
-                    }
+
+                // REGLA 2: En Tema del Sistema, letras y fuentes se mantienen neutrales e intactas
+                if (isSystem) {
+                    t.textHeadings = '#1e1b4b';
+                    t.textMain = '#1e1b4b';
+                    t.textMuted = '#64748b';
+                    t.fontFamily = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
+                    t.fontSize = '1rem';
+                    t.cardBg = '#ffffff';
+                    t.bg = '#faf7fd';
+                } else if (!isDark) {
+                    // En temas claros por rol, asegurar contraste oscuro
+                    if (!t.textHeadings || t.textHeadings === '#ffffff' || t.textHeadings === '#f8fafc') t.textHeadings = '#1e1b4b';
+                    if (!t.textMain || t.textMain === '#ffffff' || t.textMain === '#f8fafc') t.textMain = '#1e1b4b';
+                    if (!t.cardBg || t.cardBg === '#1e293b') t.cardBg = '#ffffff';
                 }
 
                 if (t.primary) r.style.setProperty('--ac-primary', t.primary);
@@ -61,12 +78,15 @@
                 if (t.fontSize) r.style.setProperty('--ac-font-scale', t.fontSize);
 
                 r.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-                r.setAttribute('data-theme', isDark ? 'dark' : 'light');
+                r.setAttribute('data-theme', isDark ? 'dark' : (isSystem ? 'system' : 'light'));
             } else {
                 r.setAttribute('data-bs-theme', 'light');
-                r.setAttribute('data-theme', 'light');
+                r.setAttribute('data-theme', 'system');
                 r.style.setProperty('--ac-text-main', '#1e1b4b');
                 r.style.setProperty('--ac-text-headings', '#2e1065');
+                r.style.setProperty('--ac-text-muted', '#64748b');
+                r.style.setProperty('--ac-font-family', "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif");
+                r.style.setProperty('--ac-font-scale', '1rem');
             }
         } catch(e) {}
     })();

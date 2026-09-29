@@ -497,8 +497,9 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 
 /* 3. TEMA OSCURO / NEGRO ([data-theme="dark"] y [data-bs-theme="dark"])
       Todas las letras oscuras se adaptan a BLANCO y los colores se iluminan */
-/* 3. TEMA CLARO Y POR DEFECTO: GARANTÍA ABSOLUTA DE CONTRASTE OSCURO */
+/* 3. TEMA DEL SISTEMA Y TEMA CLARO: GARANTÍA ABSOLUTA DE CONTRASTE OSCURO */
 :root:not([data-theme="dark"]):not([data-bs-theme="dark"]),
+[data-theme="system"],
 [data-theme="light"],
 [data-bs-theme="light"] {
     --ac-bg: #faf7fd;
@@ -510,10 +511,13 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
 }
 
 :root:not([data-theme="dark"]):not([data-bs-theme="dark"]) body,
+[data-theme="system"] body,
 [data-theme="light"] body,
 :root:not([data-theme="dark"]):not([data-bs-theme="dark"]) #main-content,
+[data-theme="system"] #main-content,
 [data-theme="light"] #main-content,
 :root:not([data-theme="dark"]):not([data-bs-theme="dark"]) .content-body,
+[data-theme="system"] .content-body,
 [data-theme="light"] .content-body {
     background-color: var(--ac-bg, #faf7fd) !important;
     color: #1e1b4b !important;
