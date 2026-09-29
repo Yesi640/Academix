@@ -282,7 +282,10 @@ def course_workspace_view(request, section_id):
 
     principales = [s for s in subjects_in_course if s.category == Subject.Category.PRINCIPAL]
     humanisticas = [s for s in subjects_in_course if s.category == Subject.Category.HUMANISTICA]
-    arte_deporte = [s for s in subjects_in_course if s.category == Subject.Category.ARTE_DEPORTE]
+    historia = [s for s in subjects_in_course if s.category == Subject.Category.HISTORIA]
+    arte = [s for s in subjects_in_course if s.category == Subject.Category.ARTE]
+    deporte = [s for s in subjects_in_course if s.category == Subject.Category.DEPORTE]
+    arte_deporte = historia + arte + deporte
 
     # Periodos del año lectivo
     periods = AcademicPeriod.objects.filter(academic_year=current_year).order_by('number') if current_year else []
@@ -458,7 +461,10 @@ def course_workspace_view(request, section_id):
 
     principales = [item for item in curriculum_data if item['subject'].category == Subject.Category.PRINCIPAL]
     humanisticas = [item for item in curriculum_data if item['subject'].category == Subject.Category.HUMANISTICA]
-    arte_deporte = [item for item in curriculum_data if item['subject'].category == Subject.Category.ARTE_DEPORTE]
+    historia = [item for item in curriculum_data if item['subject'].category == Subject.Category.HISTORIA]
+    arte = [item for item in curriculum_data if item['subject'].category == Subject.Category.ARTE]
+    deporte = [item for item in curriculum_data if item['subject'].category == Subject.Category.DEPORTE]
+    arte_deporte = historia + arte + deporte
 
     # 3. Control de Asistencia del Curso - Llamado de Lista Completo e Interactivo
     from apps.attendance.services import get_or_create_attendance_session, calculate_student_absence_stats
@@ -549,6 +555,9 @@ def course_workspace_view(request, section_id):
         'selected_subject': selected_subject,
         'principales': principales,
         'humanisticas': humanisticas,
+        'historia': historia,
+        'arte': arte,
+        'deporte': deporte,
         'arte_deporte': arte_deporte,
         'curriculum': curriculum_data,
         'curriculum_data': curriculum_data,

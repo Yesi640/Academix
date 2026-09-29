@@ -1,6 +1,8 @@
 from decimal import Decimal
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
+from django.http import JsonResponse
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from .models import KnowledgeArea, Subject, GradeSubject, SubjectNorm
@@ -28,8 +30,20 @@ def curriculum_view(request):
     if not (user.is_teacher or user.is_admin_role or user.is_rector or user.is_secretary or getattr(user, 'is_coordinator', False) or getattr(user, 'role', '') in ['ADMIN', 'RECTOR', 'SECRETARIA', 'COORDINADOR']):
         raise PermissionDenied("Acceso denegado: La Malla Curricular es de acceso exclusivo para profesores y directivos.")
 
-    # Manejo de POST para registrar una nueva norma o competencia curricular
+    # Manejo de POST para registrar una nueva norma o definir asignatura principal
     if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'set_primary':
+            target_id = request.POST.get('subject_id')
+            if target_id:
+                subj = get_object_or_404(Subject, id=target_id)
+                if subj.category in [Subject.Category.HISTORIA, Subject.Category.ARTE, Subject.Category.DEPORTE]:
+                    Subject.objects.filter(category=subj.category).update(is_primary=False)
+                    subj.is_primary = True
+                    subj.save(update_fields=['is_primary'])
+                    messages.success(request, f'"{subj.name}" se definió como la Asignatura Principal de {subj.get_category_display()}.')
+                    return redirect(f"{request.path}?subject={subj.id}")
+
         subject_id = request.POST.get('subject_id')
         code = request.POST.get('code', '').strip()
         title = request.POST.get('title', '').strip()
@@ -308,3 +322,41 @@ def subjects_by_grade_partial(request):
         subjects = Subject.objects.all()
 
     return render(request, 'subjects/partials/subject_options.html', {'subjects': subjects})
+
+
+@login_required
+@require_POST
+def set_primary_subject_view(request, subject_id):
+    """
+    Permite establecer una asignatura como la 'Principal' de su categoría
+    (Historia, Arte o Deporte). Desmarca a las demás asignaturas de la misma categoría.
+    """
+    user = request.user
+    if user.is_student or user.is_parent:
+        return JsonResponse({'status': 'error', 'message': 'No tienes permisos para modificar el currículo.'}, status=403)
+
+    subject = get_object_or_404(Subject, id=subject_id)
+
+    if subject.category not in [Subject.Category.HISTORIA, Subject.Category.ARTE, Subject.Category.DEPORTE]:
+        messages.error(request, 'Solo asignaturas de Historia, Arte o Deporte pueden definirse como principales de grupo.')
+        return redirect(f"{request.META.get('HTTP_REFERER', '/subjects/curriculum/')}?subject={subject.id}")
+
+    # Desmarcar asignaturas del mismo grupo y marcar la actual
+    Subject.objects.filter(category=subject.category).update(is_primary=False)
+    subject.is_primary = True
+    subject.save(update_fields=['is_primary'])
+
+    cat_name = subject.get_category_display()
+    messages.success(request, f'"{subject.name}" ha sido establecida como la Asignatura Principal de {cat_name}.')
+
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+        return JsonResponse({
+            'status': 'success',
+            'subject_id': subject.id,
+            'subject_name': subject.name,
+            'category': subject.category,
+            'category_name': cat_name,
+            'is_primary': True,
+        })
+
+    return redirect(f"/subjects/curriculum/?subject={subject.id}")
