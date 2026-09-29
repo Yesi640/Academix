@@ -1,9 +1,10 @@
 <!-- ==========================================================================
-     MODAL DE PERSONALIZACIÓN DE TEMA Y COLORES ACADEMIX
-     Disponible para todos los roles (Admin, Rector, Docente, Estudiante, Acudiente)
+     MODAL DE PERSONALIZACIÓN DE TEMA, COLORES Y LETRAS ACADEMIX
+     Disponible universalmente para todos los roles:
+     Directivos, Docentes, Estudiantes, Padres de Familia y Administrativos
      ========================================================================== -->
 <div class="modal fade" id="themeSettingsModal" tabindex="-1" aria-labelledby="themeSettingsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
             <!-- Modal Header -->
             <div class="modal-header border-bottom py-3 px-4 text-white" 
@@ -11,7 +12,7 @@
                 <div class="d-flex align-items-center gap-2">
                     <i class="bi bi-palette-fill fs-5"></i>
                     <h5 class="modal-title fw-bold mb-0" id="themeSettingsModalLabel" style="font-size:1.05rem;">
-                        Personalizar Tema del Sistema
+                        Personalizar Tema, Colores y Letras
                     </h5>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -19,90 +20,90 @@
 
             <!-- Modal Body -->
             <div class="modal-body p-4">
-                <p class="text-muted small mb-3">
-                    Elige el estilo visual que prefieras para tu entorno de trabajo. El tema seleccionado se aplicará de inmediato en todas tus vistas y se guardará automáticamente en tu navegador.
+                <p class="text-muted small mb-4">
+                    Personaliza la apariencia visual de la plataforma. La paleta de colores, tonos de textos y tipografías se adaptarán instantáneamente en todo el sistema y se guardarán en tu navegador.
                 </p>
 
-                <!-- 1. Paletas de Colores Predefinidas -->
+                <!-- 1. Paletas de Colores y Textos Armonizados -->
                 <div class="mb-4">
                     <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                        <i class="bi bi-collection-fill text-primary"></i> Temas Disponibles:
+                        <i class="bi bi-collection-fill text-primary"></i> 1. Paleta de Colores del Sistema:
                     </label>
 
                     <div class="row g-2" id="presetThemesGrid">
                         <!-- Morado Academix -->
-                        <div class="col-6">
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="purple"
                                     onclick="AcademixTheme.setPreset('purple')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#7c3aed; width:26px; height:26px; border:2px solid #c4b5fd;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#7c3aed; width:28px; height:28px; border:2px solid #c4b5fd; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Morado Academix</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Morado Real</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Predeterminado</small>
                                 </div>
                             </button>
                         </div>
 
-                        <!-- Verde Bosque -->
-                        <div class="col-6">
+                        <!-- Verde Esmeralda -->
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="green"
                                     onclick="AcademixTheme.setPreset('green')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#15803d; width:26px; height:26px; border:2px solid #86efac;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#15803d; width:28px; height:28px; border:2px solid #86efac; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Verde Esmeralda</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Verde Esmeralda</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Fresco y Natural</small>
                                 </div>
                             </button>
                         </div>
 
                         <!-- Azul Océano -->
-                        <div class="col-6">
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="blue"
                                     onclick="AcademixTheme.setPreset('blue')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#1d4ed8; width:26px; height:26px; border:2px solid #93c5fd;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#1d4ed8; width:28px; height:28px; border:2px solid #93c5fd; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Azul Océano</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Azul Océano</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Clásico Institucional</small>
                                 </div>
                             </button>
                         </div>
 
                         <!-- Rubí Borgoña -->
-                        <div class="col-6">
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="rose"
                                     onclick="AcademixTheme.setPreset('rose')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#be123c; width:26px; height:26px; border:2px solid #fda4af;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#be123c; width:28px; height:28px; border:2px solid #fda4af; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Rubí Tradicional</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Rubí Tradicional</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Cálido y Elegante</small>
                                 </div>
                             </button>
                         </div>
 
                         <!-- Ámbar Solar -->
-                        <div class="col-6">
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="amber"
                                     onclick="AcademixTheme.setPreset('amber')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#d97706; width:26px; height:26px; border:2px solid #fcd34d;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#d97706; width:28px; height:28px; border:2px solid #fcd34d; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Ámbar Solar</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Ámbar Solar</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Cálido y Activo</small>
                                 </div>
                             </button>
                         </div>
 
                         <!-- Modo Oscuro -->
-                        <div class="col-6">
+                        <div class="col-md-4 col-6">
                             <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
                                     data-theme-key="dark"
                                     onclick="AcademixTheme.setPreset('dark')">
-                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#0f172a; width:26px; height:26px; border:2px solid #38bdf8;"></span>
+                                <span class="theme-swatch rounded-circle shadow-sm" style="background:#0f172a; width:28px; height:28px; border:2px solid #38bdf8; flex-shrink:0;"></span>
                                 <div class="overflow-hidden">
-                                    <strong class="d-block small text-dark" style="font-size:0.78rem;">Modo Oscuro</strong>
+                                    <strong class="d-block small text-dark" style="font-size:0.8rem;">Modo Oscuro</strong>
                                     <small class="text-muted" style="font-size:0.68rem;">Descanso Visual</small>
                                 </div>
                             </button>
@@ -110,32 +111,140 @@
                     </div>
                 </div>
 
-                <!-- 2. Selector Libre de Color Personalizado -->
-                <div class="p-3 rounded-3 bg-light border mb-2">
-                    <div class="d-flex align-items-center justify-content-between">
+                <!-- 2. Color Personalizado Libre -->
+                <div class="p-3 rounded-3 bg-light border mb-4">
+                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                         <div>
                             <strong class="d-block small text-dark">
-                                <i class="bi bi-eyedropper me-1 text-primary"></i> Color Personalizado
+                                <i class="bi bi-eyedropper me-1 text-primary"></i> Color Primario Personalizado
                             </strong>
-                            <small class="text-muted" style="font-size:0.72rem;">Elige tu propio tono primario</small>
+                            <small class="text-muted" style="font-size:0.72rem;">Elige un color a tu gusto; los títulos y letras se armonizarán automáticamente</small>
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <input type="color" id="customColorPicker" value="#7c3aed" class="form-control form-control-color border-0 p-0 rounded-circle shadow-sm" style="width:36px; height:36px; cursor:pointer;">
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2 py-1" style="font-size:0.75rem;" onclick="AcademixTheme.applyCustomPicker()">
-                                Aplicar
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" style="font-size:0.78rem;" onclick="AcademixTheme.applyCustomPicker()">
+                                Aplicar Tono
                             </button>
                         </div>
                     </div>
                 </div>
+
+                <!-- 3. Adaptación del Estilo de Letras (Tipografía) -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
+                        <i class="bi bi-fonts text-primary"></i> 2. Estilo de Letra (Tipografía):
+                    </label>
+
+                    <div class="row g-2" id="fontStylesGrid">
+                        <!-- Plus Jakarta Sans -->
+                        <div class="col-md-3 col-6">
+                            <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
+                                    data-font-key="jakarta"
+                                    style="font-family:'Plus Jakarta Sans', sans-serif;"
+                                    onclick="AcademixTheme.setFont('jakarta')">
+                                <strong class="d-block small text-dark" style="font-size:0.82rem;">Jakarta Sans</strong>
+                                <span class="d-block text-muted" style="font-size:0.7rem;">Aa Bb Cc · Moderna</span>
+                            </button>
+                        </div>
+
+                        <!-- Inter -->
+                        <div class="col-md-3 col-6">
+                            <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
+                                    data-font-key="inter"
+                                    style="font-family:'Inter', sans-serif;"
+                                    onclick="AcademixTheme.setFont('inter')">
+                                <strong class="d-block small text-dark" style="font-size:0.82rem;">Inter</strong>
+                                <span class="d-block text-muted" style="font-size:0.7rem;">Aa Bb Cc · Limpia</span>
+                            </button>
+                        </div>
+
+                        <!-- Outfit -->
+                        <div class="col-md-3 col-6">
+                            <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
+                                    data-font-key="outfit"
+                                    style="font-family:'Outfit', sans-serif;"
+                                    onclick="AcademixTheme.setFont('outfit')">
+                                <strong class="d-block small text-dark" style="font-size:0.82rem;">Outfit</strong>
+                                <span class="d-block text-muted" style="font-size:0.7rem;">Aa Bb Cc · Estilizada</span>
+                            </button>
+                        </div>
+
+                        <!-- Roboto -->
+                        <div class="col-md-3 col-6">
+                            <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
+                                    data-font-key="roboto"
+                                    style="font-family:'Roboto', sans-serif;"
+                                    onclick="AcademixTheme.setFont('roboto')">
+                                <strong class="d-block small text-dark" style="font-size:0.82rem;">Roboto</strong>
+                                <span class="d-block text-muted" style="font-size:0.7rem;">Aa Bb Cc · Formal</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Escala / Tamaño de Letras -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
+                        <i class="bi bi-type-size text-primary"></i> 3. Tamaño de Letras (Escala Visual):
+                    </label>
+
+                    <div class="d-flex gap-2" id="fontSizeGrid">
+                        <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center"
+                                data-size-key="compact"
+                                onclick="AcademixTheme.setFontSize('compact')">
+                            <small class="fw-bold d-block text-dark">Compacto</small>
+                            <span class="text-muted" style="font-size:0.68rem;">94% Densidad</span>
+                        </button>
+
+                        <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center active"
+                                data-size-key="normal"
+                                onclick="AcademixTheme.setFontSize('normal')">
+                            <small class="fw-bold d-block text-dark">Normal</small>
+                            <span class="text-muted" style="font-size:0.68rem;">100% Estándar</span>
+                        </button>
+
+                        <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center"
+                                data-size-key="comfortable"
+                                onclick="AcademixTheme.setFontSize('comfortable')">
+                            <small class="fw-bold d-block text-dark">Cómodo</small>
+                            <span class="text-muted" style="font-size:0.68rem;">108% Accesible</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 5. Previsualización en Tiempo Real -->
+                <div class="p-3 rounded-4 border bg-white shadow-sm" id="themePreviewBox">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size:0.72rem;">
+                            <i class="bi bi-eye me-1"></i>Vista Previa de Letras y Colores
+                        </span>
+                        <small class="text-muted" id="previewThemeName">Tema: Morado Real</small>
+                    </div>
+                    <h5 class="fw-bold mb-1" id="previewTitle" style="color:var(--ac-text-headings, #2e1065);">
+                        Plataforma Académica ACADEMIX
+                    </h5>
+                    <p class="small mb-2" id="previewParagraph" style="color:var(--ac-text-muted, #6b7280); line-height:1.5;">
+                        Las letras principales, títulos, enlaces como <a href="javascript:void(0)" class="fw-bold text-decoration-underline">este enlace institucional</a> y los botones se adaptan armónicamente al estilo seleccionado.
+                    </p>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill px-3">
+                            <i class="bi bi-check2-circle me-1"></i>Botón Primario
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                            Botón Contorno
+                        </button>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Modal Footer -->
             <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between">
                 <button type="button" class="btn btn-link text-muted text-decoration-none btn-sm px-0" style="font-size:0.78rem;" onclick="AcademixTheme.resetDefault()">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer Predeterminado
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer Valores Iniciales
                 </button>
                 <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
-                    Aceptar
+                    Guardar y Cerrar
                 </button>
             </div>
         </div>
@@ -143,37 +252,52 @@
 </div>
 
 <style>
-.theme-preset-btn {
+.theme-preset-btn, .font-preset-btn, .size-preset-btn {
     background: #ffffff;
     cursor: pointer;
     transition: all 0.2s ease;
 }
-.theme-preset-btn:hover {
+.theme-preset-btn:hover, .font-preset-btn:hover, .size-preset-btn:hover {
     border-color: var(--ac-primary) !important;
     background: color-mix(in srgb, var(--ac-primary-pastel, #c4b5fd) 18%, white 82%);
     transform: translateY(-1px);
 }
-.theme-preset-btn.active {
+.theme-preset-btn.active, .font-preset-btn.active, .size-preset-btn.active {
     border-color: var(--ac-primary) !important;
     background: color-mix(in srgb, var(--ac-primary-pastel, #c4b5fd) 25%, white 75%);
     box-shadow: 0 0 0 2px var(--ac-primary);
 }
 </style>
 
-<!-- Theme Engine Script -->
+<!-- Theme & Typography Engine Script -->
 <script>
 window.AcademixTheme = (function() {
     const STORAGE_KEY = 'academix_user_theme';
 
+    const FONTS = {
+        'jakarta': "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
+        'inter': "'Inter', system-ui, -apple-system, sans-serif",
+        'outfit': "'Outfit', system-ui, -apple-system, sans-serif",
+        'roboto': "'Roboto', system-ui, -apple-system, sans-serif"
+    };
+
+    const SIZES = {
+        'compact': '0.94rem',
+        'normal': '1rem',
+        'comfortable': '1.08rem'
+    };
+
     const PRESETS = {
         'purple': {
+            name: 'Morado Real',
             primary: '#7c3aed',
-            primaryDark: '#3b0764',
+            primaryDark: '#5b21b6',
             primaryLight: '#8b5cf6',
             primaryPastel: '#c4b5fd',
             bg: '#faf7fd',
             cardBg: '#ffffff',
             textMain: '#1e1b4b',
+            textHeadings: '#2e1065',
             textMuted: '#6b7280',
             border: '#ede9fe',
             sidebarGradient: 'linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%)',
@@ -181,13 +305,15 @@ window.AcademixTheme = (function() {
             shadowHover: 'rgba(124, 58, 237, 0.48)'
         },
         'green': {
+            name: 'Verde Esmeralda',
             primary: '#15803d',
             primaryDark: '#14532d',
             primaryLight: '#22c55e',
             primaryPastel: '#bbf7d0',
             bg: '#f0fdf4',
             cardBg: '#ffffff',
-            textMain: '#052e16',
+            textMain: '#064e3b',
+            textHeadings: '#022c22',
             textMuted: '#4b5563',
             border: '#dcfce7',
             sidebarGradient: 'linear-gradient(180deg, #052e16 0%, #14532d 50%, #052e16 100%)',
@@ -195,6 +321,7 @@ window.AcademixTheme = (function() {
             shadowHover: 'rgba(21, 128, 61, 0.48)'
         },
         'blue': {
+            name: 'Azul Océano',
             primary: '#1d4ed8',
             primaryDark: '#1e3a8a',
             primaryLight: '#3b82f6',
@@ -202,6 +329,7 @@ window.AcademixTheme = (function() {
             bg: '#eff6ff',
             cardBg: '#ffffff',
             textMain: '#0f172a',
+            textHeadings: '#172554',
             textMuted: '#475569',
             border: '#dbeafe',
             sidebarGradient: 'linear-gradient(180deg, #081e3a 0%, #1e3a8a 50%, #081e3a 100%)',
@@ -209,13 +337,15 @@ window.AcademixTheme = (function() {
             shadowHover: 'rgba(29, 78, 216, 0.48)'
         },
         'rose': {
+            name: 'Rubí Tradicional',
             primary: '#be123c',
             primaryDark: '#881337',
             primaryLight: '#f43f5e',
             primaryPastel: '#fecdd3',
             bg: '#fff1f2',
             cardBg: '#ffffff',
-            textMain: '#1c1917',
+            textMain: '#4c0519',
+            textHeadings: '#2b0610',
             textMuted: '#57534e',
             border: '#ffe4e6',
             sidebarGradient: 'linear-gradient(180deg, #2b0610 0%, #881337 50%, #2b0610 100%)',
@@ -223,13 +353,15 @@ window.AcademixTheme = (function() {
             shadowHover: 'rgba(190, 18, 60, 0.48)'
         },
         'amber': {
+            name: 'Ámbar Solar',
             primary: '#d97706',
             primaryDark: '#78350f',
             primaryLight: '#f59e0b',
             primaryPastel: '#fde68a',
             bg: '#fffbeb',
             cardBg: '#ffffff',
-            textMain: '#1c1917',
+            textMain: '#3d1d05',
+            textHeadings: '#451a03',
             textMuted: '#57534e',
             border: '#fef3c7',
             sidebarGradient: 'linear-gradient(180deg, #2a1505 0%, #78350f 50%, #2a1505 100%)',
@@ -237,13 +369,15 @@ window.AcademixTheme = (function() {
             shadowHover: 'rgba(217, 119, 6, 0.48)'
         },
         'dark': {
+            name: 'Modo Oscuro',
             primary: '#38bdf8',
             primaryDark: '#0284c7',
             primaryLight: '#7dd3fc',
             primaryPastel: '#bae6fd',
-            bg: '#0f172a',
+            bg: '#0b1120',
             cardBg: '#1e293b',
-            textMain: '#f8fafc',
+            textMain: '#f1f5f9',
+            textHeadings: '#ffffff',
             textMuted: '#94a3b8',
             border: '#334155',
             sidebarGradient: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)',
@@ -252,10 +386,20 @@ window.AcademixTheme = (function() {
         }
     };
 
+    function getCurrentSettings() {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            return saved ? JSON.parse(saved) : Object.assign({}, PRESETS['purple'], { key: 'purple', fontKey: 'jakarta', sizeKey: 'normal' });
+        } catch (e) {
+            return Object.assign({}, PRESETS['purple'], { key: 'purple', fontKey: 'jakarta', sizeKey: 'normal' });
+        }
+    }
+
     function applyTokens(tokens) {
         const root = document.documentElement;
         if (!tokens) return;
 
+        // Colores del tema
         if (tokens.primary) root.style.setProperty('--ac-primary', tokens.primary);
         if (tokens.primaryDark) root.style.setProperty('--ac-primary-dark', tokens.primaryDark);
         if (tokens.primaryLight) root.style.setProperty('--ac-primary-light', tokens.primaryLight);
@@ -267,25 +411,70 @@ window.AcademixTheme = (function() {
         if (tokens.shadow) root.style.setProperty('--ac-primary-shadow', tokens.shadow);
         if (tokens.shadowHover) root.style.setProperty('--ac-primary-shadow-hover', tokens.shadowHover);
 
-        // Highlight active preset button if applicable
+        // Adaptación de Letras (color de textos y títulos)
+        if (tokens.textMain) root.style.setProperty('--ac-text-main', tokens.textMain);
+        if (tokens.textHeadings) root.style.setProperty('--ac-text-headings', tokens.textHeadings);
+        if (tokens.textMuted) root.style.setProperty('--ac-text-muted', tokens.textMuted);
+
+        // Adaptación de Tipografía y Escala
+        if (tokens.fontFamily) root.style.setProperty('--ac-font-family', tokens.fontFamily);
+        if (tokens.fontSize) root.style.setProperty('--ac-font-scale', tokens.fontSize);
+
+        // Actualizar UI del Modal (botones activos)
         document.querySelectorAll('.theme-preset-btn').forEach(btn => {
             btn.classList.toggle('active', btn.getAttribute('data-theme-key') === tokens.key);
         });
 
-        // Set picker value if color hex matches
+        document.querySelectorAll('.font-preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-font-key') === (tokens.fontKey || 'jakarta'));
+        });
+
+        document.querySelectorAll('.size-preset-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-size-key') === (tokens.sizeKey || 'normal'));
+        });
+
+        // Actualizar info de previsualización
+        const previewName = document.getElementById('previewThemeName');
+        if (previewName) {
+            previewName.textContent = 'Tema: ' + (tokens.name || 'Personalizado');
+        }
+
         const picker = document.getElementById('customColorPicker');
-        if (picker && tokens.primary) {
+        if (picker && tokens.primary && tokens.primary.startsWith('#')) {
             picker.value = tokens.primary;
         }
     }
 
     function setPreset(key) {
+        const current = getCurrentSettings();
         const theme = PRESETS[key];
         if (theme) {
-            const data = Object.assign({}, theme, { key: key });
+            const data = Object.assign({}, current, theme, { 
+                key: key,
+                fontFamily: current.fontFamily || FONTS[current.fontKey || 'jakarta'],
+                fontSize: current.fontSize || SIZES[current.sizeKey || 'normal']
+            });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
             applyTokens(data);
         }
+    }
+
+    function setFont(fontKey) {
+        const current = getCurrentSettings();
+        const family = FONTS[fontKey] || FONTS['jakarta'];
+        current.fontKey = fontKey;
+        current.fontFamily = family;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        applyTokens(current);
+    }
+
+    function setFontSize(sizeKey) {
+        const current = getCurrentSettings();
+        const size = SIZES[sizeKey] || SIZES['normal'];
+        current.sizeKey = sizeKey;
+        current.fontSize = size;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+        applyTokens(current);
     }
 
     function hexToRgb(hex) {
@@ -300,20 +489,25 @@ window.AcademixTheme = (function() {
         if (!picker) return;
         const hex = picker.value;
         const rgb = hexToRgb(hex);
+        const current = getCurrentSettings();
 
-        const customTokens = {
+        const customTokens = Object.assign({}, current, {
             key: 'custom',
+            name: 'Personalizado (' + hex + ')',
             primary: hex,
             primaryDark: `color-mix(in srgb, ${hex} 75%, black 25%)`,
             primaryLight: `color-mix(in srgb, ${hex} 75%, white 25%)`,
             primaryPastel: `color-mix(in srgb, ${hex} 30%, white 70%)`,
-            bg: `color-mix(in srgb, ${hex} 6%, #faf7fd 94%)`,
+            bg: `color-mix(in srgb, ${hex} 5%, #faf7fd 95%)`,
             cardBg: '#ffffff',
+            textMain: `color-mix(in srgb, ${hex} 35%, #0f172a 65%)`,
+            textHeadings: `color-mix(in srgb, ${hex} 50%, #000 50%)`,
+            textMuted: '#6b7280',
             border: `color-mix(in srgb, ${hex} 20%, #ede9fe 80%)`,
             sidebarGradient: `linear-gradient(180deg, #180927 0%, color-mix(in srgb, ${hex} 70%, #000 30%) 50%, #1a0833 100%)`,
             shadow: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)`,
             shadowHover: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.48)`
-        };
+        });
 
         localStorage.setItem(STORAGE_KEY, JSON.stringify(customTokens));
         applyTokens(customTokens);
@@ -321,7 +515,15 @@ window.AcademixTheme = (function() {
 
     function resetDefault() {
         localStorage.removeItem(STORAGE_KEY);
-        setPreset('purple');
+        const defaultData = Object.assign({}, PRESETS['purple'], {
+            key: 'purple',
+            fontKey: 'jakarta',
+            fontFamily: FONTS['jakarta'],
+            sizeKey: 'normal',
+            fontSize: SIZES['normal']
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultData));
+        applyTokens(defaultData);
     }
 
     function init() {
@@ -331,18 +533,20 @@ window.AcademixTheme = (function() {
                 const parsed = JSON.parse(saved);
                 applyTokens(parsed);
             } else {
-                setPreset('purple');
+                resetDefault();
             }
         } catch (e) {
             console.error('Error loading theme:', e);
         }
     }
 
-    // Auto-init on script load
+    // Auto-inicializar al cargar
     init();
 
     return {
         setPreset: setPreset,
+        setFont: setFont,
+        setFontSize: setFontSize,
         applyCustomPicker: applyCustomPicker,
         resetDefault: resetDefault,
         init: init
