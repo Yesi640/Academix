@@ -57,35 +57,53 @@
                 </h6>
             </div>
             <div class="p-3 d-flex flex-column gap-2">
-                <a href="{% url 'teachers:my_courses' %}" class="lms-action-btn lms-action-btn-primary justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-journal-bookmark-fill fs-5"></i>
-                        <div>
-                            <div>Mis Asignaciones</div>
-                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Planillas, asistencia y malla</small>
+                <a href="{% url 'teachers:my_courses' %}" class="lms-action-btn lms-action-btn-primary shadow-sm text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: rgba(255,255,255,0.22); color: #fff;">
+                            <i class="bi bi-journal-bookmark-fill fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-white text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Mis Asignaciones</div>
+                            <small class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Planillas, asistencia y malla</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: rgba(255,255,255,0.25); color: #fff;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
-                <a href="{% url 'homework:index' %}" class="lms-action-btn lms-action-btn-warning justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-folder-symlink-fill fs-5"></i>
-                        <div>
-                            <div>Tareas y Entregas</div>
-                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Asignar y calificar trabajos</small>
+                <a href="{% url 'homework:index' %}" class="lms-action-btn lms-action-btn-warning shadow-sm text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: rgba(255,255,255,0.22); color: #fff;">
+                            <i class="bi bi-folder-symlink-fill fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-white text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Tareas y Entregas</div>
+                            <small class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Asignar y calificar trabajos</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: rgba(255,255,255,0.25); color: #fff;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
-                <a href="{% url 'reports:index' %}" class="lms-action-btn lms-action-btn-outline justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-file-earmark-text fs-5 text-info"></i>
-                        <div>
-                            <div class="text-dark">Ver Boletines</div>
-                            <small class="text-muted" style="font-weight:400; font-size:0.72rem;">Reportes de mis grupos</small>
+                <a href="{% url 'reports:index' %}" class="lms-action-btn lms-action-btn-outline text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                            <i class="bi bi-file-earmark-text fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Ver Boletines</div>
+                            <small class="text-muted text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Reportes de mis grupos</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill text-info opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: #f1f5f9; color: #0284c7;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
             </div>
 

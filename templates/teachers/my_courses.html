@@ -131,30 +131,46 @@
                     </div>
                 </div>
 
-                <!-- Footer: Botones de Acción LMS -->
-                <div class="p-3 pt-2 border-top d-flex flex-column gap-2" style="background:#fff;">
+                <!-- Footer: Botones de Acción del Curso (LMS Premium) -->
+                <div class="p-3 pt-3 border-top d-flex flex-column gap-2" style="background: #ffffff;">
+                    <!-- Botón Principal: Planilla de Notas -->
                     <a href="{% url 'teachers:course_workspace' c.section.id %}"
-                       class="lms-action-btn lms-action-btn-primary justify-content-between w-100">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-card-checklist fs-5"></i>
-                            <div>
-                                <div style="font-size:0.85rem;">Planilla de Notas</div>
-                                <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Calificar actividades y tareas</small>
+                       class="lms-action-btn lms-action-btn-primary w-100 text-decoration-none shadow-sm"
+                       title="Ingresar a la Planilla de Calificaciones">
+                        <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                            <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width: 34px; height: 34px; background: rgba(255,255,255,0.22); color: #fff;">
+                                <i class="bi bi-card-checklist fs-6"></i>
+                            </div>
+                            <div class="text-truncate">
+                                <div class="fw-bold text-white text-truncate" style="font-size: 0.86rem; line-height: 1.2;">Planilla de Notas</div>
+                                <div class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Calificar actividades y tareas</div>
                             </div>
                         </div>
-                        <i class="bi bi-arrow-right-circle-fill fs-5 opacity-75"></i>
-                    </a>
-                    <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=malla"
-                       class="lms-action-btn lms-action-btn-outline justify-content-between w-100">
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="bi bi-diagram-3-fill fs-5 text-primary"></i>
-                            <div>
-                                <div style="font-size:0.85rem;" class="text-dark">Malla Curricular</div>
-                                <small class="text-muted" style="font-weight:400; font-size:0.72rem;">Módulos, competencias y DBA</small>
-                            </div>
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                             style="width: 26px; height: 26px; background: rgba(255,255,255,0.25); color: #fff;">
+                            <i class="bi bi-arrow-right-short fs-5"></i>
                         </div>
-                        <i class="bi bi-arrow-right-circle-fill fs-5 text-primary"></i>
                     </a>
+
+                    <!-- Botones Secundarios: Asistencia y Malla Curricular -->
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=asistencia"
+                           class="lms-action-btn lms-action-btn-outline w-50 justify-content-center py-2 px-2 text-decoration-none"
+                           style="font-size: 0.8rem; font-weight: 600;"
+                           title="Tomar Asistencia del Curso">
+                            <i class="bi bi-calendar-check-fill text-success fs-6"></i>
+                            <span>Asistencia</span>
+                        </a>
+
+                        <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=malla"
+                           class="lms-action-btn lms-action-btn-outline w-50 justify-content-center py-2 px-2 text-decoration-none"
+                           style="font-size: 0.8rem; font-weight: 600;"
+                           title="Ver Malla Modular y DBA">
+                            <i class="bi bi-diagram-3-fill text-primary fs-6"></i>
+                            <span>Malla</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

@@ -1142,46 +1142,100 @@ a:hover {
 .lms-badge-submitted { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
 
 /* --- Action Buttons LMS --- */
-.lms-action-btn {
-    display: flex; align-items: center; gap: 0.6rem;
-    padding: 0.85rem 1.1rem; border-radius: 0.75rem;
-    text-decoration: none; font-weight: 600; font-size: 0.88rem;
-    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
-    border: 1.5px solid transparent;
+.lms-action-btn,
+a.lms-action-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 0.75rem !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0.75rem !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 0.88rem !important;
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border: 1.5px solid transparent !important;
+    box-sizing: border-box !important;
+    cursor: pointer !important;
+    line-height: 1.25 !important;
 }
 
-.lms-action-btn:hover { transform: translateX(4px); }
-
-.lms-action-btn-primary {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-    color: #ffffff; box-shadow: 0 4px 14px rgba(124,58,237,0.3);
-}
-.lms-action-btn-primary:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-    color: #ffffff; box-shadow: 0 6px 20px rgba(124,58,237,0.45);
+.lms-action-btn *,
+a.lms-action-btn * {
+    text-decoration: none !important;
 }
 
-.lms-action-btn-outline {
-    background: #ffffff; color: #7c3aed; border-color: #ddd6fe;
-}
-.lms-action-btn-outline:hover {
-    background: #f5f3ff; color: #6d28d9; border-color: #c4b5fd;
-}
-
-.lms-action-btn-success {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-    color: #ffffff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
-}
-.lms-action-btn-success:hover {
-    background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff;
+.lms-action-btn:hover,
+a.lms-action-btn:hover {
+    transform: translateY(-2px) !important;
+    text-decoration: none !important;
 }
 
-.lms-action-btn-warning {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-    color: #ffffff; box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+.lms-action-btn-primary,
+a.lms-action-btn-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28) !important;
+    border-color: #6d28d9 !important;
 }
-.lms-action-btn-warning:hover {
-    background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff;
+.lms-action-btn-primary *,
+a.lms-action-btn-primary * {
+    color: #ffffff !important;
+}
+.lms-action-btn-primary:hover,
+a.lms-action-btn-primary:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, 0.4) !important;
+}
+
+.lms-action-btn-outline,
+a.lms-action-btn-outline {
+    background: #ffffff !important;
+    color: #1e1b4b !important;
+    border: 1.5px solid #e2e8f0 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04) !important;
+}
+.lms-action-btn-outline:hover,
+a.lms-action-btn-outline:hover {
+    background: #f8fafc !important;
+    border-color: #c4b5fd !important;
+    color: #7c3aed !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.12) !important;
+}
+
+.lms-action-btn-success,
+a.lms-action-btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(16, 185, 129, 0.28) !important;
+    border-color: #059669 !important;
+}
+.lms-action-btn-success *,
+a.lms-action-btn-success * {
+    color: #ffffff !important;
+}
+.lms-action-btn-success:hover,
+a.lms-action-btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    color: #ffffff !important;
+}
+
+.lms-action-btn-warning,
+a.lms-action-btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28) !important;
+    border-color: #d97706 !important;
+}
+.lms-action-btn-warning *,
+a.lms-action-btn-warning * {
+    color: #ffffff !important;
+}
+.lms-action-btn-warning:hover,
+a.lms-action-btn-warning:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    color: #ffffff !important;
 }
 
 /* --- Task / Homework Cards LMS --- */

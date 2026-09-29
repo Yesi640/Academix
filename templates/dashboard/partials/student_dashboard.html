@@ -66,56 +66,86 @@
             <div class="p-3 d-flex flex-column gap-2">
                 {% if stats.enrollment and stats.active_period and user.student_profile %}
                 <a href="{% url 'reports:student_bulletin' student_id=user.student_profile.id period_id=stats.active_period.id %}"
-                   class="lms-action-btn lms-action-btn-primary justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-file-earmark-text-fill fs-5"></i>
-                        <div>
-                            <div>Mi Boletín Oficial</div>
-                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Calificaciones del periodo</small>
+                   class="lms-action-btn lms-action-btn-primary shadow-sm text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: rgba(255,255,255,0.22); color: #fff;">
+                            <i class="bi bi-file-earmark-text-fill fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-white text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Mi Boletín Oficial</div>
+                            <small class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Calificaciones del periodo</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: rgba(255,255,255,0.25); color: #fff;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
                 {% endif %}
-                <a href="{% url 'grades:index' %}" class="lms-action-btn lms-action-btn-outline justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-award-fill fs-5 text-primary"></i>
-                        <div>
-                            <div class="text-dark">Mis Calificaciones</div>
-                            <small class="text-muted" style="font-weight:400; font-size:0.72rem;">Notas por asignatura</small>
+                <a href="{% url 'grades:index' %}" class="lms-action-btn lms-action-btn-outline text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: #ede9fe; color: #7c3aed;">
+                            <i class="bi bi-award-fill fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Mis Calificaciones</div>
+                            <small class="text-muted text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Notas por asignatura</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill text-primary opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: #f1f5f9; color: #7c3aed;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
-                <a href="{% url 'attendance:index' %}" class="lms-action-btn lms-action-btn-success justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-calendar-check fs-5"></i>
-                        <div>
-                            <div>Mi Asistencia</div>
-                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Historial de faltas</small>
+                <a href="{% url 'attendance:index' %}" class="lms-action-btn lms-action-btn-success shadow-sm text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: rgba(255,255,255,0.22); color: #fff;">
+                            <i class="bi bi-calendar-check fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-white text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Mi Asistencia</div>
+                            <small class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Historial de faltas</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: rgba(255,255,255,0.25); color: #fff;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
-                <a href="{% url 'homework:index' %}" class="lms-action-btn lms-action-btn-warning justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-folder-symlink-fill fs-5"></i>
-                        <div>
-                            <div>Mis Tareas</div>
-                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Ver y entregar actividades</small>
+                <a href="{% url 'homework:index' %}" class="lms-action-btn lms-action-btn-warning shadow-sm text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: rgba(255,255,255,0.22); color: #fff;">
+                            <i class="bi bi-folder-symlink-fill fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-white text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Mis Tareas</div>
+                            <small class="text-white-50 text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Ver y entregar actividades</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: rgba(255,255,255,0.25); color: #fff;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
-                <a href="{% url 'alerts:activities' %}" class="lms-action-btn lms-action-btn-outline justify-content-between">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-calendar-event fs-5 text-info"></i>
-                        <div>
-                            <div class="text-dark">Actividades del Colegio</div>
-                            <small class="text-muted" style="font-weight:400; font-size:0.72rem;">Agenda y eventos</small>
+                <a href="{% url 'alerts:activities' %}" class="lms-action-btn lms-action-btn-outline text-decoration-none">
+                    <div class="d-flex align-items-center gap-2 text-start min-width-0">
+                        <div class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                            <i class="bi bi-calendar-event fs-6"></i>
+                        </div>
+                        <div class="text-truncate">
+                            <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem; line-height: 1.2;">Actividades del Colegio</div>
+                            <small class="text-muted text-truncate" style="font-size: 0.7rem; line-height: 1.2;">Agenda y eventos</small>
                         </div>
                     </div>
-                    <i class="bi bi-arrow-right-circle-fill text-info opacity-75"></i>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 ms-2"
+                         style="width: 24px; height: 24px; background: #f1f5f9; color: #0284c7;">
+                        <i class="bi bi-arrow-right-short fs-5"></i>
+                    </div>
                 </a>
             </div>
         </div>
