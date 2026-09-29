@@ -3,6 +3,7 @@
 {% block title %}Planta de {{ institution.term_teachers|default:'Docentes' }} y Asignaciones | ACADEMIX{% endblock %}
 
 {% block content %}
+{% include 'partials/academic_structure_nav.html' %}
 {% if section_subjects_map_json %}<script type="application/json" id="sectionSubjectsData">{{ section_subjects_map_json }}</script>{% endif %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>

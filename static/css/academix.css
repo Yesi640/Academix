@@ -203,6 +203,65 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     color: #ffffff;
 }
 
+/* Submenús Plegables de la Barra Lateral */
+.sidebar-link.dropdown-toggle {
+    cursor: pointer;
+    user-select: none;
+}
+.sidebar-link.dropdown-toggle::after {
+    display: inline-block;
+    margin-left: auto;
+    content: "\F282"; /* bi-chevron-down */
+    font-family: "bootstrap-icons" !important;
+    font-size: 0.8rem;
+    transition: transform var(--transition-speed) ease;
+    color: var(--ac-primary-pastel, #c4b5fd);
+}
+.sidebar-link.dropdown-toggle:not(.collapsed)::after {
+    transform: rotate(-180deg);
+}
+.sidebar-submenu {
+    list-style: none;
+    padding: 0.35rem 0 0.35rem 0.85rem;
+    margin: 0.25rem 0 0.45rem 0.85rem;
+    border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+.sidebar-sublink {
+    display: flex;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    color: #e9d5ff;
+    border-radius: 0.45rem;
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-weight: 500;
+    transition: all var(--transition-speed) ease;
+    margin-bottom: 0.2rem;
+}
+.sidebar-sublink i {
+    font-size: 0.95rem;
+    margin-right: 0.65rem;
+    width: 18px;
+    text-align: center;
+    color: var(--ac-primary-pastel, #c4b5fd);
+}
+.sidebar-sublink:hover {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+.sidebar-sublink:hover i {
+    color: #ffffff;
+}
+.sidebar-sublink.active {
+    background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6) 0%, var(--ac-primary, #7c3aed) 100%);
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px var(--ac-primary-shadow, rgba(124, 58, 237, 0.35));
+}
+.sidebar-sublink.active i {
+    color: #ffffff !important;
+}
+
 .sidebar-user-badge {
     padding: 1rem 1.25rem;
     background: rgba(0, 0, 0, 0.25);

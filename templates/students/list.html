@@ -3,6 +3,8 @@
 {% block title %}Expedientes de {{ institution.term_students|default:'Estudiantes' }} y Matrículas | ACADEMIX{% endblock %}
 
 {% block content %}
+{% include 'partials/academic_structure_nav.html' %}
+
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-bold text-dark mb-0">Expedientes de {{ institution.term_students|default:'Estudiantes' }} y Matrículas</h3>

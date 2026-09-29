@@ -1,0 +1,28 @@
+<!-- ==========================================================================
+     BARRA DE NAVEGACIÓN UNIFICADA: ESTRUCTURA ACADÉMICA INTEGRAL
+     Agrupa: Cursos y Grados, Malla Curricular, Periodos, Docentes y Estudiantes
+     ========================================================================== -->
+<div class="mb-4">
+    <div class="nav nav-pills p-1 bg-white rounded-3 border shadow-xs d-inline-flex flex-wrap gap-1">
+        <a href="{% url 'courses:academic_structure' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'courses' in request.path %}active{% endif %}">
+            <i class="bi bi-building"></i>
+            <span>{{ institution.term_sections|default:'Cursos' }} y {{ institution.term_grade|default:'Grados' }}</span>
+        </a>
+        <a href="{% url 'subjects:curriculum' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
+            <i class="bi bi-diagram-2-fill"></i>
+            <span>Malla Curricular</span>
+        </a>
+        <a href="{% url 'periods:list' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'periods' in request.path %}active{% endif %}">
+            <i class="bi bi-calendar-range"></i>
+            <span>Periodos Lectivos</span>
+        </a>
+        <a href="{% url 'teachers:list' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'teachers' in request.path %}active{% endif %}">
+            <i class="bi bi-person-video3"></i>
+            <span>{{ institution.term_teachers|default:'Cuerpo Docente' }}</span>
+        </a>
+        <a href="{% url 'students:list' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'students' in request.path %}active{% endif %}">
+            <i class="bi bi-mortarboard"></i>
+            <span>Matrículas y {{ institution.term_students|default:'Estudiantes' }}</span>
+        </a>
+    </div>
+</div>
