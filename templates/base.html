@@ -45,6 +45,13 @@
                 if (t.textMuted) r.style.setProperty('--ac-text-muted', t.textMuted);
                 if (t.fontFamily) r.style.setProperty('--ac-font-family', t.fontFamily);
                 if (t.fontSize) r.style.setProperty('--ac-font-scale', t.fontSize);
+                // Adaptación de Modo Oscuro / Blanco
+                var isDark = (t.key === 'dark');
+                r.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+                r.setAttribute('data-theme', isDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-bs-theme', 'light');
+                document.documentElement.setAttribute('data-theme', 'light');
             }
         } catch(e) {}
     })();

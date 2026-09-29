@@ -451,21 +451,215 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     border-color: #c4b5fd !important;
 }
 
-.text-purple {
-    color: #7c3aed !important;
+/* ==========================================================================
+   SISTEMA DE ADAPTACIÓN UNIVERSAL DE LETRAS, COLORES Y CONTRASTES
+   ========================================================================== */
+
+/* 1. Letras y Elementos Temáticos (Morado / Color del Tema) */
+.text-purple,
+.text-primary {
+    color: var(--ac-primary, #7c3aed) !important;
 }
 
-.bg-purple-subtle {
-    background-color: #f5f3ff !important;
-    color: #7c3aed !important;
+.bg-purple-subtle,
+.bg-primary-subtle {
+    background-color: color-mix(in srgb, var(--ac-primary, #7c3aed) 14%, white 86%) !important;
+    color: var(--ac-primary-dark, #6d28d9) !important;
+    border-color: var(--ac-primary-pastel, #ddd6fe) !important;
 }
 
-.border-purple {
-    border-color: #a78bfa !important;
+.border-purple,
+.border-primary {
+    border-color: var(--ac-primary, #7c3aed) !important;
 }
 
-.border-purple-subtle {
-    border-color: #ddd6fe !important;
+.border-purple-subtle,
+.border-primary-subtle {
+    border-color: var(--ac-primary-pastel, #ddd6fe) !important;
+}
+
+/* 2. Letras de Colores Semafóricos y Funcionales (Rojo, Verde, Azul, Ámbar) */
+.text-danger {
+    color: var(--ac-danger, #ef4444) !important;
+}
+
+.text-success {
+    color: var(--ac-success, #10b981) !important;
+}
+
+.text-info {
+    color: var(--ac-info, #0284c7) !important;
+}
+
+.text-warning {
+    color: var(--ac-warning, #d97706) !important;
+}
+
+/* 3. TEMA OSCURO / NEGRO ([data-theme="dark"] y [data-bs-theme="dark"])
+      Todas las letras oscuras se adaptan a BLANCO y los colores se iluminan */
+[data-theme="dark"],
+[data-bs-theme="dark"] {
+    --ac-bg: #0b1120;
+    --ac-card-bg: #1e293b;
+    --ac-border: #334155;
+    --ac-text-main: #f1f5f9;
+    --ac-text-headings: #ffffff;
+    --ac-text-muted: #94a3b8;
+    --ac-danger: #f87171;
+    --ac-success: #34d399;
+    --ac-info: #38bdf8;
+    --ac-warning: #fbbf24;
+}
+
+[data-theme="dark"] body,
+[data-bs-theme="dark"] body,
+[data-theme="dark"] #main-content,
+[data-bs-theme="dark"] #main-content,
+[data-theme="dark"] .content-body,
+[data-bs-theme="dark"] .content-body {
+    background-color: #0b1120 !important;
+    color: #f1f5f9 !important;
+}
+
+/* Letras que eran oscuras (.text-dark) se convierten en BLANCAS en modo oscuro */
+[data-theme="dark"] .text-dark,
+[data-bs-theme="dark"] .text-dark,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+[data-bs-theme="dark"] h1, [data-bs-theme="dark"] h2, [data-bs-theme="dark"] h3,
+[data-bs-theme="dark"] h4, [data-bs-theme="dark"] h5, [data-bs-theme="dark"] h6,
+[data-theme="dark"] .card-title,
+[data-bs-theme="dark"] .card-title,
+[data-theme="dark"] .modal-title,
+[data-bs-theme="dark"] .modal-title,
+[data-theme="dark"] .form-label,
+[data-bs-theme="dark"] .form-label {
+    color: #ffffff !important;
+}
+
+/* Letras secundarias / atenuadas en modo oscuro */
+[data-theme="dark"] .text-muted,
+[data-bs-theme="dark"] .text-muted,
+[data-theme="dark"] .text-black-50,
+[data-bs-theme="dark"] .text-black-50 {
+    color: #94a3b8 !important;
+}
+
+/* Letras de colores brillantes para fondo negro */
+[data-theme="dark"] .text-purple,
+[data-bs-theme="dark"] .text-purple,
+[data-theme="dark"] .text-primary,
+[data-bs-theme="dark"] .text-primary {
+    color: var(--ac-primary-light, #7dd3fc) !important;
+}
+
+[data-theme="dark"] .text-danger,
+[data-bs-theme="dark"] .text-danger {
+    color: #f87171 !important;
+}
+
+[data-theme="dark"] .text-success,
+[data-bs-theme="dark"] .text-success {
+    color: #34d399 !important;
+}
+
+[data-theme="dark"] .text-info,
+[data-bs-theme="dark"] .text-info {
+    color: #38bdf8 !important;
+}
+
+[data-theme="dark"] .text-warning,
+[data-bs-theme="dark"] .text-warning {
+    color: #fbbf24 !important;
+}
+
+/* Adaptación de Contenedores y Tarjetas en Tema Oscuro */
+[data-theme="dark"] .card,
+[data-bs-theme="dark"] .card,
+[data-theme="dark"] .ac-card,
+[data-bs-theme="dark"] .ac-card,
+[data-theme="dark"] .modal-content,
+[data-bs-theme="dark"] .modal-content,
+[data-theme="dark"] .dropdown-menu,
+[data-bs-theme="dark"] .dropdown-menu,
+[data-theme="dark"] .list-group-item,
+[data-bs-theme="dark"] .list-group-item {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .card-header,
+[data-bs-theme="dark"] .card-header,
+[data-theme="dark"] .card-footer,
+[data-bs-theme="dark"] .card-footer {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .topbar,
+[data-bs-theme="dark"] .topbar {
+    background-color: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .bg-white:not(.btn-close):not(.btn-login-submit),
+[data-bs-theme="dark"] .bg-white:not(.btn-close):not(.btn-login-submit),
+[data-theme="dark"] .bg-light,
+[data-bs-theme="dark"] .bg-light {
+    background-color: #1e293b !important;
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .bg-primary-subtle,
+[data-bs-theme="dark"] .bg-primary-subtle,
+[data-theme="dark"] .bg-purple-subtle,
+[data-bs-theme="dark"] .bg-purple-subtle {
+    background-color: rgba(56, 189, 248, 0.15) !important;
+    color: var(--ac-primary-light, #7dd3fc) !important;
+    border-color: rgba(56, 189, 248, 0.3) !important;
+}
+
+[data-theme="dark"] .table,
+[data-bs-theme="dark"] .table {
+    --bs-table-bg: #1e293b;
+    --bs-table-color: #f1f5f9;
+    --bs-table-border-color: #334155;
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .table th,
+[data-bs-theme="dark"] .table th {
+    color: #ffffff !important;
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .table td,
+[data-bs-theme="dark"] .table td {
+    color: #f1f5f9 !important;
+    border-color: #334155 !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-bs-theme="dark"] .form-control,
+[data-theme="dark"] .form-select,
+[data-bs-theme="dark"] .form-select {
+    background-color: #0f172a !important;
+    border-color: #334155 !important;
+    color: #f8fafc !important;
+}
+
+[data-theme="dark"] .badge.bg-light.text-dark,
+[data-bs-theme="dark"] .badge.bg-light.text-dark,
+[data-theme="dark"] .badge.bg-white.text-dark,
+[data-bs-theme="dark"] .badge.bg-white.text-dark {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    border-color: #334155 !important;
 }
 
 .shadow-xs {
@@ -758,7 +952,7 @@ a:hover {
 
 /* --- Hero / Dashboard Banner LMS --- */
 .lms-hero-banner {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2e1065 100%);
+    background: var(--ac-sidebar-gradient, linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2e1065 100%));
     border-radius: 1rem;
     padding: 2rem;
     position: relative;
@@ -770,7 +964,7 @@ a:hover {
     content: '';
     position: absolute;
     width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--ac-primary-light, #8b5cf6) 25%, transparent) 0%, transparent 70%);
     top: -150px; right: -100px;
     pointer-events: none;
 }
@@ -779,7 +973,7 @@ a:hover {
     content: '';
     position: absolute;
     width: 300px; height: 300px;
-    background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--ac-primary, #7c3aed) 20%, transparent) 0%, transparent 70%);
     bottom: -100px; left: -50px;
     pointer-events: none;
 }

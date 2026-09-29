@@ -399,6 +399,14 @@ window.AcademixTheme = (function() {
         const root = document.documentElement;
         if (!tokens) return;
 
+        const isDark = (tokens.key === 'dark');
+        root.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (document.body) {
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+            document.body.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+
         // Colores del tema
         if (tokens.primary) root.style.setProperty('--ac-primary', tokens.primary);
         if (tokens.primaryDark) root.style.setProperty('--ac-primary-dark', tokens.primaryDark);
