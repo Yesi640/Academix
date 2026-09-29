@@ -22,10 +22,10 @@ def curriculum_view(request):
       Se despliega su Intensidad Horaria por Grado, las horas asignadas al docente y su contenido.
     """
     user = request.user
-    if user.is_student or user.is_parent or user.is_secretary:
+    if user.is_student or user.is_parent:
         raise PermissionDenied("Acceso denegado: La Malla Curricular es de acceso exclusivo para profesores y directivos.")
 
-    if not (user.is_teacher or user.is_admin_role or user.is_rector or getattr(user, 'is_coordinator', False)):
+    if not (user.is_teacher or user.is_admin_role or user.is_rector or user.is_secretary or getattr(user, 'is_coordinator', False) or getattr(user, 'role', '') in ['ADMIN', 'RECTOR', 'SECRETARIA', 'COORDINADOR']):
         raise PermissionDenied("Acceso denegado: La Malla Curricular es de acceso exclusivo para profesores y directivos.")
 
     # Manejo de POST para registrar una nueva norma o competencia curricular
@@ -57,13 +57,14 @@ def curriculum_view(request):
     inst_type = InstitutionSetting.get_settings().institution_type
     current_year = get_current_academic_year()
 
-    # 1. Determinar privilegios directivos o de Profesor de Grupo
+    # 1. Determinar privilegios directivos, secretaría o de Profesor de Grupo
     is_admin_or_rector = (
         user.is_superuser or
         user.is_admin_role or
         user.is_rector or
+        user.is_secretary or
         getattr(user, 'is_coordinator', False) or
-        getattr(user, 'role', '') in ['ADMIN', 'RECTOR', 'COORDINADOR']
+        getattr(user, 'role', '') in ['ADMIN', 'RECTOR', 'COORDINADOR', 'SECRETARIA']
     )
 
     # Identificar si es Director de Grupo (Profesor de Grupo)
@@ -213,11 +214,17 @@ def curriculum_view(request):
     if not active_subject and subjects_list:
         active_subject = subjects_list[0]
 
-    # Para directivos / profesores de grupo: soporte opcional de vista de matriz por grado
+    # Para directivos, secretaría y profesores: soporte de vista por Grado y por Curso
     all_grades = GradeLevel.objects.filter(institution_type=inst_type).order_by('order')
+    all_sections = CourseSection.objects.filter(
+        academic_year=current_year,
+        is_active=True
+    ).select_related('grade_level', 'homeroom_teacher').order_by('grade_level__order', 'name') if current_year else CourseSection.objects.none()
+
     selected_grade_id = request.GET.get('grade')
     active_grade = None
     grade_subjects = []
+    grade_areas_dict = {}
 
     if is_full_curriculum_viewer:
         if selected_grade_id:
@@ -230,9 +237,21 @@ def curriculum_view(request):
         if active_grade:
             grade_subjects = GradeSubject.objects.filter(
                 grade_level=active_grade
-            ).select_related('subject', 'subject__area').order_by('subject__area__order', 'subject__name')
+            ).select_related('subject', 'subject__area').prefetch_related('subject__norms').order_by('subject__area__order', 'subject__name')
 
-    view_mode = request.GET.get('mode', 'subject')  # 'subject' o 'grade'
+            for gs in grade_subjects:
+                a_id = gs.subject.area_id
+                if a_id not in grade_areas_dict:
+                    grade_areas_dict[a_id] = {
+                        'area': gs.subject.area,
+                        'name': gs.subject.area.name,
+                        'subjects': [],
+                        'total_hours': 0,
+                    }
+                grade_areas_dict[a_id]['subjects'].append(gs)
+                grade_areas_dict[a_id]['total_hours'] += gs.weekly_hours
+
+    view_mode = request.GET.get('mode', 'subject')  # 'subject', 'grade' o 'course'
 
     context = {
         'is_full_curriculum_viewer': is_full_curriculum_viewer,
@@ -246,7 +265,10 @@ def curriculum_view(request):
         'grades': all_grades,
         'active_grade': active_grade,
         'grade_subjects': grade_subjects,
+        'grade_areas_list': list(grade_areas_dict.values()),
+        'all_sections': all_sections,
         'view_mode': view_mode,
+        'current_year': current_year,
     }
     return render(request, 'subjects/curriculum.html', context)
 

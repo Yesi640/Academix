@@ -8,7 +8,8 @@
                 <th>{{ institution.term_director|default:'Director(a)' }} / Tutor</th>
                 <th>Aula / Espacio</th>
                 <th>Cupo / Matriculados</th>
-                <th class="text-end">Estado</th>
+                <th>Estado</th>
+                <th class="text-end">Malla Curricular</th>
             </tr>
         </thead>
         <tbody>
@@ -38,12 +39,18 @@
                         <span class="small font-monospace text-muted">{{ section.enrolled_count }}/{{ section.capacity }}</span>
                     </div>
                 </td>
-                <td class="text-end">
+                <td>
                     {% if section.is_active %}
                         <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
                     {% else %}
                         <span class="badge bg-secondary-subtle text-secondary">Inactivo</span>
                     {% endif %}
+                </td>
+                <td class="text-end">
+                    <a href="{% url 'teachers:course_workspace' section.id %}?tab=malla" class="btn btn-outline-primary btn-sm py-1 px-2 d-inline-flex align-items-center gap-1 shadow-sm" title="Ver Malla Curricular y Asignaturas de {{ section.name }}">
+                        <i class="bi bi-diagram-3-fill"></i>
+                        <span>Ver Malla</span>
+                    </a>
                 </td>
             </tr>
             {% empty %}

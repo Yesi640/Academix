@@ -3,56 +3,44 @@
     <input type="hidden" name="institution_type" id="institution_type_hidden" value="{{ current_institution.institution_type }}">
 
     {% if form.non_field_errors %}
-    <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 shadow-sm border-danger-subtle" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2 fs-6 text-danger"></i>
-        <div>
-            {% for error in form.non_field_errors %}
-                <span>{{ error }}</span>
-            {% endfor %}
-        </div>
+    <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 rounded-3 border-0 shadow-sm" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
+        <div>{% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}</div>
     </div>
     {% endif %}
 
-    <!-- 1. Selector de Rol Obligatorio -->
-    <div class="mb-3">
-        <label for="login-role-select" class="form-label small fw-bold text-dark d-flex align-items-center gap-1">
-            <i class="bi bi-shield-lock-fill text-purple"></i> Seleccione su Rol en el Sistema:
+    <!-- 1. Selector de Rol -->
+    <div class="mb-2">
+        <label for="login-role-select" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
+            <i class="bi bi-shield-lock-fill" style="color:var(--inst-primary, #7c3aed);"></i> Rol en el Sistema:
         </label>
         {{ form.role }}
-        <div class="form-text small text-muted" style="font-size: 0.75rem;">
-            Especifique si ingresa como Rector, Docente, Alumno, Padre de Familia o Secretaria.
-        </div>
     </div>
 
-    <!-- 2. Campo de ID ÚNICO del Alumno (Dinámico según rol) -->
-    <div class="mb-3" id="student-id-wrapper">
-        <label for="login-student-id-input" class="form-label small fw-bold text-dark d-flex align-items-center gap-1">
-            <i class="bi bi-person-badge-fill text-purple"></i> ID ÚNICO del Alumno: <span class="text-danger">*</span>
+    <!-- 2. ID Alumno (dinámico) -->
+    <div class="mb-2" id="student-id-wrapper">
+        <label for="login-student-id-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
+            <i class="bi bi-person-badge-fill" style="color:var(--inst-primary, #7c3aed);"></i>
+            ID ÚNICO del Alumno: <span class="text-danger">*</span>
         </label>
         {{ form.student_id }}
-        <div class="form-text text-purple small" style="font-size: 0.72rem;">
-            Obligatorio para Alumnos y Padres de Familia (ej: ALU-2026-1001).
-        </div>
-        {% if form.student_id.errors %}
-            <div class="text-danger small mt-1">{{ form.student_id.errors.0 }}</div>
-        {% endif %}
+        <div class="form-text text-muted" style="font-size:0.7rem;">Obligatorio para Alumnos y Padres de Familia.</div>
+        {% if form.student_id.errors %}<div class="text-danger small mt-1">{{ form.student_id.errors.0 }}</div>{% endif %}
     </div>
 
-    <!-- 3. Campo de Usuario / Identificación (Para Rector, Docente, Secretaria y Padre) -->
-    <div class="mb-3" id="username-wrapper">
-        <label for="login-username-input" class="form-label small fw-bold text-secondary">
-            <i class="bi bi-person text-purple me-1"></i> Usuario o Documento:
+    <!-- 3. Usuario / Documento -->
+    <div class="mb-2" id="username-wrapper">
+        <label for="login-username-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
+            <i class="bi bi-person" style="color:var(--inst-primary, #7c3aed);"></i> Usuario o Documento:
         </label>
         {{ form.username }}
-        {% if form.username.errors %}
-            <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
-        {% endif %}
+        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
     </div>
 
-    <!-- 4. Contraseña con pestaña/botón de ver contraseña -->
+    <!-- 4. Contraseña -->
     <div class="mb-3">
-        <label for="login-password-input" class="form-label small fw-bold text-secondary">
-            <i class="bi bi-lock-fill text-purple me-1"></i> Contraseña:
+        <label for="login-password-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
+            <i class="bi bi-lock-fill" style="color:var(--inst-primary, #7c3aed);"></i> Contraseña:
         </label>
         <div class="input-group input-group-sm">
             {{ form.password }}
@@ -60,22 +48,21 @@
                 <i class="bi bi-eye" id="togglePasswordIcon"></i>
             </button>
         </div>
-        {% if form.password.errors %}
-            <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
-        {% endif %}
+        {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
     </div>
 
-    <!-- Botón de Ingreso armónico con el morado pastel -->
-    <div class="d-grid mt-4">
-        <button type="submit" class="btn btn-login-submit fw-bold d-flex align-items-center justify-content-center gap-2 shadow">
+    <!-- Botón de Ingreso -->
+    <div class="d-grid mt-3">
+        <button type="submit" class="lp-btn-submit" id="login-submit-btn">
             <i class="bi bi-box-arrow-in-right fs-5"></i>
             <span>Ingresar al Sistema</span>
         </button>
     </div>
 
-    <div class="text-center mt-3 pt-3 border-top">
-        <span class="text-muted small">¿No tienes una cuenta aún?</span>
-        <a href="{% url 'accounts:register' %}?model={{ current_institution.institution_type }}" id="login-register-link" class="small fw-bold text-purple text-decoration-none ms-1">
+    <div class="text-center mt-3 pt-2 border-top" style="border-color:#e2e8f0 !important;">
+        <span class="text-muted" style="font-size:0.78rem;">¿Sin cuenta aún?</span>
+        <a href="{% url 'accounts:register' %}?model={{ current_institution.institution_type }}" id="login-register-link"
+           class="fw-bold text-decoration-none ms-1" style="font-size:0.78rem; color:var(--inst-primary, #7c3aed);">
             <i class="bi bi-person-plus me-1"></i>Registrarse Aquí
         </a>
     </div>
@@ -111,7 +98,7 @@
         }
     }
 
-    // Toggle de visualización de contraseña
+    // Toggle ver contraseña
     const toggleBtn = document.getElementById('togglePasswordBtn');
     const passwordInput = document.getElementById('login-password-input');
     const toggleIcon = document.getElementById('togglePasswordIcon');
@@ -121,13 +108,8 @@
             e.preventDefault();
             const isPassword = passwordInput.type === 'password';
             passwordInput.type = isPassword ? 'text' : 'password';
-            if (isPassword) {
-                toggleIcon.className = 'bi bi-eye-slash-fill text-purple';
-                toggleBtn.title = 'Ocultar contraseña';
-            } else {
-                toggleIcon.className = 'bi bi-eye';
-                toggleBtn.title = 'Ver contraseña';
-            }
+            toggleIcon.className = isPassword ? 'bi bi-eye-slash-fill' : 'bi bi-eye';
+            toggleBtn.title = isPassword ? 'Ocultar contraseña' : 'Ver contraseña';
             passwordInput.focus();
         });
     }

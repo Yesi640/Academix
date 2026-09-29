@@ -225,10 +225,15 @@ class FunctionalSpecTests(TestCase):
         resp_teacher = client.get(reverse('subjects:curriculum'))
         self.assertEqual(resp_teacher.status_code, 200)
 
-        # Secretary: Forbidden
+        # Secretary: Allowed
         client.login(username='secre_lucia', password='TestPassword123!')
         resp_sec = client.get(reverse('subjects:curriculum'))
-        self.assertEqual(resp_sec.status_code, 403)
+        self.assertEqual(resp_sec.status_code, 200)
+
+        # Rector / Directivos: Allowed
+        client.login(username='rector_alberto', password='TestPassword123!')
+        resp_rector = client.get(reverse('subjects:curriculum'))
+        self.assertEqual(resp_rector.status_code, 200)
 
         # Student: Forbidden
         client.login(username='alumno_pedro', password='TestPassword123!')

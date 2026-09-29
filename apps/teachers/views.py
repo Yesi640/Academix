@@ -393,7 +393,7 @@ def course_workspace_view(request, section_id):
         is_group_director = True
 
     # 2. Malla Curricular del Grado y Control de Acceso:
-    # - El Director de Grupo o Directivo puede ver toda la malla del grado.
+    # - El Director de Grupo, Rector, Secretaria o Directivo puede ver toda la malla del grado.
     # - Los demás docentes solo pueden ver su área asignada, sus asignaturas, las horas que les tocan y el contenido.
     if is_group_director:
         curriculum_qs = GradeSubject.objects.filter(
@@ -401,7 +401,7 @@ def course_workspace_view(request, section_id):
         ).select_related('subject__area').prefetch_related(
             'subject__norms',
             'subject__curriculum_grades__grade_level'
-        ).order_by('subject__area__order', 'subject__category', 'subject__name')
+        ).order_by('subject__area__order', 'subject__area__name', 'subject__name')
     else:
         curriculum_qs = GradeSubject.objects.filter(
             grade_level=section.grade_level,
@@ -409,11 +409,15 @@ def course_workspace_view(request, section_id):
         ).select_related('subject__area').prefetch_related(
             'subject__norms',
             'subject__curriculum_grades__grade_level'
-        ).order_by('subject__area__order', 'subject__category', 'subject__name')
+        ).order_by('subject__area__order', 'subject__area__name', 'subject__name')
 
     curriculum_data = []
+    from collections import OrderedDict
+    areas_map = OrderedDict()
+
     for gs in curriculum_qs:
         s = gs.subject
+        area = s.area
         # Intensidades de esta materia en todos los grados escolares
         intensities = []
         for cg in s.curriculum_grades.all().select_related('grade_level').order_by('grade_level__order'):
@@ -425,22 +429,36 @@ def course_workspace_view(request, section_id):
                 'is_current': cg.grade_level_id == section.grade_level_id,
             })
 
-        curriculum_data.append({
+        item_dict = {
             'grade_subject': gs,
             'subject': s,
             'weekly_hours': gs.weekly_hours,
             'weight_percentage': gs.weight_percentage,
             'description': s.description or 'Contenido curricular conforme a los lineamientos del MEN.',
-            'norms': s.norms.all().order_by('order', 'code'),
+            'norms': list(s.norms.all().order_by('order', 'code')),
             'intensities': intensities,
             'is_assigned_to_me': s.id in assigned_subject_ids,
-        })
+        }
+        curriculum_data.append(item_dict)
 
-    # Asignaturas para las tarjetas superiores de categorías en la pestaña Malla
-    malla_subjects = [item['subject'] for item in curriculum_data]
-    principales = [s for s in malla_subjects if s.category == Subject.Category.PRINCIPAL]
-    humanisticas = [s for s in malla_subjects if s.category == Subject.Category.HUMANISTICA]
-    arte_deporte = [s for s in malla_subjects if s.category == Subject.Category.ARTE_DEPORTE]
+        if area.id not in areas_map:
+            areas_map[area.id] = {
+                'area': area,
+                'name': area.name,
+                'order': area.order,
+                'subjects': [],
+                'total_hours': 0,
+            }
+        areas_map[area.id]['subjects'].append(item_dict)
+        areas_map[area.id]['total_hours'] += gs.weekly_hours
+
+    curriculum_by_area = list(areas_map.values())
+    total_curriculum_hours = sum(item['weekly_hours'] for item in curriculum_data)
+    total_areas_count = len(curriculum_by_area)
+
+    principales = [item for item in curriculum_data if item['subject'].category == Subject.Category.PRINCIPAL]
+    humanisticas = [item for item in curriculum_data if item['subject'].category == Subject.Category.HUMANISTICA]
+    arte_deporte = [item for item in curriculum_data if item['subject'].category == Subject.Category.ARTE_DEPORTE]
 
     # 3. Control de Asistencia del Curso - Llamado de Lista Completo e Interactivo
     from apps.attendance.services import get_or_create_attendance_session, calculate_student_absence_stats
@@ -534,6 +552,9 @@ def course_workspace_view(request, section_id):
         'arte_deporte': arte_deporte,
         'curriculum': curriculum_data,
         'curriculum_data': curriculum_data,
+        'curriculum_by_area': curriculum_by_area,
+        'total_curriculum_hours': total_curriculum_hours,
+        'total_areas_count': total_areas_count,
         'active_enrollments': active_enrollments,
         'current_date': current_date,
         # Llamado de lista completo

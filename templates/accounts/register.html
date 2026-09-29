@@ -97,62 +97,19 @@
             </div>
             {% endif %}
 
-            <!-- 0. Selección de Tipo de Institución / Modelo -->
-            <div class="mb-3 p-3 bg-light rounded border border-purple-subtle shadow-sm" style="border-color: #ddd6fe !important;">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                    <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-0">
-                        <i class="bi bi-building-fill-gear text-purple"></i> <span class="text-danger">*</span> Tipo de Institución:
-                    </label>
-                    <span class="badge bg-white text-dark border px-2 py-1" style="font-size: 0.68rem; font-weight: 500;">
-                        <i class="bi bi-check-circle-fill text-success me-1"></i><strong id="reg-selected-inst-text" class="text-purple">{{ current_institution.get_institution_type_display }}</strong>
-                    </span>
+            <!-- 0. Modelo Institucional Escolar -->
+            <input type="hidden" name="institution_type" id="reg-inst-colegio" value="COLEGIO">
+            <div class="mb-3 p-2 px-3 bg-light rounded border shadow-sm d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🏫</span>
+                    <div>
+                        <strong class="d-block text-dark small">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+                        <small class="text-muted" style="font-size:0.72rem;">Registro Institucional · Colegio</small>
+                    </div>
                 </div>
-
-                <div class="institution-selector" id="reg-institution-selector-grid">
-                    <!-- Colegio -->
-                    <label class="inst-card" for="reg-inst-colegio" title="Colegio / Escuela — Básica Primaria, Secundaria y Media">
-                        <input type="radio" name="institution_type" id="reg-inst-colegio" value="COLEGIO"
-                               {% if current_institution.institution_type == 'COLEGIO' %}checked{% endif %}>
-                        <div class="inst-card-inner">
-                            <span class="inst-icon">🏫</span>
-                            <span class="inst-name">Colegio</span>
-                            <span class="inst-badge" style="background:#dcfce7; color:#15803d;">Básica/Media</span>
-                        </div>
-                    </label>
-                    <!-- Universidad -->
-                    <label class="inst-card" for="reg-inst-universidad" title="Universidad / Educación Superior">
-                        <input type="radio" name="institution_type" id="reg-inst-universidad" value="UNIVERSIDAD"
-                               {% if current_institution.institution_type == 'UNIVERSIDAD' %}checked{% endif %}>
-                        <div class="inst-card-inner">
-                            <span class="inst-icon">🎓</span>
-                            <span class="inst-name">Universidad</span>
-                            <span class="inst-badge" style="background:#dbeafe; color:#1d4ed8;">Superior</span>
-                        </div>
-                    </label>
-                    <!-- SENA / Técnico -->
-                    <label class="inst-card" for="reg-inst-sena" title="Instituto Técnico / Tecnológico / SENA">
-                        <input type="radio" name="institution_type" id="reg-inst-sena" value="SENA_TECNICO"
-                               {% if current_institution.institution_type == 'SENA_TECNICO' %}checked{% endif %}>
-                        <div class="inst-card-inner">
-                            <span class="inst-icon">🔧</span>
-                            <span class="inst-name">Técnico/SENA</span>
-                            <span class="inst-badge" style="background:#fef9c3; color:#92400e;">Técnica</span>
-                        </div>
-                    </label>
-                    <!-- Academia -->
-                    <label class="inst-card" for="reg-inst-academia" title="Academia / Educación Continua / Cursos">
-                        <input type="radio" name="institution_type" id="reg-inst-academia" value="ACADEMIA"
-                               {% if current_institution.institution_type == 'ACADEMIA' %}checked{% endif %}>
-                        <div class="inst-card-inner">
-                            <span class="inst-icon">🎨</span>
-                            <span class="inst-name">Academia</span>
-                            <span class="inst-badge" style="background:#fce7f3; color:#be185d;">Cursos</span>
-                        </div>
-                    </label>
-                </div>
-                <div class="form-text small mt-1 text-muted" id="reg-inst-help" style="font-size: 0.72rem;">
-                    El entorno, roles y terminología se adaptan automáticamente al modelo seleccionado.
-                </div>
+                <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:0.7rem;">
+                    Básica y Media
+                </span>
             </div>
 
             <!-- 1. Selección de Rol Obligatoria Adaptable -->
@@ -292,57 +249,6 @@
             parentIdLabel: '<i class="bi bi-person-badge text-warning-emphasis"></i> <span class="text-danger">*</span> ID ÚNICO del Alumno a Representar:',
             parentIdHelp: 'Obligatorio para acudientes. Ingrese el código o ID único de su alumno (ej: ALU-2026-1001).',
             btnText: 'Registrarse en Colegio'
-        },
-        'UNIVERSIDAD': {
-            name: 'Universidad / Superior',
-            subtitle: 'Registro universitario para carreras profesionales, facultades y semestres.',
-            hasParents: false,
-            roles: {
-                'STUDENT': 'Estudiante Universitario',
-                'TEACHER': 'Profesor(a) / Catedrático',
-                'RECTOR': 'Rector(a) / Decano(a)',
-                'SECRETARIA': 'Registro y Control Académico'
-            },
-            roleHelp: {
-                'STUDENT': 'Los estudiantes universitarios recibirán su ID ÚNICO de matrícula automáticamente.',
-                'default': 'Registro universitario con credenciales de campus institucional.'
-            },
-            studentNotice: '<strong>ID ÚNICO Universitario:</strong> Al registrarse como <strong>estudiante</strong>, se le asignará su <strong>ID ÚNICO</strong> para inscribir materias y grupos.',
-            btnText: 'Registrarse en Universidad'
-        },
-        'SENA_TECNICO': {
-            name: 'Técnico / SENA',
-            subtitle: 'Registro para formación técnica laboral, tecnológica, competencias y fichas.',
-            hasParents: false,
-            roles: {
-                'STUDENT': 'Aprendiz SENA / Técnico',
-                'TEACHER': 'Instructor(a) Técnico',
-                'RECTOR': 'Subdirector(a) de Centro',
-                'SECRETARIA': 'Administración Educativa'
-            },
-            roleHelp: {
-                'STUDENT': 'Los aprendices recibirán su ID ÚNICO de ficha y formación técnica automáticamente.',
-                'default': 'Registro técnico con credenciales de formación institucional.'
-            },
-            studentNotice: '<strong>ID ÚNICO de Aprendiz:</strong> Al registrarse como <strong>aprendiz</strong>, el sistema le asignará su <strong>ID ÚNICO</strong> exclusivo para su ficha y competencias.',
-            btnText: 'Registrarse en SENA / Técnico'
-        },
-        'ACADEMIA': {
-            name: 'Academia / Cursos',
-            subtitle: 'Registro para academias de idiomas, talleres prácticos y cursos continuos.',
-            hasParents: false,
-            roles: {
-                'STUDENT': 'Alumno(a) de Curso o Taller',
-                'TEACHER': 'Tutor(a) / Tallerista',
-                'RECTOR': 'Director(a) de Academia',
-                'SECRETARIA': 'Coordinación y Admisiones'
-            },
-            roleHelp: {
-                'STUDENT': 'Los alumnos recibirán su código ID ÚNICO de membresía de cursos automáticamente.',
-                'default': 'Registro en academia con usuario y contraseña institucional.'
-            },
-            studentNotice: '<strong>ID ÚNICO de Alumno:</strong> Al registrarse como <strong>alumno(a)</strong>, el sistema le asignará su <strong>ID ÚNICO</strong> exclusivo para sus talleres y clases.',
-            btnText: 'Registrarse en Academia'
         }
     };
 

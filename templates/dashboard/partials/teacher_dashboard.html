@@ -1,151 +1,179 @@
-<!-- Dashboard Docente — Panel de Aula y Evaluación -->
+<!-- Dashboard Docente LMS Corporativo — Panel de Aula y Evaluación -->
 {% if stats.my_assignments_count is not None %}
-<div class="row g-3 mb-4">
-    <div class="col-sm-6 col-xl-3">
-        <div class="ac-card metric-card border-primary">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-semibold">MIS ASIGNACIONES</div>
-                    <div class="fs-3 fw-bold text-dark mt-1">{{ stats.my_assignments_count }}</div>
-                    <span class="badge bg-primary-subtle text-primary mt-1 small">
-                        <i class="bi bi-book me-1"></i>Asignaturas activas
-                    </span>
-                </div>
-                <div class="metric-icon-box bg-primary-subtle text-primary"><i class="bi bi-journal-bookmark-fill"></i></div>
+
+<!-- ============================================================
+     HERO BANNER LMS + KPI CHIPS
+     ============================================================ -->
+<div class="lms-hero-banner mb-4 lms-animate-in">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative" style="z-index:2;">
+        <div>
+            <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                <span class="lms-badge" style="background:rgba(139,92,246,0.25); color:#c4b5fd; border:1px solid rgba(196,181,253,0.3);">
+                    <i class="bi bi-person-badge-fill"></i>PANEL DOCENTE
+                </span>
+                {% if stats.active_period %}
+                <span class="lms-badge" style="background:rgba(16,185,129,0.2); color:#6ee7b7; border:1px solid rgba(110,231,183,0.3);">
+                    <i class="bi bi-calendar-check"></i>{{ stats.active_period.name }} — {{ stats.active_period.percentage }}%
+                </span>
+                {% endif %}
             </div>
+            <h2 class="fw-bold text-white mb-1 h3">
+                <i class="bi bi-journal-bookmark-fill me-2" style="color:#c4b5fd;"></i>
+                Bienvenido, Prof. {{ user.last_name|default:user.username }}
+            </h2>
+            <p class="text-white-50 mb-0 small">
+                Gestione sus grupos, calificaciones, asistencia y malla curricular desde aquí.
+            </p>
         </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="ac-card metric-card border-success">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-semibold">MIS GRUPOS</div>
-                    <div class="fs-3 fw-bold text-dark mt-1">{{ stats.my_sections_count }}</div>
-                    <span class="badge bg-success-subtle text-success mt-1 small">
-                        <i class="bi bi-people-fill me-1"></i>{{ stats.enrolled_in_my_sections }} estudiante{{ stats.enrolled_in_my_sections|pluralize }}
-                    </span>
-                </div>
-                <div class="metric-icon-box bg-success-subtle text-success"><i class="bi bi-people-fill"></i></div>
+        <!-- KPI Chips -->
+        <div class="d-flex gap-2 flex-wrap position-relative" style="z-index:2;">
+            <div class="lms-stat-chip">
+                <div class="fs-3 fw-bold text-white">{{ stats.my_assignments_count }}</div>
+                <small class="text-white-50" style="font-size:0.65rem; text-transform:uppercase;">Asignaturas</small>
             </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="ac-card metric-card border-warning">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-semibold">PERIODO ACTIVO</div>
-                    <div class="fs-4 fw-bold text-dark mt-1">
-                        {% if stats.active_period %}{{ stats.active_period.name }}{% else %}—{% endif %}
-                    </div>
-                    <span class="badge bg-warning-subtle text-warning mt-1 small">
-                        {% if stats.active_period %}{{ stats.active_period.percentage }}% del año{% else %}Sin periodo activo{% endif %}
-                    </span>
-                </div>
-                <div class="metric-icon-box bg-warning-subtle text-warning"><i class="bi bi-calendar-range"></i></div>
+            <div class="lms-stat-chip">
+                <div class="fs-3 fw-bold text-success" style="color:#6ee7b7 !important;">{{ stats.my_sections_count }}</div>
+                <small class="text-white-50" style="font-size:0.65rem; text-transform:uppercase;">Grupos</small>
             </div>
-        </div>
-    </div>
-    <div class="col-sm-6 col-xl-3">
-        <div class="ac-card metric-card border-info">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-muted small fw-semibold">ALERTAS SISTEMA</div>
-                    <div class="fs-3 fw-bold text-dark mt-1">{{ stats.active_alerts }}</div>
-                    <span class="badge bg-info-subtle text-info mt-1 small">
-                        <i class="bi bi-bell me-1"></i>Semáforos activos
-                    </span>
-                </div>
-                <div class="metric-icon-box bg-info-subtle text-info"><i class="bi bi-bell-fill"></i></div>
+            <div class="lms-stat-chip">
+                <div class="fs-3 fw-bold text-info" style="color:#7dd3fc !important;">{{ stats.enrolled_in_my_sections }}</div>
+                <small class="text-white-50" style="font-size:0.65rem; text-transform:uppercase;">Estudiantes</small>
             </div>
         </div>
     </div>
 </div>
 
+<!-- ============================================================
+     FILA PRINCIPAL: ACCIONES + ASIGNACIONES
+     ============================================================ -->
 <div class="row g-4">
-    <!-- Acciones del Docente -->
-    <div class="col-lg-4">
-        <div class="card ac-card p-4 h-100">
-            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                <i class="bi bi-lightning-charge-fill text-warning"></i> Acciones Rápidas
-            </h5>
-            <div class="d-grid gap-2">
-                <a href="{% url 'teachers:my_courses' %}" class="btn btn-primary text-start d-flex align-items-center justify-content-between p-3 rounded-3 shadow-sm">
-                    <div>
-                        <div class="fw-bold"><i class="bi bi-journal-bookmark-fill me-2"></i>Mis Asignaciones (Cursos)</div>
-                        <small class="opacity-90">Planillas de notas, asistencia y malla curricular</small>
-                    </div>
-                    <i class="bi bi-arrow-right-circle-fill fs-5"></i>
-                </a>
-                <a href="{% url 'homework:index' %}" class="btn btn-warning text-start d-flex align-items-center justify-content-between p-3 rounded-3">
-                    <div>
-                        <div class="fw-bold"><i class="bi bi-folder-symlink-fill me-2"></i>Tareas y Entregas</div>
-                        <small class="opacity-75">Asignar y calificar trabajos</small>
-                    </div>
-                    <i class="bi bi-arrow-right-circle-fill fs-5"></i>
-                </a>
-                <a href="{% url 'reports:index' %}" class="btn btn-outline-info text-start d-flex align-items-center justify-content-between p-3 rounded-3">
-                    <div>
-                        <div class="fw-bold"><i class="bi bi-file-earmark-text me-2 text-info"></i>Ver Boletines</div>
-                        <small class="text-muted">Reportes de mis grupos</small>
-                    </div>
-                    <i class="bi bi-arrow-right-circle-fill text-info fs-5"></i>
-                </a>
-            </div>
-        </div>
-    </div>
 
-    <!-- Mis Asignaciones -->
-    <div class="col-lg-8">
-        <div class="card ac-card p-4 h-100">
-            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                <i class="bi bi-journal-bookmark-fill text-primary"></i> Mis Asignaciones Activas
-            </h5>
-            {% if stats.my_assignments_list %}
-            <div class="table-responsive">
-                <table class="table table-hover align-middle small mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Asignatura</th>
-                            <th>Grupo</th>
-                            <th>Grado</th>
-                            <th class="text-center">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for assignment in stats.my_assignments_list %}
-                        <tr>
-                            <td>
-                                <div class="fw-semibold">{{ assignment.subject.name }}</div>
-                                <small class="text-muted">{{ assignment.subject.code }}</small>
-                            </td>
-                            <td><span class="badge bg-primary-subtle text-primary">{{ assignment.course_section.name }}</span></td>
-                            <td class="text-muted">{{ assignment.course_section.grade_level.name }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'teachers:course_workspace' assignment.course_section.id %}?subject_id={{ assignment.subject.id }}"
-                                   class="btn btn-sm btn-primary fw-bold px-3 shadow-sm" title="Abrir Planilla de Notas de este Curso">
-                                    <i class="bi bi-card-checklist me-1"></i>Planilla de Notas
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <!-- Acciones Rápidas LMS -->
+    <div class="col-lg-4">
+        <div class="card ac-card p-0 h-100 overflow-hidden border-0 shadow-sm">
+            <div class="p-3 border-bottom" style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
+                <h6 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
+                    <i class="bi bi-lightning-charge-fill text-warning"></i>Acciones Rápidas
+                </h6>
             </div>
-            {% else %}
-            <div class="text-center text-muted py-5">
-                <i class="bi bi-journal-x fs-1 d-block mb-2 opacity-25"></i>
-                <p class="mb-0">No tienes asignaciones académicas activas para el año en curso.</p>
-                <small>Contacta a la Secretaría para que te asignen cursos y asignaturas.</small>
+            <div class="p-3 d-flex flex-column gap-2">
+                <a href="{% url 'teachers:my_courses' %}" class="lms-action-btn lms-action-btn-primary justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-journal-bookmark-fill fs-5"></i>
+                        <div>
+                            <div>Mis Asignaciones</div>
+                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Planillas, asistencia y malla</small>
+                        </div>
+                    </div>
+                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                </a>
+                <a href="{% url 'homework:index' %}" class="lms-action-btn lms-action-btn-warning justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-folder-symlink-fill fs-5"></i>
+                        <div>
+                            <div>Tareas y Entregas</div>
+                            <small style="font-weight:400; opacity:0.8; font-size:0.72rem;">Asignar y calificar trabajos</small>
+                        </div>
+                    </div>
+                    <i class="bi bi-arrow-right-circle-fill opacity-75"></i>
+                </a>
+                <a href="{% url 'reports:index' %}" class="lms-action-btn lms-action-btn-outline justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-file-earmark-text fs-5 text-info"></i>
+                        <div>
+                            <div class="text-dark">Ver Boletines</div>
+                            <small class="text-muted" style="font-weight:400; font-size:0.72rem;">Reportes de mis grupos</small>
+                        </div>
+                    </div>
+                    <i class="bi bi-arrow-right-circle-fill text-info opacity-75"></i>
+                </a>
+            </div>
+
+            <!-- Alerta de sistema -->
+            {% if stats.active_alerts > 0 %}
+            <div class="m-3 mt-0 p-3 rounded-3 d-flex align-items-center gap-3"
+                 style="background:linear-gradient(135deg,#fef3c7,#fde68a); border:1px solid #fcd34d;">
+                <i class="bi bi-bell-fill text-warning fs-4 flex-shrink-0"></i>
+                <div>
+                    <div class="fw-bold text-dark small">{{ stats.active_alerts }} alerta{{ stats.active_alerts|pluralize }} activa{{ stats.active_alerts|pluralize }}</div>
+                    <small class="text-muted" style="font-size:0.72rem;">Semáforos y notificaciones del sistema</small>
+                </div>
             </div>
             {% endif %}
         </div>
     </div>
+
+    <!-- Mis Asignaciones (Tabla Moderna LMS) -->
+    <div class="col-lg-8">
+        <div class="card ac-card h-100 border-0 shadow-sm overflow-hidden">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center"
+                 style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
+                <h6 class="fw-bold mb-0 d-flex align-items-center gap-2 text-dark">
+                    <i class="bi bi-diagram-3-fill text-primary"></i>Mis Asignaciones Activas
+                </h6>
+                <a href="{% url 'teachers:my_courses' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-grid-3x3-gap me-1"></i>Ver todos
+                </a>
+            </div>
+
+            {% if stats.my_assignments_list %}
+            <div class="p-3">
+                <div class="d-flex flex-column gap-2">
+                    {% for assignment in stats.my_assignments_list %}
+                    <div class="lms-module-card d-flex align-items-center justify-content-between gap-3 lms-animate-in">
+                        <!-- Ícono y materia -->
+                        <div class="d-flex align-items-center gap-3 flex-grow-1" style="min-width:0;">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width:42px; height:42px; background:linear-gradient(135deg,#ede9fe,#ddd6fe); color:#7c3aed;">
+                                <i class="bi bi-book-fill fs-5"></i>
+                            </div>
+                            <div style="min-width:0;">
+                                <div class="fw-bold text-dark text-truncate" style="font-size:0.88rem;" title="{{ assignment.subject.name }}">
+                                    {{ assignment.subject.name }}
+                                </div>
+                                <div class="d-flex align-items-center gap-2 mt-1 flex-wrap">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style="font-size:0.65rem;">
+                                        {{ assignment.subject.code }}
+                                    </span>
+                                    <span class="lms-badge lms-badge-active" style="font-size:0.62rem;">
+                                        <i class="bi bi-mortarboard-fill"></i>{{ assignment.course_section.name }} · {{ assignment.course_section.grade_level.name }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Acciones -->
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <a href="{% url 'teachers:course_workspace' assignment.course_section.id %}?subject_id={{ assignment.subject.id }}"
+                               class="btn btn-sm btn-primary px-2 py-1 shadow-sm" title="Planilla de Notas"
+                               style="font-size:0.75rem;">
+                                <i class="bi bi-card-checklist me-1"></i>Notas
+                            </a>
+                            <a href="{% url 'teachers:course_workspace' assignment.course_section.id %}?tab=malla"
+                               class="btn btn-sm btn-outline-primary px-2 py-1" title="Malla Curricular"
+                               style="font-size:0.75rem;">
+                                <i class="bi bi-diagram-3-fill me-1"></i>Malla
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="lms-empty-state">
+                <div class="lms-empty-icon"><i class="bi bi-journal-x"></i></div>
+                <h6 class="fw-bold text-dark">Sin asignaciones activas</h6>
+                <small>Contacta a la Secretaría para asociar cursos y asignaturas.</small>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
 </div>
 
 {% else %}
-<!-- Docente sin perfil creado aún -->
-<div class="alert alert-warning d-flex align-items-center gap-3 p-4 rounded-3">
-    <i class="bi bi-person-x-fill fs-1 text-warning"></i>
+<!-- Docente sin perfil -->
+<div class="alert alert-warning d-flex align-items-center gap-3 p-4 rounded-3 border-0 shadow-sm">
+    <i class="bi bi-person-x-fill fs-1 text-warning flex-shrink-0"></i>
     <div>
         <h5 class="fw-bold mb-1">Perfil Docente Incompleto</h5>
         <p class="mb-2">Tu cuenta tiene el rol de Docente, pero aún no tiene un perfil institucional creado con especialidad y asignaciones.</p>

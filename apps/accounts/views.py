@@ -90,10 +90,15 @@ def login_view(request):
                     'current_institution': current_institution,
                 })
 
+    from apps.courses.models import InstitutionSetting, AcademicYear
+
+    current_academic_year = AcademicYear.objects.filter(is_current=True).first()
+
     return render(request, 'accounts/login.html', {
         'form': form,
         'institution_types': institution_types,
         'current_institution': current_institution,
+        'current_academic_year': current_academic_year,
     })
 
 

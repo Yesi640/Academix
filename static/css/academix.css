@@ -53,14 +53,14 @@ body {
 
 #sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%);
+    background: var(--ac-sidebar-gradient, linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%));
     color: #f5f3ff;
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
     transition: all var(--transition-speed) ease-in-out;
     z-index: 1040;
-    box-shadow: 4px 0 18px rgba(76, 29, 149, 0.2);
+    box-shadow: 4px 0 18px rgba(0, 0, 0, 0.2);
 }
 
 .sidebar-brand {
@@ -77,7 +77,7 @@ body {
 }
 
 .sidebar-brand i {
-    color: #c4b5fd;
+    color: var(--ac-primary-pastel, #c4b5fd);
     margin-right: 0.75rem;
     font-size: 1.4rem;
 }
@@ -94,7 +94,7 @@ body {
     font-size: 0.7rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    color: #c4b5fd;
+    color: var(--ac-primary-pastel, #c4b5fd);
     opacity: 0.85;
     padding: 0.75rem 0.75rem 0.35rem 0.75rem;
     font-weight: 700;
@@ -121,7 +121,7 @@ body {
     margin-right: 0.85rem;
     width: 20px;
     text-align: center;
-    color: #c4b5fd;
+    color: var(--ac-primary-pastel, #c4b5fd);
     transition: color var(--transition-speed) ease;
 }
 
@@ -135,10 +135,10 @@ body {
 }
 
 .sidebar-link.active {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6) 0%, var(--ac-primary, #7c3aed) 100%);
     color: #ffffff;
     font-weight: 600;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
+    box-shadow: 0 4px 14px var(--ac-primary-shadow, rgba(124, 58, 237, 0.45));
 }
 
 .sidebar-link.active i {
@@ -157,7 +157,7 @@ body {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+    background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6) 0%, var(--ac-primary-dark, #6d28d9) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -433,32 +433,32 @@ body {
     transform: scale(0.97);
 }
 
-/* Botón Primario Armonizado con el Tema Morado Institucional */
+/* Botón Primario Armonizado con el Tema Dinámico */
 .btn-primary {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6) 0%, var(--ac-primary, #7c3aed) 100%) !important;
     border: none !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 4px 14px var(--ac-primary-shadow, rgba(124, 58, 237, 0.35));
 }
 
 .btn-primary:hover, .btn-primary:focus {
-    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.48);
+    background: linear-gradient(135deg, var(--ac-primary, #7c3aed) 0%, var(--ac-primary-dark, #6d28d9) 100%) !important;
+    box-shadow: 0 6px 20px var(--ac-primary-shadow-hover, rgba(124, 58, 237, 0.48));
     transform: translateY(-1.5px);
     color: #ffffff !important;
 }
 
-/* Botón Outline Primario Morado */
+/* Botón Outline Primario Dinámico */
 .btn-outline-primary {
-    color: #7c3aed !important;
-    border-color: #c4b5fd !important;
+    color: var(--ac-primary, #7c3aed) !important;
+    border-color: var(--ac-primary-pastel, #c4b5fd) !important;
 }
 
 .btn-outline-primary:hover, .btn-outline-primary:focus {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
-    border-color: #7c3aed !important;
+    background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6) 0%, var(--ac-primary, #7c3aed) 100%) !important;
+    border-color: var(--ac-primary, #7c3aed) !important;
     color: #ffffff !important;
-    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.35);
+    box-shadow: 0 4px 14px var(--ac-primary-shadow, rgba(124, 58, 237, 0.35));
 }
 
 /* Enlaces, Insignias y Textos Primarios */
@@ -627,4 +627,237 @@ a:hover {
     border-color: #3b82f6 !important;
     box-shadow: 0 0 0 3.5px rgba(59, 130, 246, 0.25) !important;
     outline: none;
+}
+
+/* ==========================================================================
+   LMS CORPORATIVO — SISTEMA DE APRENDIZAJE MODULAR (ACADEMIX EDU)
+   ========================================================================== */
+
+/* --- Tarjetas de Curso / Track LMS --- */
+.lms-course-card {
+    background: #ffffff;
+    border-radius: 1rem;
+    border: 1px solid #e8e3f7;
+    box-shadow: 0 4px 16px -4px rgba(124, 58, 237, 0.08);
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                box-shadow 0.25s ease;
+}
+
+.lms-course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 16px 40px -8px rgba(124, 58, 237, 0.18);
+}
+
+.lms-course-card .lms-card-banner {
+    height: 8px;
+    background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 50%, #0ea5e9 100%);
+}
+
+.lms-course-card.banner-success .lms-card-banner { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+.lms-course-card.banner-warning .lms-card-banner { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+.lms-course-card.banner-danger  .lms-card-banner { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+.lms-course-card.banner-info    .lms-card-banner { background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%); }
+
+/* --- Progress Track LMS --- */
+.lms-progress-track {
+    background: #f1f5f9;
+    border-radius: 999px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.lms-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #8b5cf6 0%, #6366f1 100%);
+    transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.lms-progress-fill.fill-success { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+.lms-progress-fill.fill-warning { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+.lms-progress-fill.fill-danger  { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+
+/* --- Módulo / Subject Card LMS --- */
+.lms-module-card {
+    background: #ffffff;
+    border-radius: 0.75rem;
+    border: 1px solid #ede9fe;
+    border-left: 4px solid #8b5cf6;
+    padding: 1rem;
+    transition: box-shadow 0.2s ease, border-left-color 0.2s ease;
+}
+
+.lms-module-card:hover {
+    box-shadow: 0 6px 20px -4px rgba(124, 58, 237, 0.15);
+    border-left-color: #7c3aed;
+}
+
+.lms-module-card.module-success { border-left-color: #10b981; }
+.lms-module-card.module-warning { border-left-color: #f59e0b; }
+.lms-module-card.module-danger  { border-left-color: #ef4444; }
+.lms-module-card.module-info    { border-left-color: #0ea5e9; }
+
+/* --- Hero / Dashboard Banner LMS --- */
+.lms-hero-banner {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #2e1065 100%);
+    border-radius: 1rem;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    color: white;
+}
+
+.lms-hero-banner::before {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(139,92,246,0.25) 0%, transparent 70%);
+    top: -150px; right: -100px;
+    pointer-events: none;
+}
+
+.lms-hero-banner::after {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%);
+    bottom: -100px; left: -50px;
+    pointer-events: none;
+}
+
+/* --- Stat Chips LMS --- */
+.lms-stat-chip {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 0.6rem;
+    padding: 0.6rem 1rem;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    min-width: 90px;
+}
+
+/* --- Badges de Estado LMS --- */
+.lms-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.2px;
+}
+
+.lms-badge-active    { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.lms-badge-pending   { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.lms-badge-graded    { background: #ede9fe; color: #6d28d9; border: 1px solid #ddd6fe; }
+.lms-badge-overdue   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+.lms-badge-submitted { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+/* --- Action Buttons LMS --- */
+.lms-action-btn {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.85rem 1.1rem; border-radius: 0.75rem;
+    text-decoration: none; font-weight: 600; font-size: 0.88rem;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    border: 1.5px solid transparent;
+}
+
+.lms-action-btn:hover { transform: translateX(4px); }
+
+.lms-action-btn-primary {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: #ffffff; box-shadow: 0 4px 14px rgba(124,58,237,0.3);
+}
+.lms-action-btn-primary:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: #ffffff; box-shadow: 0 6px 20px rgba(124,58,237,0.45);
+}
+
+.lms-action-btn-outline {
+    background: #ffffff; color: #7c3aed; border-color: #ddd6fe;
+}
+.lms-action-btn-outline:hover {
+    background: #f5f3ff; color: #6d28d9; border-color: #c4b5fd;
+}
+
+.lms-action-btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: #ffffff; box-shadow: 0 4px 14px rgba(16,185,129,0.3);
+}
+.lms-action-btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%); color: #ffffff;
+}
+
+.lms-action-btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff; box-shadow: 0 4px 14px rgba(245,158,11,0.3);
+}
+.lms-action-btn-warning:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #ffffff;
+}
+
+/* --- Task / Homework Cards LMS --- */
+.lms-task-card {
+    background: #ffffff;
+    border-radius: 0.9rem;
+    border: 1px solid #e8e3f7;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.25s ease;
+    display: flex; flex-direction: column;
+}
+
+.lms-task-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px -6px rgba(124,58,237,0.15);
+}
+
+.lms-task-top-bar { height: 5px; }
+.lms-task-top-bar.bar-active    { background: linear-gradient(90deg,#10b981,#059669); }
+.lms-task-top-bar.bar-pending   { background: linear-gradient(90deg,#f59e0b,#d97706); }
+.lms-task-top-bar.bar-graded    { background: linear-gradient(90deg,#8b5cf6,#7c3aed); }
+.lms-task-top-bar.bar-overdue   { background: linear-gradient(90deg,#ef4444,#dc2626); }
+.lms-task-top-bar.bar-submitted { background: linear-gradient(90deg,#0ea5e9,#0284c7); }
+
+/* --- Score Ring LMS --- */
+.lms-score-ring {
+    width: 68px; height: 68px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.2rem; border: 4px solid; flex-shrink: 0;
+}
+.lms-score-ring.score-high    { border-color: #10b981; color: #059669; background: #f0fdf4; }
+.lms-score-ring.score-mid     { border-color: #f59e0b; color: #b45309; background: #fffbeb; }
+.lms-score-ring.score-low     { border-color: #ef4444; color: #b91c1c; background: #fef2f2; }
+.lms-score-ring.score-pending { border-color: #cbd5e1; color: #94a3b8; background: #f8fafc; }
+
+/* --- Micro animaciones de entrada --- */
+@keyframes lmsFadeSlideIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.lms-animate-in { animation: lmsFadeSlideIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both; }
+.lms-animate-in:nth-child(1) { animation-delay: 0.05s; }
+.lms-animate-in:nth-child(2) { animation-delay: 0.10s; }
+.lms-animate-in:nth-child(3) { animation-delay: 0.15s; }
+.lms-animate-in:nth-child(4) { animation-delay: 0.20s; }
+.lms-animate-in:nth-child(5) { animation-delay: 0.25s; }
+.lms-animate-in:nth-child(6) { animation-delay: 0.30s; }
+
+/* --- Divider con label LMS --- */
+.lms-divider {
+    display: flex; align-items: center; gap: 0.75rem;
+    color: #94a3b8; font-size: 0.75rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin: 1.25rem 0;
+}
+.lms-divider::before, .lms-divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
+
+/* --- Empty State LMS --- */
+.lms-empty-state { text-align: center; padding: 3.5rem 2rem; color: #94a3b8; }
+.lms-empty-state .lms-empty-icon {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: #f8fafc; border: 2px dashed #cbd5e1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; margin: 0 auto 1.25rem; color: #94a3b8;
+}
+
+@media (max-width: 992px) {
+    .lms-hero-banner { padding: 1.25rem; }
+    .lms-stat-chip { min-width: 72px; padding: 0.5rem 0.6rem; }
 }

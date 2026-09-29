@@ -32,11 +32,14 @@
 
     {% if is_full_curriculum_viewer %}
     <div class="btn-group shadow-sm" role="group">
-        <button type="button" class="btn btn-sm {% if view_mode != 'grade' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewSubject">
+        <button type="button" class="btn btn-sm {% if view_mode != 'grade' and view_mode != 'course' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewSubject">
             <i class="bi bi-journal-bookmark-fill me-1"></i>Por Asignaturas
         </button>
         <button type="button" class="btn btn-sm {% if view_mode == 'grade' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewGrade">
             <i class="bi bi-calendar3 me-1"></i>Matriz por Grado
+        </button>
+        <button type="button" class="btn btn-sm {% if view_mode == 'course' %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}" id="btnViewCourse">
+            <i class="bi bi-collection-fill me-1"></i>Malla por Curso
         </button>
     </div>
     {% endif %}
@@ -57,7 +60,7 @@
 <!-- ========================================== -->
 <!-- MODO 1: EXPLORADOR POR ASIGNATURA (PRINCIPAL) -->
 <!-- ========================================== -->
-<div id="subjectViewSection" class="row g-4" {% if view_mode == 'grade' %}style="display:none;"{% endif %}>
+<div id="subjectViewSection" class="row g-4" {% if view_mode == 'grade' or view_mode == 'course' %}style="display:none;"{% endif %}>
     <!-- Columna Izquierda: Áreas y Asignaturas -->
     <div class="col-lg-4 col-md-5">
         <div class="card ac-card p-3 shadow-sm h-100">
@@ -263,66 +266,114 @@
 </div>
 
 <!-- ========================================== -->
-<!-- MODO 2: MATRIZ POR GRADO (SOLO DIRECTIVOS/GRUPO) -->
+<!-- MODO 2: MATRIZ POR GRADO (AGRUPADA POR ÁREAS) -->
 <!-- ========================================== -->
 {% if is_full_curriculum_viewer %}
 <div id="gradeViewSection" class="card ac-card p-4 shadow-sm" {% if view_mode != 'grade' %}style="display:none;"{% endif %}>
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
             <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
-                <i class="bi bi-table text-success"></i> Matriz Completa de Horas por Grado
+                <i class="bi bi-table text-success"></i> Matriz de Asignaturas por Grado Escolar
             </h5>
-            <div class="text-muted small">Malla de asignaturas para el grado {{ active_grade.name }}</div>
+            <div class="text-muted small">Malla curricular estructurada para el grado <strong>{{ active_grade.name }}</strong></div>
         </div>
         <div class="d-flex gap-1 flex-wrap">
             {% for g in grades %}
-            <a href="?mode=grade&grade={{ g.id }}" class="btn btn-sm {% if g == active_grade %}btn-primary fw-bold{% else %}btn-outline-secondary{% endif %}">
+            <a href="?mode=grade&grade={{ g.id }}" class="btn btn-sm {% if g == active_grade %}btn-primary fw-bold shadow-sm{% else %}btn-outline-secondary{% endif %}">
                 {{ g.name }}
             </a>
             {% endfor %}
         </div>
     </div>
 
-    <div class="table-responsive bg-white rounded-3 border">
-        <table class="table table-hover align-middle mb-0 small">
-            <thead class="table-light text-muted text-uppercase" style="font-size:0.75rem;">
-                <tr>
-                    <th>Asignatura</th>
-                    <th>Área</th>
-                    <th>Categoría</th>
-                    <th class="text-center">Horas / Semana</th>
-                    <th class="text-end">Peso Área</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for gs in grade_subjects %}
-                <tr>
-                    <td class="fw-bold text-dark">
-                        {{ gs.subject.name }}
-                        <span class="badge bg-light text-muted font-monospace border ms-1">{{ gs.subject.code }}</span>
-                    </td>
-                    <td class="text-muted">{{ gs.subject.area.name }}</td>
-                    <td>
-                        <span class="badge bg-light text-secondary border">{{ gs.subject.get_category_display }}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace px-2 py-1">
-                            {{ gs.weekly_hours }} hrs
-                        </span>
-                    </td>
-                    <td class="text-end font-monospace fw-bold text-secondary">
-                        {{ gs.weight_percentage }}%
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center py-4 text-muted small">
-                        No hay asignaturas configuradas para este grado escolar.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    {% if grade_areas_list %}
+    <div class="row g-3">
+        {% for ga in grade_areas_list %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card border rounded-3 overflow-hidden shadow-sm h-100" style="border-top: 3px solid #3b82f6 !important;">
+                <div class="d-flex justify-content-between align-items-center p-2 px-3 bg-light border-bottom">
+                    <span class="fw-bold text-dark small text-truncate me-2" title="{{ ga.name }}"><i class="bi bi-folder2 text-primary me-1"></i>{{ ga.name }}</span>
+                    <span class="badge bg-primary text-white rounded-pill px-2" style="font-size: 0.7rem;">{{ ga.total_hours }}h/sem</span>
+                </div>
+                <div class="p-2">
+                    {% for gs in ga.subjects %}
+                    <div class="p-2 mb-1 bg-white rounded border d-flex justify-content-between align-items-center shadow-none">
+                        <div class="flex-grow-1 text-truncate me-2">
+                            <div class="fw-semibold small text-dark text-truncate">{{ gs.subject.name }}</div>
+                            <div class="d-flex align-items-center gap-1 mt-1">
+                                <span class="badge bg-light text-muted border font-monospace" style="font-size: 0.65rem;">{{ gs.subject.code }}</span>
+                                <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.65rem;">{{ gs.weight_percentage }}% peso</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style="font-size: 0.72rem;">
+                                {{ gs.weekly_hours }}h/sem
+                            </span>
+                            <a href="?subject={{ gs.subject.id }}" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size: 0.72rem;" title="Ver contenido curricular y DBAs">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-4 text-center text-muted">
+        No hay asignaturas configuradas para este grado escolar.
+    </div>
+    {% endif %}
+</div>
+
+<!-- ========================================== -->
+<!-- MODO 3: MALLA CURRICULAR POR CURSO (DIRECTO) -->
+<!-- ========================================== -->
+<div id="courseViewSection" class="card ac-card p-4 shadow-sm" {% if view_mode != 'course' %}style="display:none;"{% endif %}>
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+                <i class="bi bi-collection-fill text-primary"></i> Malla Curricular de cada Curso
+            </h5>
+            <div class="text-muted small">Acceso directo a la malla curricular y asignaturas por áreas de cada curso institucional.</div>
+        </div>
+        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1">
+            {{ all_sections|length }} Cursos Registrados
+        </span>
+    </div>
+
+    <div class="row g-3">
+        {% for sec in all_sections %}
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="card border rounded-3 p-3 shadow-sm hover-shadow transition h-100 d-flex flex-column" style="border-top: 3px solid #0ea5e9 !important;">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-1">
+                            <i class="bi bi-collection-fill text-primary"></i>
+                            <span>{{ sec.name }}</span>
+                        </h6>
+                        <small class="text-muted">Grado {{ sec.grade_level.name }}</small>
+                    </div>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle">Activo</span>
+                </div>
+
+                <div class="small text-muted mb-3 flex-grow-1">
+                    <div><i class="bi bi-person-badge me-1"></i>Director(a): {% if sec.homeroom_teacher %}<strong>{{ sec.homeroom_teacher.get_full_name|default:sec.homeroom_teacher.username }}</strong>{% else %}<span>Sin asignar</span>{% endif %}</div>
+                    <div><i class="bi bi-people me-1"></i>Estudiantes: {{ sec.enrolled_count }} matriculados</div>
+                </div>
+
+                <a href="{% url 'teachers:course_workspace' sec.id %}?tab=malla" class="btn btn-primary btn-sm w-100 fw-bold d-flex align-items-center justify-content-center gap-1 shadow-sm">
+                    <i class="bi bi-diagram-3-fill"></i>
+                    <span>Ver Malla Curricular</span>
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 py-4 text-center text-muted">
+            No hay cursos o secciones activas registradas en el año lectivo.
+        </div>
+        {% endfor %}
     </div>
 </div>
 {% endif %}
@@ -413,25 +464,44 @@
         });
     });
 
-    // Conmutador entre vista por Asignaturas y Matriz por Grado
+    // Conmutador entre vista por Asignaturas, Matriz por Grado y Malla por Curso
     var btnSubject = document.getElementById('btnViewSubject');
     var btnGrade = document.getElementById('btnViewGrade');
+    var btnCourse = document.getElementById('btnViewCourse');
     var secSubject = document.getElementById('subjectViewSection');
     var secGrade = document.getElementById('gradeViewSection');
+    var secCourse = document.getElementById('courseViewSection');
 
-    if (btnSubject && btnGrade && secSubject && secGrade) {
+    if (btnSubject && secSubject) {
         btnSubject.addEventListener('click', function() {
             secSubject.style.display = 'flex';
-            secGrade.style.display = 'none';
+            if (secGrade) secGrade.style.display = 'none';
+            if (secCourse) secCourse.style.display = 'none';
             btnSubject.className = 'btn btn-sm btn-primary fw-bold';
-            btnGrade.className = 'btn btn-sm btn-outline-secondary';
+            if (btnGrade) btnGrade.className = 'btn btn-sm btn-outline-secondary';
+            if (btnCourse) btnCourse.className = 'btn btn-sm btn-outline-secondary';
         });
+    }
 
+    if (btnGrade && secGrade) {
         btnGrade.addEventListener('click', function() {
-            secSubject.style.display = 'none';
+            if (secSubject) secSubject.style.display = 'none';
             secGrade.style.display = 'block';
+            if (secCourse) secCourse.style.display = 'none';
             btnGrade.className = 'btn btn-sm btn-primary fw-bold';
-            btnSubject.className = 'btn btn-sm btn-outline-secondary';
+            if (btnSubject) btnSubject.className = 'btn btn-sm btn-outline-secondary';
+            if (btnCourse) btnCourse.className = 'btn btn-sm btn-outline-secondary';
+        });
+    }
+
+    if (btnCourse && secCourse) {
+        btnCourse.addEventListener('click', function() {
+            if (secSubject) secSubject.style.display = 'none';
+            if (secGrade) secGrade.style.display = 'none';
+            secCourse.style.display = 'block';
+            btnCourse.className = 'btn btn-sm btn-primary fw-bold';
+            if (btnSubject) btnSubject.className = 'btn btn-sm btn-outline-secondary';
+            if (btnGrade) btnGrade.className = 'btn btn-sm btn-outline-secondary';
         });
     }
 

@@ -44,6 +44,12 @@
             </a>
         </li>
         <li class="sidebar-item">
+            <a href="{% url 'subjects:curriculum' %}" class="sidebar-link {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
+                <i class="bi bi-diagram-3-fill text-primary"></i>
+                <span>Malla Curricular</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
             <a href="{% url 'periods:list' %}" class="sidebar-link {% if 'periods' in request.path %}active{% endif %}">
                 <i class="bi bi-calendar-range"></i>
                 <span>Periodos Lectivos</span>
@@ -220,6 +226,12 @@
             <a href="{% url 'accounts:profile' %}" class="sidebar-link {% if request.resolver_match.url_name == 'profile' %}active{% endif %}">
                 <i class="bi bi-person-circle"></i>
                 <span>Mi Perfil</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="#" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#themeSettingsModal">
+                <i class="bi bi-palette-fill text-warning"></i>
+                <span>Cambiar Tema</span>
             </a>
         </li>
         <li class="sidebar-item">

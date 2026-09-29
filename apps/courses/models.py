@@ -164,6 +164,50 @@ class InstitutionSetting(models.Model):
         verbose_name='Lema o Subtítulo'
     )
 
+    # ── Branding e Identidad Visual ──────────────────────────────────────────
+    logo = models.ImageField(
+        upload_to='institution/logos/',
+        blank=True,
+        null=True,
+        verbose_name='Logo Institucional (PNG/SVG recomendado)',
+        help_text='Logo que aparecerá en el login y la barra lateral.'
+    )
+    primary_color = models.CharField(
+        max_length=7,
+        default='#7c3aed',
+        verbose_name='Color Primario (hex)',
+        help_text='Color principal de la institución. Ej: #7c3aed (morado ACADEMIX), #1b4332 (verde), #1e3a8a (azul).'
+    )
+    secondary_color = models.CharField(
+        max_length=7,
+        default='#c4b5fd',
+        verbose_name='Color Secundario / Pastel (hex)',
+        help_text='Color de acentos y fondos claros. Suele ser una versión más clara del color primario.'
+    )
+    hero_image = models.ImageField(
+        upload_to='institution/hero/',
+        blank=True,
+        null=True,
+        verbose_name='Imagen Hero de la Página de Login',
+        help_text='Foto del colegio o estudiantes que aparece en el fondo del login.'
+    )
+    contact_email = models.EmailField(
+        blank=True,
+        default='',
+        verbose_name='Correo de Contacto Institucional'
+    )
+    contact_phone = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        verbose_name='Teléfono de Contacto'
+    )
+    website_url = models.URLField(
+        blank=True,
+        default='',
+        verbose_name='Sitio Web Oficial'
+    )
+
     # Terminología Adaptable
     term_student = models.CharField(max_length=30, default='Estudiante', verbose_name='Término Alumno (Singular)')
     term_students = models.CharField(max_length=30, default='Estudiantes', verbose_name='Término Alumnos (Plural)')
@@ -177,6 +221,25 @@ class InstitutionSetting(models.Model):
     term_director = models.CharField(max_length=30, default='Rector(a)', verbose_name='Término Director(a)/Decano(a)')
 
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def primary_color_rgb(self):
+        """Convierte el color hex primario a formato RGB para CSS."""
+        c = self.primary_color.lstrip('#')
+        if len(c) == 6:
+            r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+            return f"{r}, {g}, {b}"
+        return "124, 58, 237"
+
+    @property
+    def secondary_color_rgb(self):
+        """Convierte el color hex secundario a formato RGB para CSS."""
+        c = self.secondary_color.lstrip('#')
+        if len(c) == 6:
+            r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+            return f"{r}, {g}, {b}"
+        return "196, 181, 253"
+
 
     class Meta:
         verbose_name = 'Configuración Institucional'

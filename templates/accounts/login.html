@@ -1,226 +1,1511 @@
-{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Portal Institucional | {{ current_institution.institution_name|default:"ACADEMIX" }}{% endblock %}</title>
 
-{% block title %}Iniciar Sesión | ACADEMIX{% endblock %}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+
+    <style>
+        /* ─────────────────────────────────────────────────────────
+           VARIABLES CSS INSTITUCIONALES (Morado Pastel por defecto)
+           Se adaptan dinámicamente según la BD de la institución
+        ───────────────────────────────────────────────────────── */
+        :root {
+            --inst-primary:        {{ current_institution.primary_color|default:"#7c3aed" }};
+            --inst-primary-rgb:    {{ current_institution.primary_color_rgb|default:"124, 58, 237" }};
+            --inst-secondary:      {{ current_institution.secondary_color|default:"#c4b5fd" }};
+            --inst-secondary-rgb:  {{ current_institution.secondary_color_rgb|default:"196, 181, 253" }};
+            --inst-dark:           color-mix(in srgb, var(--inst-primary) 80%, #000 20%);
+            --inst-soft-bg:        #faf7fd;
+            --inst-card-bg:        #ffffff;
+        }
+
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            background: var(--inst-soft-bg);
+            color: #1f2937;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           BARRA SUPERIOR (TOPBAR INFORMATIVA)
+        ───────────────────────────────────────────────────────── */
+        .lp-topbar {
+            background: var(--inst-primary);
+            color: rgba(255,255,255,0.92);
+            font-size: 0.78rem;
+            padding: 0.45rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .lp-topbar a {
+            color: rgba(255,255,255,0.92);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s;
+        }
+
+        .lp-topbar a:hover {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        .lp-topbar-pill {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 2rem;
+            padding: 0.2rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           NAVBAR PRINCIPAL CON ENLACES INSTITUCIONALES
+        ───────────────────────────────────────────────────────── */
+        .lp-navbar {
+            background: #ffffff;
+            border-bottom: 3px solid var(--inst-primary);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(var(--inst-primary-rgb), 0.08);
+        }
+
+        .lp-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+        }
+
+        .lp-brand-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 0.8rem;
+            background: linear-gradient(135deg, var(--inst-secondary), var(--inst-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.45rem;
+            box-shadow: 0 4px 14px rgba(var(--inst-primary-rgb), 0.28);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .lp-brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+
+        .lp-brand-text strong {
+            display: block;
+            font-size: 1.18rem;
+            font-weight: 800;
+            color: var(--inst-primary);
+            letter-spacing: -0.4px;
+            line-height: 1.1;
+        }
+
+        .lp-brand-text span {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 600;
+            display: block;
+        }
+
+        .lp-nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 1.35rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .lp-nav-link {
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 0.84rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s, transform 0.2s;
+            padding: 0.35rem 0.5rem;
+            border-radius: 0.5rem;
+        }
+
+        .lp-nav-link:hover {
+            color: var(--inst-primary);
+            background: color-mix(in srgb, var(--inst-secondary) 15%, transparent);
+        }
+
+        .lp-btn-nav-ingresar {
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            color: white !important;
+            padding: 0.55rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.86rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(var(--inst-primary-rgb), 0.35);
+        }
+
+        .lp-btn-nav-ingresar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(var(--inst-primary-rgb), 0.45);
+            color: white !important;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           HERO SECTION
+        ───────────────────────────────────────────────────────── */
+        .lp-hero {
+            position: relative;
+            min-height: 560px;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+            background: #200f40;
+        }
+
+        .lp-hero-bg {
+            position: absolute;
+            inset: 0;
+            {% if current_institution.hero_image %}
+            background-image: url("{{ current_institution.hero_image.url }}");
+            {% else %}
+            background-image: url("{% static 'img/school_hero.jpg' %}");
+            {% endif %}
+            background-size: cover;
+            background-position: center 30%;
+            z-index: 0;
+            filter: saturate(1.1);
+        }
+
+        .lp-hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                115deg,
+                rgba(var(--inst-primary-rgb), 0.94) 0%,
+                rgba(var(--inst-primary-rgb), 0.82) 48%,
+                rgba(32, 15, 64, 0.65) 100%
+            );
+            z-index: 1;
+        }
+
+        .lp-hero-content {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 3.5rem 2rem;
+            gap: 3.5rem;
+        }
+
+        .lp-hero-text {
+            flex: 1;
+            color: white;
+            min-width: 0;
+        }
+
+        .lp-hero-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 2rem;
+            padding: 0.4rem 1.15rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.95);
+            backdrop-filter: blur(8px);
+            margin-bottom: 1.4rem;
+        }
+
+        .lp-hero-text h1 {
+            font-size: clamp(2rem, 4.2vw, 3rem);
+            font-weight: 800;
+            line-height: 1.18;
+            letter-spacing: -0.6px;
+            margin-bottom: 1.1rem;
+        }
+
+        .lp-hero-text h1 .highlight-phrase {
+            color: var(--inst-secondary);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.25);
+            display: block;
+            font-size: 0.82em;
+            margin-top: 0.3rem;
+        }
+
+        .lp-superacion-quote-box {
+            background: rgba(255,255,255,0.12);
+            border-left: 4px solid var(--inst-secondary);
+            border-radius: 0.85rem;
+            padding: 1.1rem 1.35rem;
+            margin-bottom: 1.6rem;
+            backdrop-filter: blur(6px);
+            border-top: 1px solid rgba(255,255,255,0.18);
+            border-right: 1px solid rgba(255,255,255,0.18);
+            border-bottom: 1px solid rgba(255,255,255,0.18);
+        }
+
+        .lp-superacion-quote-box p {
+            font-size: 1.02rem;
+            color: #ffffff;
+            line-height: 1.6;
+            margin-bottom: 0.4rem;
+            font-style: italic;
+            font-weight: 400;
+        }
+
+        .lp-superacion-quote-box small {
+            display: block;
+            color: var(--inst-secondary);
+            font-weight: 700;
+            font-size: 0.78rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .lp-hero-quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+            margin-top: 1.25rem;
+        }
+
+        .lp-hero-pill-link {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.28);
+            color: white;
+            text-decoration: none;
+            padding: 0.4rem 0.95rem;
+            border-radius: 2rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .lp-hero-pill-link:hover {
+            background: rgba(255,255,255,0.28);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           TARJETA INTERACTIVA DE INICIO / CREDENCIALES
+        ───────────────────────────────────────────────────────── */
+        .lp-card-panel {
+            width: 100%;
+            max-width: 440px;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .lp-login-card {
+            background: #ffffff;
+            border-radius: 1.35rem;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.24), 0 6px 24px rgba(var(--inst-primary-rgb),0.15);
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.8);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .lp-card-header {
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            padding: 1.35rem 1.6rem;
+            color: white;
+            position: relative;
+        }
+
+        .lp-card-header-icon {
+            width: 46px;
+            height: 46px;
+            background: rgba(255,255,255,0.22);
+            border-radius: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+            backdrop-filter: blur(4px);
+        }
+
+        .lp-card-body { padding: 1.6rem; }
+
+        /* VISTA 1: TARJETA DE BIENVENIDA */
+        #view-welcome {
+            display: block;
+        }
+
+        .welcome-quote-card {
+            background: color-mix(in srgb, var(--inst-secondary) 15%, white 85%);
+            border: 1px solid color-mix(in srgb, var(--inst-secondary) 35%, white 65%);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            margin-bottom: 1.35rem;
+            text-align: center;
+        }
+
+        .welcome-quote-icon {
+            font-size: 2rem;
+            color: var(--inst-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-quote-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.4rem;
+        }
+
+        .welcome-quote-text {
+            font-size: 0.85rem;
+            color: #4b5563;
+            line-height: 1.55;
+            margin: 0;
+        }
+
+        .lp-btn-cta-ingresar {
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.95rem 1.5rem;
+            border-radius: 0.85rem;
+            font-size: 1.05rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.65rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 6px 18px rgba(var(--inst-primary-rgb), 0.42);
+            cursor: pointer;
+        }
+
+        .lp-btn-cta-ingresar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 28px rgba(var(--inst-primary-rgb), 0.55);
+            color: white;
+        }
+
+        /* VISTA 2: FORMULARIO DE CREDENCIALES */
+        #view-credentials {
+            display: none;
+        }
+
+        .lp-btn-back {
+            background: rgba(255,255,255,0.22);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            border-radius: 2rem;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: all 0.2s;
+        }
+
+        .lp-btn-back:hover {
+            background: rgba(255,255,255,0.35);
+            color: white;
+        }
+
+        /* Selector de institución */
+        .institution-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+        }
+        @media (max-width: 440px) { .institution-selector { grid-template-columns: repeat(2,1fr); } }
+
+        .inst-card { position: relative; cursor: pointer; margin: 0; }
+        .inst-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .inst-card-inner {
+            border: 1.5px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 6px 2px;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: #fff;
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .inst-card-inner:hover {
+            border-color: var(--inst-secondary);
+            background: color-mix(in srgb, var(--inst-secondary) 15%, white 85%);
+            transform: translateY(-1px);
+        }
+        .inst-card input[type="radio"]:checked + .inst-card-inner {
+            border-color: var(--inst-primary);
+            background: color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
+            box-shadow: 0 3px 10px rgba(var(--inst-primary-rgb), 0.18);
+        }
+        .inst-icon { font-size: 1.25rem; display: block; margin-bottom: 2px; line-height: 1; }
+        .inst-name { font-size: 0.62rem; font-weight: 600; color: #374151; line-height: 1.1; }
+        .inst-badge { font-size: 0.5rem; padding: 1px 3px; border-radius: 6px; margin-top: 2px; display: inline-block; white-space: nowrap; }
+
+        .lp-card-body .form-control,
+        .lp-card-body .form-select {
+            border-color: #d1d5db;
+            border-radius: 0.55rem;
+            font-size: 0.85rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .lp-card-body .form-control:focus,
+        .lp-card-body .form-select:focus {
+            border-color: var(--inst-primary) !important;
+            box-shadow: 0 0 0 3px rgba(var(--inst-primary-rgb), 0.18) !important;
+            outline: none;
+        }
+        .lp-card-body .btn-toggle-password {
+            border-color: #d1d5db !important;
+            background: #f9fafb;
+            color: #6b7280;
+            border-top-right-radius: 0.55rem !important;
+            border-bottom-right-radius: 0.55rem !important;
+            transition: all 0.2s;
+        }
+
+        .lp-btn-submit {
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            border: none;
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.65rem;
+            font-size: 0.95rem;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(var(--inst-primary-rgb), 0.4);
+            cursor: pointer;
+        }
+        .lp-btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(var(--inst-primary-rgb), 0.5);
+            color: white;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           SECCIONES INSTITUCIONALES GENERALES
+        ───────────────────────────────────────────────────────── */
+        .lp-section {
+            padding: 4.5rem 2rem;
+            position: relative;
+        }
+
+        .lp-section-alt {
+            background: #ffffff;
+            border-top: 1px solid color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
+            border-bottom: 1px solid color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
+        }
+
+        .lp-section-badge {
+            background: color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
+            color: var(--inst-primary);
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.4rem 1.1rem;
+            border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .lp-section-title {
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #1f2937;
+        }
+
+        .lp-section-subtitle {
+            max-width: 620px;
+            margin: 0.6rem auto 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #6b7280;
+        }
+
+        /* Tarjetas de Información */
+        .lp-info-card {
+            background: #ffffff;
+            border: 1px solid color-mix(in srgb, var(--inst-secondary) 30%, white 70%);
+            border-radius: 1.25rem;
+            padding: 2rem 1.6rem;
+            height: 100%;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(var(--inst-primary-rgb), 0.04);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .lp-info-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--inst-primary);
+            box-shadow: 0 12px 32px rgba(var(--inst-primary-rgb), 0.12);
+        }
+
+        .lp-info-icon {
+            width: 58px;
+            height: 58px;
+            border-radius: 1rem;
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.6rem;
+            color: white;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 6px 18px rgba(var(--inst-primary-rgb), 0.28);
+        }
+
+        /* Tarjeta de Matrículas Destacada */
+        .lp-matriculas-card {
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--inst-secondary) 15%, white 85%) 0%,
+                color-mix(in srgb, var(--inst-secondary) 30%, white 70%) 100%);
+            border: 1.5px solid var(--inst-secondary);
+            border-radius: 1.5rem;
+            padding: 2.2rem;
+            box-shadow: 0 12px 32px rgba(var(--inst-primary-rgb), 0.08);
+        }
+
+        .lp-timeline-step {
+            position: relative;
+            padding-left: 2rem;
+            padding-bottom: 1.5rem;
+            border-left: 2px solid var(--inst-secondary);
+        }
+        .lp-timeline-step:last-child {
+            padding-bottom: 0;
+            border-left: 2px transparent;
+        }
+        .lp-timeline-step::before {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 0;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--inst-primary);
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 0 2px var(--inst-secondary);
+        }
+
+        /* Footer */
+        .lp-footer {
+            background: var(--inst-primary);
+            color: rgba(255,255,255,0.9);
+            padding: 2.5rem 2rem 1.5rem;
+            font-size: 0.85rem;
+            margin-top: auto;
+        }
+
+        .lp-footer-link {
+            color: rgba(255,255,255,0.8);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .lp-footer-link:hover { color: #ffffff; text-decoration: underline; }
+
+        @media (max-width: 992px) {
+            .lp-hero-content { flex-direction: column; padding: 2.5rem 1.25rem; gap: 2.25rem; }
+            .lp-hero-text { text-align: center; }
+            .lp-superacion-quote-box { text-align: left; }
+            .lp-hero-quick-links { justify-content: center; }
+            .lp-card-panel { max-width: 100%; }
+            .lp-nav-menu { display: none; }
+            .lp-topbar { font-size: 0.72rem; flex-direction: column; gap: 0.25rem; text-align: center; padding: 0.35rem 1rem; }
+            .lp-navbar { padding: 0.6rem 1.25rem; }
+            .lp-section { padding: 3rem 1.25rem; }
+            .lp-hero { min-height: auto; }
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
 
 {% block auth_content %}
-<style>
-.institution-selector {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
-}
-@media (max-width: 440px) {
-    .institution-selector {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-.inst-card {
-    position: relative;
-    cursor: pointer;
-    margin: 0;
-}
-.inst-card input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0; height: 0;
-}
-.inst-card-inner {
-    border: 1.5px solid #e2e8f0;
-    border-radius: 9px;
-    padding: 6px 3px;
-    text-align: center;
-    transition: all 0.2s ease-in-out;
-    background: #ffffff;
-    cursor: pointer;
-    user-select: none;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-.inst-card-inner:hover {
-    border-color: #a78bfa;
-    background: #faf5ff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(124,58,237,.12);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner {
-    border-color: #7c3aed;
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    box-shadow: 0 3px 10px rgba(124,58,237,.18);
-    transform: translateY(-1px);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner .inst-icon {
-    transform: scale(1.12);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner .inst-name {
-    color: #5b21b6;
-    font-weight: 700;
-}
-.inst-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; transition: transform 0.2s; line-height: 1; }
-.inst-name { font-size: 0.67rem; font-weight: 600; color: #374151; line-height: 1.15; }
-.inst-badge {
-    font-size: 0.52rem;
-    padding: 1px 4px;
-    border-radius: 8px;
-    margin-top: 3px;
-    display: inline-block;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-    line-height: 1.2;
-}
-</style>
 
-<div class="login-bg">
-    <div class="login-card p-4 p-sm-5 animate__animated animate__fadeIn" style="max-width: 460px;">
+<!-- ════════════════════════════════════════════════════════
+     BARRA SUPERIOR INFORMATIVA
+════════════════════════════════════════════════════════ -->
+<div class="lp-topbar">
+    <div class="d-flex align-items-center gap-3 flex-wrap justify-content-center justify-content-md-start">
+        {% if current_institution.contact_email %}
+        <a href="mailto:{{ current_institution.contact_email }}">
+            <i class="bi bi-envelope-fill"></i>{{ current_institution.contact_email }}
+        </a>
+        {% else %}
+        <span class="d-flex align-items-center gap-1">
+            <i class="bi bi-envelope-fill"></i>secretaria@institucion.edu.co
+        </span>
+        {% endif %}
 
-        <!-- Encabezado -->
-        <div class="text-center mb-3">
-            <div class="d-inline-flex p-2 rounded-circle mb-2 shadow-sm" style="background: linear-gradient(135deg, #c4b5fd 0%, #b892ff 100%); color: #3b0764; width: 56px; height: 56px; align-items: center; justify-content: center;">
-                <i class="bi bi-mortarboard-fill fs-3"></i>
-            </div>
-            <h3 class="fw-bold text-dark mb-0" style="letter-spacing: -0.5px;">ACADEMIX</h3>
-            <p class="text-muted small mb-0" style="font-size: 0.8rem;">Selecciona tu institución e ingresa al sistema</p>
+        {% if current_institution.contact_phone %}
+        <span class="d-none d-md-flex align-items-center gap-1">
+            <i class="bi bi-telephone-fill"></i>{{ current_institution.contact_phone }}
+        </span>
+        {% endif %}
+
+        <span class="d-none d-lg-flex align-items-center gap-1 opacity-75">
+            <i class="bi bi-clock-fill"></i>Horario de Atención: Lunes a Viernes 7:00 AM – 3:30 PM
+        </span>
+    </div>
+
+    <div class="d-flex align-items-center gap-2">
+        <a href="#matriculas" class="lp-topbar-pill">
+            <i class="bi bi-calendar2-check-fill me-1"></i>Matrículas {{ current_academic_year.year|default:"2026-2027" }}
+        </a>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     NAVBAR PRINCIPAL CON ENLACES INSTITUCIONALES
+════════════════════════════════════════════════════════ -->
+<nav class="lp-navbar">
+    <a href="#" class="lp-brand" id="navbar-brand-link">
+        <div class="lp-brand-logo">
+            {% if current_institution.logo %}
+                <img src="{{ current_institution.logo.url }}" alt="Logo">
+            {% else %}
+                <i class="bi bi-mortarboard-fill" style="color:white;"></i>
+            {% endif %}
         </div>
+        <div class="lp-brand-text">
+            <strong>{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+            <span>{{ current_institution.get_institution_type_display|default:"Institución Educativa" }}</span>
+        </div>
+    </a>
 
-        <!-- Selector Visual Compacto de Modelo Institucional -->
-        <div class="mb-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="small fw-bold text-dark d-flex align-items-center gap-1" style="font-size: 0.78rem;">
-                    <i class="bi bi-building-fill-gear text-purple"></i>
-                    Tipo de Institución:
+    <!-- Menú Institucional -->
+    <ul class="lp-nav-menu d-none d-lg-flex">
+        <li><a href="#sobre-nosotros" class="lp-nav-link"><i class="bi bi-info-circle me-1"></i>Sobre Nosotros</a></li>
+        <li><a href="#comunidad" class="lp-nav-link"><i class="bi bi-people me-1"></i>Comunidad Estudiantil</a></li>
+        <li><a href="#manual-estudiantil" class="lp-nav-link"><i class="bi bi-book me-1"></i>Manual de Convivencia</a></li>
+        <li><a href="#matriculas" class="lp-nav-link"><i class="bi bi-calendar-event me-1"></i>Periodo y Matrículas</a></li>
+    </ul>
+
+</nav>
+
+<!-- ════════════════════════════════════════════════════════
+     HERO SECTION
+════════════════════════════════════════════════════════ -->
+<section class="lp-hero" id="portal-hero">
+    <div class="lp-hero-bg"></div>
+    <div class="lp-hero-overlay"></div>
+
+    <div class="lp-hero-content">
+
+        <!-- MENSAJE DE IDENTIDAD Y SUPERACIÓN -->
+        <div class="lp-hero-text">
+            <div class="lp-hero-label">
+                <i class="bi bi-stars"></i>
+                Comunidad Educativa · {{ current_institution.institution_name|default:"ACADEMIX" }}
+            </div>
+
+            <h1>
+                El Conocimiento Transforma Vidas
+                <span class="highlight-phrase">
+                    {{ current_institution.slogan|default:"Cada día es una oportunidad para aprender, superarte y liderar el futuro." }}
                 </span>
-                <span class="badge bg-light text-dark border px-2 py-1" style="font-size: 0.68rem; font-weight: 500;">
-                    <i class="bi bi-check-circle-fill text-success me-1"></i><strong id="selected-inst-text" class="text-purple">{{ current_institution.get_institution_type_display }}</strong>
-                </span>
+            </h1>
+
+            <div class="lp-superacion-quote-box">
+                <p>
+                    «No te detengas hasta que te sientas orgulloso de tus metas. En nuestra institución creemos en tu talento y te brindamos las herramientas para alcanzar tu máxima excelencia académica y personal.»
+                </p>
+                <small>
+                    <i class="bi bi-award-fill me-1"></i> Formación Integral con Valores y Sentido Humano
+                </small>
             </div>
 
-            <div class="institution-selector" id="institution-selector-grid">
-                <!-- Colegio -->
-                <label class="inst-card" for="inst-colegio" title="Colegio / Escuela — Básica Primaria, Secundaria y Media">
-                    <input type="radio" name="institution_type_preview" id="inst-colegio" value="COLEGIO"
-                           {% if current_institution.institution_type == 'COLEGIO' %}checked{% endif %}>
-                    <div class="inst-card-inner">
-                        <span class="inst-icon">🏫</span>
-                        <span class="inst-name">Colegio</span>
-                        <span class="inst-badge" style="background:#dcfce7; color:#15803d;">Básica/Media</span>
-                    </div>
-                </label>
-                <!-- Universidad -->
-                <label class="inst-card" for="inst-universidad" title="Universidad / Educación Superior">
-                    <input type="radio" name="institution_type_preview" id="inst-universidad" value="UNIVERSIDAD"
-                           {% if current_institution.institution_type == 'UNIVERSIDAD' %}checked{% endif %}>
-                    <div class="inst-card-inner">
-                        <span class="inst-icon">🎓</span>
-                        <span class="inst-name">Universidad</span>
-                        <span class="inst-badge" style="background:#dbeafe; color:#1d4ed8;">Superior</span>
-                    </div>
-                </label>
-                <!-- SENA / Técnico -->
-                <label class="inst-card" for="inst-sena" title="Instituto Técnico / Tecnológico / SENA">
-                    <input type="radio" name="institution_type_preview" id="inst-sena" value="SENA_TECNICO"
-                           {% if current_institution.institution_type == 'SENA_TECNICO' %}checked{% endif %}>
-                    <div class="inst-card-inner">
-                        <span class="inst-icon">🔧</span>
-                        <span class="inst-name">Técnico/SENA</span>
-                        <span class="inst-badge" style="background:#fef9c3; color:#92400e;">Técnica</span>
-                    </div>
-                </label>
-                <!-- Academia -->
-                <label class="inst-card" for="inst-academia" title="Academia / Educación Continua / Cursos">
-                    <input type="radio" name="institution_type_preview" id="inst-academia" value="ACADEMIA"
-                           {% if current_institution.institution_type == 'ACADEMIA' %}checked{% endif %}>
-                    <div class="inst-card-inner">
-                        <span class="inst-icon">🎨</span>
-                        <span class="inst-name">Academia</span>
-                        <span class="inst-badge" style="background:#fce7f3; color:#be185d;">Cursos</span>
-                    </div>
-                </label>
+            <p style="font-size:0.95rem; color:rgba(255,255,255,0.9); line-height:1.65; max-width:520px; margin-bottom:1.3rem;">
+                Espacio de encuentro para directivos, docentes, estudiantes y familias, promoviendo el seguimiento pedagógico y la excelencia formativa.
+            </p>
+
+            <div class="lp-hero-quick-links">
+                <a href="#sobre-nosotros" class="lp-hero-pill-link">
+                    <i class="bi bi-building"></i> Nuestra Institución
+                </a>
+                <a href="#comunidad" class="lp-hero-pill-link">
+                    <i class="bi bi-people"></i> Comunidad Estudiantil
+                </a>
+                <a href="#manual-estudiantil" class="lp-hero-pill-link">
+                    <i class="bi bi-file-earmark-text"></i> Manual de Convivencia
+                </a>
+                <a href="#matriculas" class="lp-hero-pill-link">
+                    <i class="bi bi-calendar-check"></i> Fechas de Matrícula
+                </a>
             </div>
         </div>
 
-        <hr class="my-2" style="border-top: 1px dashed #e2e8f0;">
+        <!-- TARJETA INTERACTIVA DE INICIO / ACCESO -->
+        <div class="lp-card-panel" id="card-panel-wrapper">
+            <div class="lp-login-card">
 
-        <!-- Formulario de Login -->
-        <div id="login-form-container">
-            {% include 'accounts/partials/login_form.html' %}
+                <!-- ESTADO 1: TARJETA DE BIENVENIDA INICIAL -->
+                <div id="view-welcome">
+                    <div class="lp-card-header">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="lp-card-header-icon">
+                                <i class="bi bi-mortarboard-fill"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold" style="font-size:1.05rem; line-height:1.2;">Portal Academix</div>
+                                <small style="opacity:0.88; font-size:0.78rem;">{{ current_institution.institution_name|default:"Institución Educativa" }}</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lp-card-body">
+                        <div class="welcome-quote-card">
+                            <div class="welcome-quote-icon">
+                                <i class="bi bi-trophy-fill"></i>
+                            </div>
+                            <h5 class="welcome-quote-title">¡Bienvenido a tu Entorno Educativo!</h5>
+                            <p class="welcome-quote-text">
+                                Ingresa a la plataforma para consultar tus asignaturas, calificaciones, tareas escolares, asistencias y comunicados institucionales.
+                            </p>
+                        </div>
+
+                        <div class="text-center mb-3">
+                            <span class="badge px-3 py-2 border"
+                                  style="background:color-mix(in srgb, var(--inst-secondary) 18%, white 82%); color:var(--inst-primary); border-color:var(--inst-secondary) !important; font-size:0.75rem;">
+                                <i class="bi bi-shield-check me-1"></i>Acceso para Estudiantes, Docentes y Familias
+                            </span>
+                        </div>
+
+                        <button type="button" class="lp-btn-cta-ingresar btn-trigger-login" id="btn-hero-ingresar">
+                            <i class="bi bi-box-arrow-in-right fs-5"></i>
+                            <span>Ingresar al Sistema</span>
+                        </button>
+
+                        <div class="text-center mt-3" style="font-size:0.72rem; color:#6b7280;">
+                            <i class="bi bi-lock-fill me-1" style="color:var(--inst-primary);"></i>
+                            Canal institucional seguro y autenticado
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ESTADO 2: FORMULARIO DE CREDENCIALES -->
+                <div id="view-credentials">
+                    <div class="lp-card-header">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="lp-card-header-icon">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold" style="font-size:1rem; line-height:1.2;">Ingreso al Sistema</div>
+                                    <small style="opacity:0.88; font-size:0.76rem;">{{ current_institution.institution_name|default:"ACADEMIX" }}</small>
+                                </div>
+                            </div>
+                            <button type="button" class="lp-btn-back" id="btn-back-to-welcome" title="Volver al inicio">
+                                <i class="bi bi-arrow-left"></i> Inicio
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="lp-card-body">
+                        <!-- Identificación Escolar -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 p-2 px-3 rounded-3"
+                             style="background:color-mix(in srgb, var(--inst-secondary) 15%, white 85%); border:1px solid color-mix(in srgb, var(--inst-secondary) 30%, white 70%);">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="fs-4">🏫</span>
+                                <div>
+                                    <strong class="d-block text-dark" style="font-size:0.84rem; line-height:1.2;">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+                                    <small class="text-muted" style="font-size:0.72rem;">Portal Institucional Escolar</small>
+                                </div>
+                            </div>
+                            <span class="badge border px-2 py-1" style="background:#dcfce7; color:#15803d; border-color:#86efac !important; font-size:0.68rem;">
+                                <i class="bi bi-shield-check me-1"></i>Básica y Media
+                            </span>
+                        </div>
+
+                        <!-- Formulario de credenciales -->
+                        <div id="login-form-container">
+                            {% include 'accounts/partials/login_form.html' %}
+                        </div>
+
+                        <div class="text-center mt-3" style="font-size:0.7rem; color:#9ca3af;">
+                            <i class="bi bi-shield-check me-1" style="color:var(--inst-primary);"></i>
+                            Plataforma Segura • Datos Protegidos • Acceso Auditado
+                        </div>
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="text-center mt-3 text-muted small">
-            <span style="font-size: 0.72rem;"><i class="bi bi-shield-check text-purple me-1"></i>Plataforma Educativa Segura y Auditada</span>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     1. SECCIÓN: SOBRE NOSOTROS
+════════════════════════════════════════════════════════ -->
+<section class="lp-section" id="sobre-nosotros">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <span class="lp-section-badge">
+                <i class="bi bi-info-circle-fill"></i> Identidad Institucional
+            </span>
+            <h2 class="lp-section-title">Sobre Nuestra Institución</h2>
+            <p class="lp-section-subtitle">
+                {{ current_institution.institution_name|default:"ACADEMIX" }} es una comunidad formativa comprometida con la excelencia pedagógica, la formación ética y el desarrollo del talento de cada estudiante.
+            </p>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <!-- Misión -->
+            <div class="col-md-4">
+                <div class="lp-info-card">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-compass-fill"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Nuestra Misión</h5>
+                    <p class="text-muted small mb-0" style="line-height:1.65;">
+                        Brindar una educación integral de alta calidad fundada en valores éticos, pensamiento analítico y creatividad, preparando líderes con sólidas competencias para contribuir constructivamente a la sociedad.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Visión -->
+            <div class="col-md-4">
+                <div class="lp-info-card">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-eye-fill"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Nuestra Visión</h5>
+                    <p class="text-muted small mb-0" style="line-height:1.65;">
+                        Consolidarnos como un referente educativo innovador en el año {{ current_academic_year.year|default:"2026-2027" }}, reconocido por su ambiente de respeto, convivencia incluyente y excelencia en procesos formativos mediados por tecnología.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Valores -->
+            <div class="col-md-4">
+                <div class="lp-info-card">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-gem"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-2">Valores Institucionales</h5>
+                    <ul class="text-muted small mb-0 ps-3" style="line-height:1.65;">
+                        <li><strong>Respeto y Convivencia:</strong> Reconocimiento de la dignidad humana.</li>
+                        <li><strong>Responsabilidad:</strong> Compromiso diario con el aprendizaje.</li>
+                        <li><strong>Honestidad:</strong> Rectitud académica y personal.</li>
+                        <li><strong>Solidaridad e Inclusión:</strong> Apoyo mutuo y empatía social.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     2. SECCIÓN: COMUNIDAD ESTUDIANTIL
+════════════════════════════════════════════════════════ -->
+<section class="lp-section lp-section-alt" id="comunidad">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <span class="lp-section-badge">
+                <i class="bi bi-people-fill"></i> Vida Escolar
+            </span>
+            <h2 class="lp-section-title">Comunidad Estudiantil</h2>
+            <p class="lp-section-subtitle">
+                Espacios pensados para el bienestar, la participación activa, el arte, la ciencia y la convivencia armoniosa de nuestros estudiantes.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Cultura y Deporte -->
+            <div class="col-md-6 col-lg-3">
+                <div class="lp-info-card text-center align-items-center">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-palette-fill"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2">Arte, Cultura y Deporte</h6>
+                    <p class="text-muted small mb-0" style="line-height:1.6;">
+                        Talleres extracurriculares de música, danza, teatro y torneos intercolegiales para estimular las destrezas artísticas y físicas.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Gobierno Escolar -->
+            <div class="col-md-6 col-lg-3">
+                <div class="lp-info-card text-center align-items-center">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-patch-check-fill"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2">Gobierno Escolar</h6>
+                    <p class="text-muted small mb-0" style="line-height:1.6;">
+                        Elección democrática de personero estudiantil, contralor y consejo de estudiantes, promoviendo el liderazgo y el ejercicio cívico.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Semilleros e Investigación -->
+            <div class="col-md-6 col-lg-3">
+                <div class="lp-info-card text-center align-items-center">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-cpu-fill"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2">Semilleros y Ciencia</h6>
+                    <p class="text-muted small mb-0" style="line-height:1.6;">
+                        Clubes de ciencias, proyectos STEM, robótica y ferias de emprendimiento donde la curiosidad se convierte en innovación.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Bienestar y Orientación -->
+            <div class="col-md-6 col-lg-3">
+                <div class="lp-info-card text-center align-items-center">
+                    <div class="lp-info-icon">
+                        <i class="bi bi-heart-pulse-fill"></i>
+                    </div>
+                    <h6 class="fw-bold text-dark mb-2">Bienestar y Orientación</h6>
+                    <p class="text-muted small mb-0" style="line-height:1.6;">
+                        Acompañamiento psicoorientador continuo para el desarrollo socioemocional, hábitos de estudio y orientación vocacional.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     3. SECCIÓN: MANUAL ESTUDIANTIL Y DE CONVIVENCIA
+════════════════════════════════════════════════════════ -->
+<section class="lp-section" id="manual-estudiantil">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <span class="lp-section-badge">
+                <i class="bi bi-book-fill"></i> Marco Normativo Escolar
+            </span>
+            <h2 class="lp-section-title">Manual de Convivencia Estudiantil</h2>
+            <p class="lp-section-subtitle">
+                Nuestro acuerdo colectivo de derechos, deberes y pautas pedagógicas para garantizar una convivencia pacífica, incluyente y fraterna.
+            </p>
+        </div>
+
+        <div class="row g-4 align-items-center">
+            <!-- Columna Resumen de Derechos y Deberes -->
+            <div class="col-lg-7">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-4 bg-white border h-100 shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-success">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <span class="fw-bold text-dark">Derechos Clave</span>
+                            </div>
+                            <ul class="text-muted small ps-3 mb-0" style="line-height:1.6;">
+                                <li>Recibir educación de excelencia sin discriminación.</li>
+                                <li>Ser escuchado y tratado con dignidad y respeto.</li>
+                                <li>Debido proceso en valoraciones pedagógicas.</li>
+                                <li>Uso seguro de recursos e instalaciones.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-sm-6">
+                        <div class="p-3 rounded-4 bg-white border h-100 shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2" style="color:var(--inst-primary);">
+                                <i class="bi bi-shield-check fs-5"></i>
+                                <span class="fw-bold text-dark">Deberes Esenciales</span>
+                            </div>
+                            <ul class="text-muted small ps-3 mb-0" style="line-height:1.6;">
+                                <li>Puntualidad y asistencia continua a clases.</li>
+                                <li>Cuidado de la infraestructura y el medio ambiente.</li>
+                                <li>Trato cortés y cordial con docentes y pares.</li>
+                                <li>Cumplimiento diligente de tareas y deberes.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <div class="p-3 rounded-4 bg-white border shadow-sm">
+                            <div class="d-flex align-items-center gap-2 mb-2 text-warning">
+                                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+                                <span class="fw-bold text-dark">Rutas de Atención y Mediación</span>
+                            </div>
+                            <p class="text-muted small mb-0" style="line-height:1.6;">
+                                Nuestro comité de convivencia aplica protocolos formativos y restaurativos frente a conflictos escolares, promoviendo el diálogo, la concertación y la reparación de relaciones interpersonales.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Tarjeta de Documento / Modal -->
+            <div class="col-lg-5">
+                <div class="p-4 rounded-4 text-center border shadow-sm"
+                     style="background:linear-gradient(135deg, color-mix(in srgb, var(--inst-secondary) 15%, white 85%) 0%, color-mix(in srgb, var(--inst-secondary) 30%, white 70%) 100%); border-color:var(--inst-secondary) !important;">
+                    <div class="fs-1 mb-3" style="color:var(--inst-primary);">
+                        <i class="bi bi-journal-richtext"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">Manual de Convivencia Oficial</h5>
+                    <p class="text-muted small mb-3">
+                        Documento oficial vigente para el año lectivo {{ current_academic_year.year|default:"2026-2027" }}, aprobado por el Consejo Directivo.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary rounded-3 py-2 fw-bold"
+                                style="background:var(--inst-primary); border-color:var(--inst-primary);"
+                                data-bs-toggle="modal" data-bs-target="#modalManual">
+                            <i class="bi bi-book-half me-1"></i> Consultar Manual en Línea
+                        </button>
+                        <a href="#matriculas" class="btn btn-outline-dark rounded-3 py-2 fw-semibold" style="font-size:0.85rem;">
+                            <i class="bi bi-calendar2-week me-1"></i> Ver Periodo y Fechas Escolares
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     4. SECCIÓN: PERIODO ACADÉMICO Y MATRÍCULAS
+════════════════════════════════════════════════════════ -->
+<section class="lp-section lp-section-alt" id="matriculas">
+    <div class="container-xl">
+        <div class="text-center mb-5">
+            <span class="lp-section-badge">
+                <i class="bi bi-calendar-check-fill"></i> Calendario y Admisiones
+            </span>
+            <h2 class="lp-section-title">Periodo Académico y Matrículas</h2>
+            <p class="lp-section-subtitle">
+                Conozca los periodos escolares, las fechas de inscripciones y los requisitos para formar parte de nuestra comunidad.
+            </p>
+        </div>
+
+        <!-- Banner de Matrículas Abiertas -->
+        <div class="lp-matriculas-card mb-5">
+            <div class="row align-items-center g-4">
+                <div class="col-lg-7">
+                    <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill bg-white text-success fw-bold small mb-2 border shadow-sm">
+                        <i class="bi bi-patch-check-fill"></i> Proceso de Matrículas Abierto
+                    </div>
+                    <h3 class="fw-bold text-dark mb-2">
+                        Inscripciones para el Año Lectivo {{ current_academic_year.year|default:"2026-2027" }}
+                    </h3>
+                    <p class="text-muted small mb-3" style="line-height:1.65;">
+                        Están disponibles los cupos para preescolar, básica primaria y secundaria. Invite a su familia a sumarse a un proyecto educativo innovador, exigente y humano.
+                    </p>
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar-event text-primary fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size:0.7rem;">Inscripción Ordinaria</small>
+                                <strong class="small text-dark">15 Oct – 30 Ene</strong>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-calendar2-range text-warning fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size:0.7rem;">Matrícula Extraordinaria</small>
+                                <strong class="small text-dark">01 Feb – 15 Feb</strong>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-bell-fill text-danger fs-5"></i>
+                            <div>
+                                <small class="text-muted d-block" style="font-size:0.7rem;">Inicio de Clases</small>
+                                <strong class="small text-dark">{{ current_academic_year.start_date|date:"d F Y"|default:"Febrero 2026" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5 text-lg-end">
+                    <div class="p-3 bg-white rounded-4 border shadow-sm text-start">
+                        <div class="fw-bold text-dark small mb-2 d-flex align-items-center gap-2">
+                            <i class="bi bi-clipboard2-check text-primary"></i> Requisitos de Matrícula:
+                        </div>
+                        <ul class="text-muted small ps-3 mb-3" style="font-size:0.78rem; line-height:1.55;">
+                            <li>Fotocopia documento de identidad del estudiante y acudiente.</li>
+                            <li>Certificado de calificaciones de años anteriores.</li>
+                            <li>Certificado médico general y carné de vacunas.</li>
+                            <li>Paz y salvo de la institución de procedencia.</li>
+                            <li>2 fotografías 3x4 fondo blanco recientes.</li>
+                        </ul>
+                        <div class="text-center">
+                            {% if current_institution.contact_email %}
+                            <a href="mailto:{{ current_institution.contact_email }}?subject=Solicitud%20de%20Cupo%20y%20Matrícula"
+                               class="btn btn-sm btn-primary w-100 rounded-pill py-2 fw-bold"
+                               style="background:var(--inst-primary); border-color:var(--inst-primary);">
+                                <i class="bi bi-envelope me-1"></i> Contactar Admisiones
+                            </a>
+                            {% else %}
+                            <a href="#sobre-nosotros" class="btn btn-sm btn-outline-secondary w-100 rounded-pill py-2 fw-semibold">
+                                <i class="bi bi-geo-alt me-1"></i> Atención en Secretaría
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cronograma de los 4 Periodos Escolares -->
+        <div class="row g-4">
+            <div class="col-12">
+                <h5 class="fw-bold text-dark mb-3 text-center">
+                    <i class="bi bi-clock-history me-1" style="color:var(--inst-primary);"></i>
+                    Cronograma de Periodos Académicos
+                </h5>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="p-3 bg-white border rounded-4 shadow-sm h-100">
+                    <span class="badge mb-2" style="background:#dcfce7; color:#15803d;">1er Periodo</span>
+                    <h6 class="fw-bold text-dark mb-1">Diagnóstico y Apertura</h6>
+                    <small class="text-muted d-block mb-2">Febrero – Abril</small>
+                    <p class="text-muted small mb-0" style="font-size:0.78rem; line-height:1.5;">
+                        Nivelación pedagógica, socialización de pactos de aula y primeros avances evaluativos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="p-3 bg-white border rounded-4 shadow-sm h-100">
+                    <span class="badge mb-2" style="background:#dbeafe; color:#1d4ed8;">2do Periodo</span>
+                    <h6 class="fw-bold text-dark mb-1">Desarrollo Curricular</h6>
+                    <small class="text-muted d-block mb-2">Abril – Junio</small>
+                    <p class="text-muted small mb-0" style="font-size:0.78rem; line-height:1.5;">
+                        Profundización de competencias, evaluaciones intermedias y entrega del primer informe académico a familias.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="p-3 bg-white border rounded-4 shadow-sm h-100">
+                    <span class="badge mb-2" style="background:#fef9c3; color:#92400e;">3er Periodo</span>
+                    <h6 class="fw-bold text-dark mb-1">Consolidación y Proyectos</h6>
+                    <small class="text-muted d-block mb-2">Julio – Septiembre</small>
+                    <p class="text-muted small mb-0" style="font-size:0.78rem; line-height:1.5;">
+                        Ferias de ciencias, olimpiadas académicas y acompañamiento a estudiantes que requieran refuerzo.
+                    </p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3">
+                <div class="p-3 bg-white border rounded-4 shadow-sm h-100">
+                    <span class="badge mb-2" style="background:#fce7f3; color:#be185d;">4to Periodo</span>
+                    <h6 class="fw-bold text-dark mb-1">Cierre y Promoción</h6>
+                    <small class="text-muted d-block mb-2">Octubre – Noviembre</small>
+                    <p class="text-muted small mb-0" style="font-size:0.78rem; line-height:1.5;">
+                        Evaluaciones finales, comisiones de evaluación y promoción, clausura y ceremonias de grado.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════
+     MODAL: CONSULTA DEL MANUAL DE CONVIVENCIA
+════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalManual" tabindex="-1" aria-labelledby="modalManualLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content rounded-4 border-0 shadow-lg">
+            <div class="modal-header text-white" style="background:var(--inst-primary);">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-book-fill fs-5"></i>
+                    <h5 class="modal-title fw-bold" id="modalManualLabel">Manual de Convivencia Estudiantil</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <h5 class="fw-bold text-dark">{{ current_institution.institution_name|default:"ACADEMIX" }}</h5>
+                    <p class="text-muted small mb-0">Normas y Principios Fundamentales para la Convivencia Armónica</p>
+                </div>
+
+                <div class="accordion accordion-flush" id="manualAccordion">
+                    <!-- Cap 1 -->
+                    <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#cap1">
+                                Capítulo I: Principios, Fines y Valores Institucionales
+                            </button>
+                        </h2>
+                        <div id="cap1" class="accordion-collapse collapse show" data-bs-parent="#manualAccordion">
+                            <div class="accordion-body small text-muted" style="line-height:1.65;">
+                                La formación en nuestra institución se orienta hacia el desarrollo armónico del ser, fomentando el libre pensamiento, el respeto irrestricto por los derechos humanos y el compromiso con la preservación del entorno ambiental y social.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cap 2 -->
+                    <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#cap2">
+                                Capítulo II: Derechos y Garantías de los Estudiantes
+                            </button>
+                        </h2>
+                        <div id="cap2" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
+                            <div class="accordion-body small text-muted" style="line-height:1.65;">
+                                Todo estudiante tiene derecho a recibir formación de alta calidad pedagógica, ser respetado en su dignidad e identidad personal, ser evaluado con justicia y transparencia, ser escuchado en sus inquietudes y participar en las instancias del gobierno escolar.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cap 3 -->
+                    <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#cap3">
+                                Capítulo III: Deberes, Compromisos y Normas de Comportamiento
+                            </button>
+                        </h2>
+                        <div id="cap3" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
+                            <div class="accordion-body small text-muted" style="line-height:1.65;">
+                                Son deberes fundamentales la asistencia puntual a la totalidad de clases, el cuidado esmerado del mobiliario institucional, el respeto mutuo entre compañeros y hacia los docentes, y el cumplimiento puntual de tareas y responsabilidades formativas.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cap 4 -->
+                    <div class="accordion-item border rounded-3 mb-2 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#cap4">
+                                Capítulo IV: Protocolos Pedagógicos y Mediación de Conflictos
+                            </button>
+                        </h2>
+                        <div id="cap4" class="accordion-collapse collapse" data-bs-parent="#manualAccordion">
+                            <div class="accordion-body small text-muted" style="line-height:1.65;">
+                                Se contemplan rutas de diálogo formativo, acuerdos de conciliación y el apoyo de psicoorientación antes de medidas disciplinarias mayores, garantizando siempre el debido proceso y el enfoque restaurativo en la comunidad escolar.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="window.print()" style="background:var(--inst-primary); border-color:var(--inst-primary);">
+                    <i class="bi bi-printer me-1"></i> Imprimir Manual
+                </button>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════
+     FOOTER INSTITUCIONAL
+════════════════════════════════════════════════════════ -->
+<footer class="lp-footer">
+    <div class="container-xl">
+        <div class="row g-4 mb-4">
+            <div class="col-md-5">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="lp-brand-logo" style="width:36px; height:36px; font-size:1.1rem;">
+                        {% if current_institution.logo %}
+                            <img src="{{ current_institution.logo.url }}" alt="Logo">
+                        {% else %}
+                            <i class="bi bi-mortarboard-fill" style="color:white;"></i>
+                        {% endif %}
+                    </div>
+                    <strong class="fs-6 text-white">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+                </div>
+                <p class="text-white-50 small mb-2" style="max-width:380px; line-height:1.6;">
+                    Sistema integral de gestión académica y control escolar enfocado en la excelencia, la transparencia pedagógica y el acompañamiento permanente de las familias.
+                </p>
+            </div>
+
+            <div class="col-md-3 col-6">
+                <h6 class="fw-bold text-white mb-3" style="font-size:0.85rem;">Navegación</h6>
+                <ul class="list-unstyled small mb-0 d-grid gap-2">
+                    <li><a href="#sobre-nosotros" class="lp-footer-link">Sobre Nosotros</a></li>
+                    <li><a href="#comunidad" class="lp-footer-link">Comunidad Estudiantil</a></li>
+                    <li><a href="#manual-estudiantil" class="lp-footer-link">Manual de Convivencia</a></li>
+                    <li><a href="#matriculas" class="lp-footer-link">Periodo y Matrículas</a></li>
+                </ul>
+            </div>
+
+            <div class="col-md-4 col-6">
+                <h6 class="fw-bold text-white mb-3" style="font-size:0.85rem;">Contacto y Soporte</h6>
+                <ul class="list-unstyled small mb-0 d-grid gap-2 text-white-50">
+                    {% if current_institution.contact_email %}
+                    <li><i class="bi bi-envelope me-1 text-white"></i>{{ current_institution.contact_email }}</li>
+                    {% else %}
+                    <li><i class="bi bi-envelope me-1 text-white"></i>soporte@academix.edu.co</li>
+                    {% endif %}
+                    {% if current_institution.contact_phone %}
+                    <li><i class="bi bi-telephone me-1 text-white"></i>{{ current_institution.contact_phone }}</li>
+                    {% endif %}
+                    <li><i class="bi bi-clock me-1 text-white"></i>Atención 7:00 AM – 3:30 PM</li>
+                </ul>
+            </div>
+        </div>
+
+        <hr style="border-color:rgba(255,255,255,0.15); margin:1.5rem 0;">
+
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 small text-white-50">
+            <span>© 2026 <strong>{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>. Todos los derechos reservados.</span>
+            <span>Plataforma Académica Integral</span>
+        </div>
+    </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════════════
+     SCRIPTS DE CONTROL Y TRANSICIÓN
+════════════════════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function() {
-    const institutionLabels = {
-        'COLEGIO': 'Colegio / Escuela',
-        'UNIVERSIDAD': 'Universidad / Superior',
-        'SENA_TECNICO': 'Técnico / SENA',
-        'ACADEMIA': 'Academia / Cursos'
-    };
+    const viewWelcome = document.getElementById('view-welcome');
+    const viewCredentials = document.getElementById('view-credentials');
+    const heroSection = document.getElementById('portal-hero');
 
-    const radios = document.querySelectorAll('input[name="institution_type_preview"]');
-    const selectedText = document.getElementById('selected-inst-text');
+    // Cambiar a la vista de credenciales
+    function showCredentialsView() {
+        if (viewWelcome && viewCredentials) {
+            viewWelcome.style.display = 'none';
+            viewCredentials.style.display = 'block';
 
-    function syncHiddenInput(value) {
-        let hidden = document.getElementById('institution_type_hidden');
-        if (!hidden) {
-            hidden = document.createElement('input');
-            hidden.type = 'hidden';
-            hidden.name = 'institution_type';
-            hidden.id = 'institution_type_hidden';
-            const form = document.querySelector('form[action*="login"]');
-            if (form) form.appendChild(hidden);
-        }
-        if (hidden) hidden.value = value;
-        if (selectedText) selectedText.textContent = institutionLabels[value] || value;
-
-        // Actualizar enlace a registro para preseleccionar este modelo
-        const regLink = document.getElementById('login-register-link') || document.querySelector('a[href*="register"]');
-        if (regLink) {
-            regLink.href = "{% url 'accounts:register' %}?model=" + encodeURIComponent(value);
-        }
-
-        // Quitar opción de Acudiente en SENA, Universidad y Academia
-        const loginRoleSelect = document.getElementById('login-role-select');
-        if (loginRoleSelect) {
-            let parentOpt = loginRoleSelect.querySelector('option[value="PARENT"]');
-            if (value === 'COLEGIO') {
-                if (!parentOpt) {
-                    parentOpt = document.createElement('option');
-                    parentOpt.value = 'PARENT';
-                    parentOpt.textContent = 'Padre de Familia';
-                    loginRoleSelect.appendChild(parentOpt);
-                }
-            } else {
-                if (parentOpt) {
-                    if (loginRoleSelect.value === 'PARENT') {
-                        loginRoleSelect.value = 'STUDENT';
-                        loginRoleSelect.dispatchEvent(new Event('change'));
-                    }
-                    parentOpt.remove();
-                }
+            if (heroSection) {
+                heroSection.scrollIntoView({ behavior: 'smooth' });
             }
-        }
 
-        // Sincronizar preset en el servidor de forma asíncrona
-        fetch("{% url 'accounts:switch_model' %}?model=" + encodeURIComponent(value), {
-            headers: {'X-Requested-With': 'XMLHttpRequest'}
-        }).catch(function() {});
+            setTimeout(function() {
+                const roleSelect = document.getElementById('login-role-select');
+                const usernameInput = document.getElementById('login-username-input');
+                const studentInput = document.getElementById('login-student-id-input');
+                if (studentInput && studentInput.offsetParent !== null) {
+                    studentInput.focus();
+                } else if (usernameInput && usernameInput.offsetParent !== null) {
+                    usernameInput.focus();
+                } else if (roleSelect) {
+                    roleSelect.focus();
+                }
+            }, 200);
+        }
     }
 
-    const checked = document.querySelector('input[name="institution_type_preview"]:checked');
-    if (checked) syncHiddenInput(checked.value);
+    // Cambiar a la vista de bienvenida inicial
+    function showWelcomeView() {
+        if (viewWelcome && viewCredentials) {
+            viewCredentials.style.display = 'none';
+            viewWelcome.style.display = 'block';
+        }
+    }
 
-    radios.forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            syncHiddenInput(this.value);
+    // Botones para disparar login
+    document.querySelectorAll('.btn-trigger-login').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            showCredentialsView();
         });
     });
+
+    // Botón volver al inicio
+    const btnBack = document.getElementById('btn-back-to-welcome');
+    if (btnBack) {
+        btnBack.addEventListener('click', function(e) {
+            e.preventDefault();
+            showWelcomeView();
+        });
+    }
+
+    // Logo navbar vuelve a bienvenida
+    const brandLink = document.getElementById('navbar-brand-link');
+    if (brandLink) {
+        brandLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showWelcomeView();
+            if (heroSection) heroSection.scrollIntoView({ behavior: 'smooth' });
+        });
+    }
+
+    // Si hubo errores al enviar credenciales o URL pide auth, mostrar de inmediato el login
+    const hasFormErrors = {% if form.errors or request.method == 'POST' or request.GET.auth %}true{% else %}false{% endif %};
+    if (hasFormErrors || window.location.hash === '#ingresar') {
+        showCredentialsView();
+    }
+
+    // Asegurar modelo escolar COLEGIO por defecto
+    let hidden = document.getElementById('institution_type_hidden');
+    if (!hidden) {
+        hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = 'institution_type';
+        hidden.id = 'institution_type_hidden';
+        const form = document.querySelector('form[action*="login"]');
+        if (form) form.appendChild(hidden);
+    }
+    if (hidden) hidden.value = 'COLEGIO';
+
+    // Asegurar opción Padre de Familia para Colegio
+    const roleSelect = document.getElementById('login-role-select');
+    if (roleSelect) {
+        let parentOpt = roleSelect.querySelector('option[value="PARENT"]');
+        if (!parentOpt) {
+            parentOpt = document.createElement('option');
+            parentOpt.value = 'PARENT';
+            parentOpt.textContent = 'Padre de Familia';
+            roleSelect.appendChild(parentOpt);
+        }
+    }
+
 })();
 </script>
+
 {% endblock %}
+</body>
+</html>

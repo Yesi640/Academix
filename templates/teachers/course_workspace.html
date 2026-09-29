@@ -595,214 +595,134 @@
         {% endif %}
         <div class="tab-pane fade {% if active_tab == 'malla' %}show active{% endif %}" id="tab-malla" role="tabpanel">
             
-            <!-- Cabecera Compacta de la Malla -->
-            <div class="card ac-card border-0 shadow-sm rounded-3 p-3 mb-3">
-                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <!-- Banner Ejecutivo: LMS Corporativo del Curso -->
+            <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4 text-white position-relative overflow-hidden" 
+                 style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1e3a8a 100%);">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 position-relative" style="z-index: 2;">
                     <div>
-                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                            <h5 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-                                <i class="bi bi-diagram-3-fill text-primary"></i>
-                                <span>Malla Curricular de {{ section.name }}</span>
-                            </h5>
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-2">
+                            <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-1 rounded-pill" style="font-size: 0.75rem;">
+                                <i class="bi bi-mortarboard-fill me-1"></i>PROGRAMA ACADÉMICO • {{ section.grade_level.name|upper }}
+                            </span>
                             {% if is_group_director %}
-                            <span class="badge bg-warning-subtle text-dark border border-warning px-2 py-1 rounded-pill small">
-                                <i class="bi bi-star-fill text-warning me-1"></i>Director(a) de Grupo: Malla Completa
+                            <span class="badge bg-warning text-dark px-3 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                <i class="bi bi-shield-check me-1"></i>Supervisión Directiva / Malla Completa
                             </span>
                             {% else %}
-                            <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1 rounded-pill small">
-                                <i class="bi bi-person-check-fill me-1"></i>Docente de Asignatura
+                            <span class="badge bg-info-subtle text-info px-3 py-1 rounded-pill fw-bold" style="font-size: 0.75rem;">
+                                <i class="bi bi-person-check-fill me-1"></i>Facilitador / Docente Asignado
                             </span>
                             {% endif %}
                         </div>
-                        <small class="text-muted">
-                            Grado {{ section.grade_level.name }} • Asignaturas, intensidades semanales y contenidos curriculares.
-                        </small>
+                        <h3 class="fw-bold text-white mb-1 d-flex align-items-center gap-2">
+                            <i class="bi bi-layers-fill text-info"></i>
+                            <span>Malla Modular de {{ section.name }}</span>
+                        </h3>
+                        <p class="text-white-50 small mb-0">
+                            Estructura de módulos de aprendizaje, competencias DBA e intensidades horarias semanales.
+                        </p>
                     </div>
 
-                    <!-- Resumen Abreviado en Línea -->
+                    <!-- Métricas Estilo LMS Dashboard -->
                     <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">
-                            Principales: <strong>{{ principales|length }}</strong>
-                        </span>
-                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
-                            Humanísticas: <strong>{{ humanisticas|length }}</strong>
-                        </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                            Arte/Deporte: <strong>{{ arte_deporte|length }}</strong>
-                        </span>
+                        <div class="px-3 py-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 text-center" style="min-width: 100px;">
+                            <div class="fs-4 fw-bold text-white">{{ curriculum_by_area|length }}</div>
+                            <small class="text-white-50" style="font-size: 0.7rem; text-transform: uppercase;">Áreas / Tracks</small>
+                        </div>
+                        <div class="px-3 py-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 text-center" style="min-width: 100px;">
+                            <div class="fs-4 fw-bold text-info">{{ curriculum|length }}</div>
+                            <small class="text-white-50" style="font-size: 0.7rem; text-transform: uppercase;">Módulos / Materias</small>
+                        </div>
+                        <div class="px-3 py-2 rounded-3 bg-white bg-opacity-10 border border-white border-opacity-10 text-center" style="min-width: 110px;">
+                            <div class="fs-4 fw-bold text-success">{{ total_curriculum_hours }}h</div>
+                            <small class="text-white-50" style="font-size: 0.7rem; text-transform: uppercase;">Carga Semanal</small>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Columnas Agrupadas por Categorías (Lado a Lado) -->
-            {% if curriculum %}
-            <div class="row g-3 align-items-stretch mb-4">
-                <!-- COLUMNA 1: ÁREAS PRINCIPALES -->
-                <div class="col-12 col-lg-4 d-flex flex-column">
-                    <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden h-100 d-flex flex-column" style="border-top: 4px solid #3b82f6 !important; background: #ffffff;">
-                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background: linear-gradient(90deg,#eff6ff,#dbeafe);">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-star-fill text-primary"></i>
-                                <span class="fw-bold text-primary small text-uppercase">Áreas Principales</span>
-                            </div>
-                            <span class="badge bg-primary text-white rounded-pill px-2">{{ principales|length }}</span>
-                        </div>
-                        <div class="p-3 flex-grow-1 bg-light-subtle d-flex flex-column">
-                            {% if principales %}
-                            <div class="d-flex flex-column gap-2">
-                                {% for item in principales %}
-                                <div class="card border rounded-3 p-2 bg-white shadow-sm hover-shadow transition">
-                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                        <div class="flex-grow-1" style="min-width: 0;">
-                                            <div class="fw-bold text-dark text-truncate" title="{{ item.subject.name }}">{{ item.subject.name }}</div>
-                                            <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                                <span class="badge bg-light text-muted font-monospace border" style="font-size:0.65rem;">{{ item.subject.code }}</span>
-                                                {% if item.is_assigned_to_me %}
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.65rem;">Tu materia</span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace text-nowrap" style="font-size:0.75rem;">
-                                            {{ item.weekly_hours }}h / sem
-                                        </span>
-                                    </div>
-                                    <div class="d-flex align-items-center justify-content-between text-muted small mt-2 pt-2 border-top" style="font-size: 0.75rem;">
-                                        <div class="text-truncate me-1">
-                                            <span class="text-secondary">{{ item.subject.area.name }}</span>
-                                            <span class="mx-1">•</span>
-                                            {% if item.norms %}
-                                            <span class="text-success font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA</span>
-                                            {% else %}
-                                            <span class="text-muted">Sin DBA</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}" title="Ver Ficha e Intensidad">
-                                                <i class="bi bi-clock-history me-1"></i>Ficha
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" title="Agregar Norma">
-                                                <i class="bi bi-plus-lg"></i>
-                                            </button>
-                                        </div>
-                                    </div>
+            <!-- Grilla Modular: Áreas de Conocimiento y Materias (Estilo LMS Corporativo) -->
+            {% if curriculum_by_area %}
+            <div class="row g-4 align-items-stretch mb-4">
+                {% for area_group in curriculum_by_area %}
+                <div class="col-12 col-lg-6 col-xl-4 d-flex flex-column">
+                    <div class="card ac-card border-0 shadow-sm rounded-4 overflow-hidden h-100 d-flex flex-column" 
+                         style="background: #ffffff; border: 1px solid rgba(226, 232, 240, 0.8) !important;">
+                        
+                        <!-- Header del Área (Track Corporativo) -->
+                        <div class="p-3 border-bottom d-flex align-items-center justify-content-between" 
+                             style="background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);">
+                            <div class="d-flex align-items-center gap-2 text-truncate me-2">
+                                <div class="rounded-3 bg-primary text-white p-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="bi bi-folder-fill" style="font-size: 0.9rem;"></i>
                                 </div>
-                                {% endfor %}
+                                <div class="text-truncate">
+                                    <div class="fw-bold text-dark text-truncate" style="font-size: 0.85rem;" title="{{ area_group.name }}">{{ area_group.name }}</div>
+                                    <small class="text-muted font-monospace" style="font-size: 0.7rem;">Área Fundamental</small>
+                                </div>
                             </div>
-                            {% else %}
-                            <div class="text-center text-muted small py-4 my-auto">
-                                <i class="bi bi-inbox d-block fs-3 mb-1 text-muted opacity-50"></i>
-                                Sin materias principales
+                            <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill font-monospace" style="font-size: 0.7rem;">
+                                    <i class="bi bi-clock-history me-1"></i>{{ area_group.total_hours }}h/sem
+                                </span>
                             </div>
-                            {% endif %}
                         </div>
-                    </div>
-                </div>
 
-                <!-- COLUMNA 2: ÁREAS HUMANÍSTICAS -->
-                <div class="col-12 col-lg-4 d-flex flex-column">
-                    <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden h-100 d-flex flex-column" style="border-top: 4px solid #7c3aed !important; background: #ffffff;">
-                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background: linear-gradient(90deg,#faf5ff,#ede9fe);">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-book-fill" style="color:#7c3aed;"></i>
-                                <span class="fw-bold small text-uppercase" style="color:#7c3aed;">Áreas Humanísticas</span>
-                            </div>
-                            <span class="badge text-white rounded-pill px-2" style="background:#7c3aed;">{{ humanisticas|length }}</span>
-                        </div>
+                        <!-- Módulos / Materias dentro del Área -->
                         <div class="p-3 flex-grow-1 bg-light-subtle d-flex flex-column">
-                            {% if humanisticas %}
-                            <div class="d-flex flex-column gap-2">
-                                {% for item in humanisticas %}
-                                <div class="card border rounded-3 p-2 bg-white shadow-sm hover-shadow transition">
-                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
+                            <div class="d-flex flex-column gap-3">
+                                {% for item in area_group.subjects %}
+                                <div class="card border-0 rounded-3 p-3 bg-white shadow-sm transition hover-shadow position-relative"
+                                     style="border: 1px solid #e2e8f0 !important; border-left: 4px solid #3b82f6 !important;">
+                                    
+                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                                         <div class="flex-grow-1" style="min-width: 0;">
-                                            <div class="fw-bold text-dark text-truncate" title="{{ item.subject.name }}">{{ item.subject.name }}</div>
-                                            <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                                <span class="badge bg-light text-muted font-monospace border" style="font-size:0.65rem;">{{ item.subject.code }}</span>
+                                            <div class="d-flex align-items-center gap-1 mb-1">
+                                                <span class="badge bg-light text-dark border font-monospace" style="font-size: 0.65rem;">
+                                                    {{ item.subject.code }}
+                                                </span>
                                                 {% if item.is_assigned_to_me %}
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.65rem;">Tu materia</span>
+                                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>Tu materia
+                                                </span>
                                                 {% endif %}
                                             </div>
+                                            <h6 class="fw-bold text-dark mb-0 text-truncate" title="{{ item.subject.name }}">
+                                                {{ item.subject.name }}
+                                            </h6>
                                         </div>
-                                        <span class="badge bg-info-subtle text-info border border-info-subtle font-monospace text-nowrap" style="font-size:0.75rem;">
-                                            {{ item.weekly_hours }}h / sem
+                                        <span class="badge bg-primary text-white font-monospace text-nowrap rounded-pill px-2 py-1" style="font-size: 0.72rem;">
+                                            {{ item.weekly_hours }} hrs/sem
                                         </span>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between text-muted small mt-2 pt-2 border-top" style="font-size: 0.75rem;">
-                                        <div class="text-truncate me-1">
-                                            <span class="text-secondary">{{ item.subject.area.name }}</span>
-                                            <span class="mx-1">•</span>
-                                            {% if item.norms %}
-                                            <span class="text-success font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA</span>
-                                            {% else %}
-                                            <span class="text-muted">Sin DBA</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}" title="Ver Ficha e Intensidad">
-                                                <i class="bi bi-clock-history me-1"></i>Ficha
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" title="Agregar Norma">
-                                                <i class="bi bi-plus-lg"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                            {% else %}
-                            <div class="text-center text-muted small py-4 my-auto">
-                                <i class="bi bi-inbox d-block fs-3 mb-1 text-muted opacity-50"></i>
-                                Sin materias humanísticas
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
 
-                <!-- COLUMNA 3: ARTE, DEPORTE E INFORMÁTICA -->
-                <div class="col-12 col-lg-4 d-flex flex-column">
-                    <div class="card ac-card border-0 shadow-sm rounded-3 p-0 overflow-hidden h-100 d-flex flex-column" style="border-top: 4px solid #10b981 !important; background: #ffffff;">
-                        <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom" style="background: linear-gradient(90deg,#f0fdf4,#dcfce7);">
-                            <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-trophy-fill text-success"></i>
-                                <span class="fw-bold text-success small text-uppercase">Arte, Deporte e Informática</span>
-                            </div>
-                            <span class="badge bg-success text-white rounded-pill px-2">{{ arte_deporte|length }}</span>
-                        </div>
-                        <div class="p-3 flex-grow-1 bg-light-subtle d-flex flex-column">
-                            {% if arte_deporte %}
-                            <div class="d-flex flex-column gap-2">
-                                {% for item in arte_deporte %}
-                                <div class="card border rounded-3 p-2 bg-white shadow-sm hover-shadow transition">
-                                    <div class="d-flex align-items-start justify-content-between gap-2 mb-1">
-                                        <div class="flex-grow-1" style="min-width: 0;">
-                                            <div class="fw-bold text-dark text-truncate" title="{{ item.subject.name }}">{{ item.subject.name }}</div>
-                                            <div class="d-flex flex-wrap align-items-center gap-1 mt-1">
-                                                <span class="badge bg-light text-muted font-monospace border" style="font-size:0.65rem;">{{ item.subject.code }}</span>
-                                                {% if item.is_assigned_to_me %}
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size:0.65rem;">Tu materia</span>
-                                                {% endif %}
-                                            </div>
+                                    <!-- Barra de Progreso / Resumen de Competencias DBA -->
+                                    <div class="p-2 bg-light rounded-2 border mb-2" style="font-size: 0.72rem;">
+                                        <div class="d-flex justify-content-between align-items-center mb-1 text-muted">
+                                            <span><i class="bi bi-award-fill text-warning me-1"></i>Competencias / DBA:</span>
+                                            <strong class="text-dark">{{ item.norms|length }} registrados</strong>
                                         </div>
-                                        <span class="badge bg-success-subtle text-success border border-success-subtle font-monospace text-nowrap" style="font-size:0.75rem;">
-                                            {{ item.weekly_hours }}h / sem
-                                        </span>
+                                        <div class="progress" style="height: 4px;">
+                                            <div class="progress-bar bg-success" role="progressbar" 
+                                                 style="width: {% if item.norms %}100%{% else %}15%{% endif %};"></div>
+                                        </div>
                                     </div>
-                                    <div class="d-flex align-items-center justify-content-between text-muted small mt-2 pt-2 border-top" style="font-size: 0.75rem;">
-                                        <div class="text-truncate me-1">
-                                            <span class="text-secondary">{{ item.subject.area.name }}</span>
-                                            <span class="mx-1">•</span>
-                                            {% if item.norms %}
-                                            <span class="text-success font-monospace"><i class="bi bi-award text-warning me-1"></i>{{ item.norms|length }} DBA</span>
-                                            {% else %}
-                                            <span class="text-muted">Sin DBA</span>
-                                            {% endif %}
-                                        </div>
+
+                                    <!-- Acciones del Módulo: Botón Área y Agregar DBA -->
+                                    <div class="d-flex align-items-center justify-content-between pt-2 border-top">
+                                        <small class="text-muted" style="font-size: 0.7rem;">
+                                            Peso en el área: <strong>{{ item.weight_percentage }}%</strong>
+                                        </small>
                                         <div class="d-flex gap-1 flex-shrink-0">
-                                            <button type="button" class="btn btn-outline-primary btn-sm py-0 px-2" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}" title="Ver Ficha e Intensidad">
-                                                <i class="bi bi-clock-history me-1"></i>Ficha
+                                            <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2 d-flex align-items-center gap-1 shadow-sm" 
+                                                    style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#subjectDetailModal-{{ item.subject.id }}" 
+                                                    title="Ver Módulo, Área e Intensidades">
+                                                <i class="bi bi-diagram-3-fill"></i>
+                                                <span>Área</span>
                                             </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:0.72rem;" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" title="Agregar Norma">
+                                            <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2 d-flex align-items-center gap-1" 
+                                                    style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}" 
+                                                    title="Agregar Competencia / DBA">
                                                 <i class="bi bi-plus-lg"></i>
                                             </button>
                                         </div>
@@ -810,53 +730,58 @@
                                 </div>
                                 {% endfor %}
                             </div>
-                            {% else %}
-                            <div class="text-center text-muted small py-4 my-auto">
-                                <i class="bi bi-inbox d-block fs-3 mb-1 text-muted opacity-50"></i>
-                                Sin materias de arte/deporte
-                            </div>
-                            {% endif %}
                         </div>
                     </div>
                 </div>
+                {% endfor %}
             </div>
             {% else %}
-            <div class="card ac-card border-0 shadow-sm p-4 text-center text-muted small mb-4">
-                No hay materias asignadas en este curso para mostrar.
+            <div class="card ac-card border-0 shadow-sm p-5 text-center text-muted rounded-4 mb-4">
+                <i class="bi bi-inbox fs-1 d-block mb-3 opacity-50"></i>
+                <h5 class="fw-bold text-dark">Sin materias configuradas en la malla</h5>
+                <p class="small mb-0">No hay materias asignadas a este curso para mostrar en la estructura curricular.</p>
             </div>
             {% endif %}
         </div>
 
-        <!-- MODALES UBICADOS FUERA DE LA TABLA (EVITA DEFORMACIONES DE PANTALLA) -->
+        <!-- MODALES DE DETALLE Y NORMAS POR ASIGNATURA (SYLLABUS MODULAR) -->
         {% for item in curriculum %}
-        <!-- Modal: Ficha Curricular e Intensidad Abreviada -->
+        <!-- Modal: Detalle Modular del Área y Asignatura -->
         <div class="modal fade" id="subjectDetailModal-{{ item.subject.id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow">
-                    <div class="modal-header bg-primary text-white py-2 px-3">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="modal-header text-white py-3 px-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);">
                         <div>
-                            <h6 class="modal-title fw-bold mb-0">
-                                {{ item.subject.name }} <span class="badge bg-white text-primary font-monospace ms-1">{{ item.subject.code }}</span>
-                            </h6>
-                            <small class="opacity-75" style="font-size:0.75rem;">{{ item.subject.area.name }} • {{ item.subject.get_category_display }}</small>
+                            <span class="badge bg-white bg-opacity-20 text-white font-monospace mb-1" style="font-size:0.7rem;">
+                                {{ item.subject.code }} • {{ item.subject.get_category_display }}
+                            </span>
+                            <h5 class="modal-title fw-bold mb-0">
+                                {{ item.subject.name }}
+                            </h5>
+                            <small class="text-white-50" style="font-size:0.75rem;">
+                                Área: <strong>{{ item.subject.area.name }}</strong> (Peso: {{ item.weight_percentage }}%)
+                            </small>
                         </div>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-body p-3 small">
+                    <div class="modal-body p-4 small">
                         <!-- Horas en este curso -->
-                        <div class="d-flex justify-content-between align-items-center p-2 bg-primary-subtle text-primary rounded-2 mb-3 border border-primary-subtle">
-                            <span><strong>Horas en {{ section.name }}:</strong></span>
-                            <span class="badge bg-primary font-monospace fs-6">{{ item.weekly_hours }} hrs / sem</span>
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-primary-subtle text-primary rounded-3 mb-4 border border-primary-subtle">
+                            <div>
+                                <span class="fw-bold d-block text-dark">Intensidad en {{ section.name }}:</span>
+                                <small class="text-muted">Grado {{ section.grade_level.name }}</small>
+                            </div>
+                            <span class="badge bg-primary font-monospace fs-6 px-3 py-2 rounded-pill">{{ item.weekly_hours }} hrs / semana</span>
                         </div>
 
-                        <!-- Intensidad por Grado Abreviada (Chips Compactos) -->
-                        <div class="mb-3">
-                            <label class="fw-bold text-dark d-block mb-1">
-                                <i class="bi bi-calendar3 me-1 text-success"></i>Intensidad por Grado (Colegio):
+                        <!-- Matriz de Intensidad por Grado Escolar Institucional -->
+                        <div class="mb-4">
+                            <label class="fw-bold text-dark d-block mb-2">
+                                <i class="bi bi-calendar3 me-1 text-success"></i>Carga Horaria en todos los Grados del Colegio:
                             </label>
-                            <div class="d-flex flex-wrap gap-1 p-2 bg-light rounded-2 border">
+                            <div class="d-flex flex-wrap gap-2 p-3 bg-light rounded-3 border">
                                 {% for c in item.intensities %}
-                                <span class="badge {% if c.is_current %}bg-primary text-white shadow-sm{% else %}bg-white text-dark border{% endif %} px-2 py-1 font-monospace" style="font-size:0.72rem;">
+                                <span class="badge {% if c.is_current %}bg-primary text-white shadow-sm{% else %}bg-white text-dark border{% endif %} px-2 py-1 font-monospace" style="font-size:0.75rem;">
                                     {{ c.grade_code }}: <strong>{{ c.weekly_hours }}h</strong>{% if c.is_current %} 📌{% endif %}
                                 </span>
                                 {% empty %}
@@ -866,41 +791,49 @@
                             <small class="text-muted d-block mt-1" style="font-size:0.7rem;">📌 Grado correspondiente a este curso actual ({{ section.grade_level.name }}).</small>
                         </div>
 
-                        <!-- Enfoque Curricular Abreviado -->
-                        <div class="mb-3">
-                            <label class="fw-bold text-dark d-block mb-1">
-                                <i class="bi bi-card-text me-1 text-primary"></i>Enfoque Curricular:
+                        <!-- Enfoque y Contenido Curricular -->
+                        <div class="mb-4">
+                            <label class="fw-bold text-dark d-block mb-2">
+                                <i class="bi bi-card-text me-1 text-primary"></i>Enfoque Curricular / Objetivos de Aprendizaje:
                             </label>
-                            <div class="p-2 bg-light rounded-2 border text-secondary" style="font-size:0.8rem; line-height:1.4;">
-                                {{ item.description|truncatechars:180 }}
+                            <div class="p-3 bg-light rounded-3 border text-secondary" style="font-size:0.85rem; line-height:1.5;">
+                                {{ item.description }}
                             </div>
                         </div>
 
-                        <!-- Competencias y DBA -->
+                        <!-- Competencias y DBA del Módulo -->
                         <div>
-                            <label class="fw-bold text-dark d-block mb-1">
-                                <i class="bi bi-award-fill me-1 text-warning"></i>Competencias / DBA ({{ item.norms|length }}):
-                            </label>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="fw-bold text-dark mb-0">
+                                    <i class="bi bi-award-fill me-1 text-warning"></i>Competencias y Estándares DBA ({{ item.norms|length }}):
+                                </label>
+                                <span class="badge bg-light text-muted border font-monospace">{{ item.norms|length }} registradas</span>
+                            </div>
                             {% if item.norms %}
-                            <div class="d-flex flex-column gap-1" style="max-height: 160px; overflow-y: auto;">
+                            <div class="d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
                                 {% for norm in item.norms %}
-                                <div class="p-2 bg-white rounded border">
-                                    <span class="badge bg-secondary-subtle text-secondary font-monospace me-1">{{ norm.code }}</span>
-                                    <strong class="text-dark">{{ norm.title }}</strong>
-                                    <div class="text-muted mt-1" style="font-size:0.72rem;">{{ norm.description|truncatechars:120 }}</div>
+                                <div class="p-3 bg-white rounded-3 border shadow-none">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ norm.code }}</span>
+                                        <strong class="text-dark">{{ norm.title }}</strong>
+                                    </div>
+                                    <div class="text-muted mt-1" style="font-size:0.78rem;">{{ norm.description }}</div>
                                 </div>
                                 {% endfor %}
                             </div>
                             {% else %}
-                            <span class="text-muted small">Sin normas registradas.</span>
+                            <div class="p-3 text-center bg-light rounded-3 border text-muted small">
+                                <i class="bi bi-info-circle me-1"></i>No hay competencias DBA registradas para este módulo aún.
+                            </div>
                             {% endif %}
                         </div>
                     </div>
-                    <div class="modal-footer py-2 px-3 bg-light">
-                        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" class="btn btn-primary btn-sm fw-bold" 
+                    <div class="modal-footer py-2 px-4 bg-light border-top">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                        <button type="button" class="btn btn-primary btn-sm fw-bold d-flex align-items-center gap-1" 
                                 data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}">
-                            <i class="bi bi-plus-lg me-1"></i>Nueva Norma
+                            <i class="bi bi-plus-lg"></i>
+                            <span>Agregar Nueva Norma / DBA</span>
                         </button>
                     </div>
                 </div>
