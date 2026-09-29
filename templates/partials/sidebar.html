@@ -33,57 +33,40 @@
         </li>
 
 
-        <!-- Gestión Académica Integral (Opción Única Unificada) -->
-        <li class="sidebar-menu-header">Gestión Académica</li>
+        <!-- Gestión Académica y Cursos (Sprint 2) -->
+        <li class="sidebar-menu-header">Estructura Académica</li>
         
         {% if user.is_admin_role or user.is_rector or user.is_secretary %}
-        {% with is_academic_active='courses' in request.path or 'subjects' in request.path or 'curriculum' in request.path or 'periods' in request.path or 'teachers' in request.path or 'students' in request.path %}
         <li class="sidebar-item">
-            <a href="#menuEstructuraAcademica" 
-               class="sidebar-link dropdown-toggle {% if is_academic_active %}active{% else %}collapsed{% endif %}" 
-               data-bs-toggle="collapse" 
-               role="button" 
-               aria-expanded="{% if is_academic_active %}true{% else %}false{% endif %}" 
-               aria-controls="menuEstructuraAcademica">
-                <i class="bi bi-diagram-3-fill"></i>
-                <span>Estructura Académica</span>
+            <a href="{% url 'courses:academic_structure' %}" class="sidebar-link {% if 'courses' in request.path %}active{% endif %}">
+                <i class="bi bi-building"></i>
+                <span>{{ institution.term_sections|default:'Cursos' }} y {{ institution.term_grade|default:'Grados' }}</span>
             </a>
-            <div class="collapse {% if is_academic_active %}show{% endif %}" id="menuEstructuraAcademica">
-                <ul class="sidebar-submenu">
-                    <li>
-                        <a href="{% url 'courses:academic_structure' %}" class="sidebar-sublink {% if 'courses' in request.path %}active{% endif %}">
-                            <i class="bi bi-building"></i>
-                            <span>{{ institution.term_sections|default:'Cursos' }} y {{ institution.term_grade|default:'Grados' }}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'subjects:curriculum' %}" class="sidebar-sublink {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
-                            <i class="bi bi-diagram-2-fill"></i>
-                            <span>Malla Curricular</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'periods:list' %}" class="sidebar-sublink {% if 'periods' in request.path %}active{% endif %}">
-                            <i class="bi bi-calendar-range"></i>
-                            <span>Periodos Lectivos</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'teachers:list' %}" class="sidebar-sublink {% if 'teachers' in request.path %}active{% endif %}">
-                            <i class="bi bi-person-video3"></i>
-                            <span>{{ institution.term_teachers|default:'Cuerpo Docente' }}</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a href="{% url 'students:list' %}" class="sidebar-sublink {% if 'students' in request.path %}active{% endif %}">
-                            <i class="bi bi-mortarboard"></i>
-                            <span>Matrículas y {{ institution.term_students|default:'Estudiantes' }}</span>
-                        </a>
-                    </li>
-                </ul>
-            </div>
         </li>
-        {% endwith %}
+        <li class="sidebar-item">
+            <a href="{% url 'subjects:curriculum' %}" class="sidebar-link {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
+                <i class="bi bi-diagram-3-fill text-primary"></i>
+                <span>Malla Curricular</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'periods:list' %}" class="sidebar-link {% if 'periods' in request.path %}active{% endif %}">
+                <i class="bi bi-calendar-range"></i>
+                <span>Periodos Lectivos</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'teachers:list' %}" class="sidebar-link {% if 'teachers' in request.path %}active{% endif %}">
+                <i class="bi bi-person-video3"></i>
+                <span>{{ institution.term_teachers|default:'Cuerpo Docente' }}</span>
+            </a>
+        </li>
+        <li class="sidebar-item">
+            <a href="{% url 'students:list' %}" class="sidebar-link {% if 'students' in request.path %}active{% endif %}">
+                <i class="bi bi-mortarboard"></i>
+                <span>Matrículas y {{ institution.term_students|default:'Alumnos' }}</span>
+            </a>
+        </li>
         {% endif %}
 
         {% if user.is_teacher %}

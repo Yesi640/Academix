@@ -42,15 +42,22 @@ class Subject(models.Model):
         verbose_name='Área Fundamental'
     )
     class Category(models.TextChoices):
-        PRINCIPAL = 'PRINCIPAL', 'Materia Principal'
+        PRINCIPAL   = 'PRINCIPAL',   'Materia Principal'
         HUMANISTICA = 'HUMANISTICA', 'Materia Humanística'
-        ARTE_DEPORTE = 'ARTE_DEPORTE', 'Arte y Deporte'
+        HISTORIA    = 'HISTORIA',    'Historia y Ciencias Sociales'
+        ARTE        = 'ARTE',        'Arte y Cultura'
+        DEPORTE     = 'DEPORTE',     'Deporte y Educación Física'
 
     category = models.CharField(
         max_length=20,
         choices=Category.choices,
         default=Category.PRINCIPAL,
         verbose_name='Agrupación / Categoría'
+    )
+    is_primary = models.BooleanField(
+        default=False,
+        verbose_name='¿Es la asignatura principal de su categoría?',
+        help_text='Marca la asignatura representativa de este grupo (Historia, Arte o Deporte).'
     )
     credits = models.PositiveSmallIntegerField(
         default=3,

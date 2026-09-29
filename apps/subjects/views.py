@@ -180,6 +180,7 @@ def curriculum_view(request):
             'area_name': s.area.name,
             'category': s.category,
             'category_display': s.get_category_display(),
+            'is_primary': s.is_primary,
             'description': s.description or 'Contenido curricular conforme a los lineamientos y estándares del MEN.',
             'curriculum': curriculum_entries,
             'norms': norms_list,
@@ -189,7 +190,7 @@ def curriculum_view(request):
         subjects_list.append(s_dict)
         subject_lookup[s.id] = s_dict
 
-    # Agrupar las asignaturas visibles por área para el panel izquierdo
+    # Agrupar por área para el panel izquierdo
     areas_data = []
     for area in areas_qs:
         area_subjs = [s for s in subjects_list if s['area_id'] == area.id]
@@ -200,6 +201,25 @@ def curriculum_view(request):
                 'order': area.order,
                 'subjects': area_subjs,
                 'subjects_count': len(area_subjs),
+            })
+
+    # Agrupar por categoría especial (Historia, Arte, Deporte)
+    SPECIAL_CATEGORIES = [
+        ('HISTORIA', 'Historia y Cs. Sociales', 'bi-globe-americas', '#0ea5e9'),
+        ('ARTE',     'Arte y Cultura',           'bi-palette-fill',   '#a855f7'),
+        ('DEPORTE',  'Deporte y Ed. Física',     'bi-trophy-fill',    '#22c55e'),
+    ]
+    category_groups = []
+    for cat_key, cat_label, cat_icon, cat_color in SPECIAL_CATEGORIES:
+        group_subjects = [s for s in subjects_list if s['category'] == cat_key]
+        if group_subjects:
+            category_groups.append({
+                'key': cat_key,
+                'label': cat_label,
+                'icon': cat_icon,
+                'color': cat_color,
+                'subjects': group_subjects,
+                'primary': next((s for s in group_subjects if s['is_primary']), group_subjects[0]),
             })
 
     # Asignatura activa
@@ -260,6 +280,7 @@ def curriculum_view(request):
         'homeroom_section': homeroom_section,
         'total_teacher_hours': total_teacher_hours,
         'areas_data': areas_data,
+        'category_groups': category_groups,
         'subjects_list': subjects_list,
         'active_subject': active_subject,
         'grades': all_grades,
