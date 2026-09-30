@@ -119,6 +119,11 @@ h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
     transition: all var(--transition-speed) ease-in-out;
     z-index: 1040;
     box-shadow: 4px 0 18px rgba(0, 0, 0, 0.2);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    max-height: 100vh;
+    align-self: flex-start;
 }
 
 .sidebar-brand {

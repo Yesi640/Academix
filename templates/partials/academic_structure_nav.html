@@ -4,14 +4,23 @@
      ========================================================================== -->
 <div class="mb-4">
     <div class="nav nav-pills p-1 bg-white rounded-3 border shadow-xs d-inline-flex flex-wrap gap-1">
+        {% if user.is_admin_role or user.is_rector or user.is_secretary %}
         <a href="{% url 'courses:academic_structure' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'courses' in request.path %}active{% endif %}">
             <i class="bi bi-building"></i>
             <span>{{ institution.term_sections|default:'Cursos' }} y {{ institution.term_grade|default:'Grados' }}</span>
         </a>
+        {% endif %}
+        {% if user.is_teacher and not user.is_admin_role and not user.is_rector and not user.is_secretary %}
+        <a href="{% url 'teachers:my_courses' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'my-courses' in request.path or 'course/' in request.path %}active{% endif %}">
+            <i class="bi bi-journal-bookmark-fill"></i>
+            <span>Mis Asignaciones</span>
+        </a>
+        {% endif %}
         <a href="{% url 'subjects:curriculum' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
             <i class="bi bi-diagram-2-fill"></i>
             <span>Malla Curricular</span>
         </a>
+        {% if user.is_admin_role or user.is_rector or user.is_secretary %}
         <a href="{% url 'periods:list' %}" class="nav-link py-2 px-3 rounded-2 fw-semibold small d-flex align-items-center gap-2 {% if 'periods' in request.path %}active{% endif %}">
             <i class="bi bi-calendar-range"></i>
             <span>Periodos Lectivos</span>
@@ -24,5 +33,6 @@
             <i class="bi bi-mortarboard"></i>
             <span>Matrículas y {{ institution.term_students|default:'Estudiantes' }}</span>
         </a>
+        {% endif %}
     </div>
 </div>

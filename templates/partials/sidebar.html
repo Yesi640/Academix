@@ -76,6 +76,12 @@
                 <span>Mis Asignaciones</span>
             </a>
         </li>
+        <li class="sidebar-item">
+            <a href="{% url 'subjects:curriculum' %}" class="sidebar-link {% if 'subjects' in request.path or 'curriculum' in request.path %}active{% endif %}">
+                <i class="bi bi-diagram-3-fill text-primary"></i>
+                <span>Malla Curricular</span>
+            </a>
+        </li>
         {% endif %}
 
         <!-- Evaluación y Seguimiento Escolar (Sprint 3 y 4 Activos) -->
