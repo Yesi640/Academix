@@ -48,6 +48,14 @@ def curriculum_view(request):
         code = request.POST.get('code', '').strip()
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
+        competency = request.POST.get('competency', '').strip()
+        domain = request.POST.get('domain', '').strip()
+        dimension = request.POST.get('dimension', '').strip()
+        indicator = request.POST.get('indicator', '').strip()
+        saber = request.POST.get('saber', '').strip()
+        hacer = request.POST.get('hacer', '').strip()
+        ser = request.POST.get('ser', '').strip()
+        evidence = request.POST.get('evidence', '').strip()
         order = request.POST.get('order', 1)
 
         if subject_id and code and title:
@@ -61,12 +69,20 @@ def curriculum_view(request):
                 code=code,
                 title=title,
                 description=description,
+                competency=competency,
+                domain=domain,
+                dimension=dimension,
+                indicator=indicator,
+                saber=saber,
+                hacer=hacer,
+                ser=ser,
+                evidence=evidence,
                 order=order_val
             )
-            messages.success(request, f'Competencia / Norma "{code}" agregada correctamente a {subject.name}.')
+            messages.success(request, f'Resultado de Aprendizaje (RAP) "{code}" agregado correctamente a {subject.name}.')
             return redirect(f"{request.path}?subject={subject.id}")
         else:
-            messages.error(request, 'El código y título de la norma son requeridos.')
+            messages.error(request, 'El código y título del RAP son requeridos.')
 
     inst_type = InstitutionSetting.get_settings().institution_type
     current_year = get_current_academic_year()
@@ -182,6 +198,16 @@ def curriculum_view(request):
                 'code': norm.code,
                 'title': norm.title,
                 'description': norm.description,
+                'competency': norm.competency,
+                'domain': norm.domain,
+                'dimension': norm.dimension,
+                'indicator': norm.indicator,
+                'saber': norm.saber,
+                'hacer': norm.hacer,
+                'ser': norm.ser,
+                'evidence': norm.evidence,
+                'order': norm.order,
+                'rap_label': norm.rap_label,
             })
 
         teacher_assigned_info = my_assigned_map.get(s.id, None)

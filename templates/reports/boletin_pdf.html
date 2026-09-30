@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Boletín Oficial de Calificaciones — {{ b.student.user.get_full_name }}</title>
+    <style>
+        /* ══════════════════════════════════════════════════════════════════════
+           CONFIGURACIÓN WEASYPRINT & PAGED MEDIA (ESTÁNDAR A4 IMPRENTA)
+           ══════════════════════════════════════════════════════════════════════ */
+        @page {
+            size: A4 portrait;
+            margin: 1.2cm 1.2cm 1.5cm 1.2cm;
+            @top-right {
+                content: "{{ b.institution.institution_name }} • {{ b.academic_year.year }}";
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                font-size: 7pt;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            @bottom-left {
+                content: "Validación Criptográfica: {{ b.verification_token }} • Expedido: {{ b.issued_at|date:'Y-m-d H:i' }}";
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                font-size: 6.5pt;
+                color: #64748b;
+            }
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+                font-size: 7pt;
+                font-weight: bold;
+                color: #334155;
+            }
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           VARIABLES INSTITUCIONALES Y RESET TIPOGRÁFICO
+           ══════════════════════════════════════════════════════════════════════ */
+        :root {
+            --primary: {{ b.institution.primary_color|default:"#1e3a8a" }};
+            --primary-light: {{ b.institution.secondary_color|default:"#dbeafe" }};
+            --dark: #0f172a;
+            --gray-700: #334155;
+            --gray-500: #64748b;
+            --gray-200: #e2e8f0;
+            --gray-100: #f8fafc;
+            --success: #15803d;
+            --danger: #b91c1c;
+            --warning: #b45309;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: var(--gray-700);
+            font-size: 8pt;
+            line-height: 1.35;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           ENCABEZADO INSTITUCIONAL
+           ══════════════════════════════════════════════════════════════════════ */
+        .inst-header {
+            display: table;
+            width: 100%;
+            border-bottom: 2.5px solid var(--primary);
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .header-logo-cell {
+            display: table-cell;
+            width: 75px;
+            vertical-align: middle;
+        }
+
+        .inst-logo {
+            max-width: 68px;
+            max-height: 68px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .logo-placeholder {
+            width: 64px;
+            height: 64px;
+            background: var(--primary);
+            border-radius: 8px;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 20pt;
+            text-align: center;
+            line-height: 64px;
+        }
+
+        .header-info-cell {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            padding: 0 10px;
+        }
+
+        .inst-name {
+            font-size: 13pt;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .inst-subtitle {
+            font-size: 7.5pt;
+            color: var(--gray-500);
+            margin: 2px 0 4px 0;
+            font-style: italic;
+        }
+
+        .inst-legal-meta {
+            font-size: 6.8pt;
+            color: var(--gray-700);
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .header-badge-cell {
+            display: table-cell;
+            width: 120px;
+            vertical-align: middle;
+            text-align: right;
+        }
+
+        .report-title-badge {
+            background-color: var(--primary);
+            color: #ffffff;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 5px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .period-highlight {
+            font-size: 8.5pt;
+            font-weight: 800;
+            display: block;
+            margin-top: 2px;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           TARJETA METADATOS DEL ESTUDIANTE
+           ══════════════════════════════════════════════════════════════════════ */
+        .student-card {
+            width: 100%;
+            background: var(--gray-100);
+            border: 1px solid var(--gray-200);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            padding: 6px 10px;
+        }
+
+        .card-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .card-table td {
+            padding: 2px 6px;
+            font-size: 7.8pt;
+            vertical-align: middle;
+        }
+
+        .meta-label {
+            font-weight: 700;
+            color: var(--dark);
+            text-transform: uppercase;
+            font-size: 6.8pt;
+        }
+
+        .meta-value {
+            color: #0f172a;
+            font-weight: 500;
+        }
+
+        .meta-value-strong {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 8.5pt;
+        }
+
+        .metric-pill {
+            display: inline-block;
+            background: #ffffff;
+            border: 1px solid var(--gray-200);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .metric-pill.success {
+            background: #f0fdf4;
+            border-color: #86efac;
+            color: #166534;
+        }
+
+        .metric-pill.danger {
+            background: #fef2f2;
+            border-color: #fca5a5;
+            color: #991b1b;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           TABLA OFICIAL DE CALIFICACIONES
+           ══════════════════════════════════════════════════════════════════════ */
+        .grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            page-break-inside: auto;
+        }
+
+        .grades-table thead {
+            display: table-header-group;
+        }
+
+        .grades-table tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        .grades-table th {
+            background: var(--dark);
+            color: #ffffff;
+            font-size: 7pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 5px 6px;
+            border: 1px solid #1e293b;
+            text-align: left;
+        }
+
+        .grades-table th.center {
+            text-align: center;
+        }
+
+        .grades-table th.right {
+            text-align: right;
+        }
+
+        .area-header-row td {
+            background: #eef2ff;
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 7.8pt;
+            text-transform: uppercase;
+            padding: 4px 6px;
+            border-top: 1.5px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
+        }
+
+        .subject-row td {
+            padding: 4px 6px;
+            border-bottom: 1px solid var(--gray-200);
+            font-size: 7.5pt;
+            vertical-align: top;
+        }
+
+        .subject-row:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .sub-name {
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .sub-teacher {
+            font-size: 6.8pt;
+            color: var(--gray-500);
+            display: block;
+            margin-top: 1px;
+        }
+
+        .score-cell {
+            text-align: center;
+            font-size: 8.5pt;
+            font-weight: 800;
+        }
+
+        .score-cell.approved {
+            color: var(--success);
+        }
+
+        .score-cell.failed {
+            color: var(--danger);
+        }
+
+        .badge-perf {
+            display: inline-block;
+            padding: 1.5px 5px;
+            border-radius: 3px;
+            font-size: 6.8pt;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .perf-SUPERIOR, .perf-Superior {
+            background: #dcfce7;
+            color: #15803d;
+            border: 1px solid #86efac;
+        }
+
+        .perf-ALTO, .perf-Alto {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border: 1px solid #93c5fd;
+        }
+
+        .perf-BASICO, .perf-Básico {
+            background: #fef3c7;
+            color: #b45309;
+            border: 1px solid #fcd34d;
+        }
+
+        .perf-BAJO, .perf-Bajo {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+        }
+
+        .feedback-box {
+            font-size: 6.8pt;
+            color: #475569;
+            font-style: italic;
+            margin-top: 2px;
+            padding-left: 6px;
+            border-left: 2px solid #cbd5e1;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           CUADRO DE CONVIVENCIA, ESCALA Y RESUMEN
+           ══════════════════════════════════════════════════════════════════════ */
+        .summary-container {
+            display: table;
+            width: 100%;
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .summary-col {
+            display: table-cell;
+            vertical-align: top;
+            width: 50%;
+        }
+
+        .summary-col:first-child {
+            padding-right: 6px;
+        }
+
+        .summary-col:last-child {
+            padding-left: 6px;
+        }
+
+        .panel-box {
+            border: 1px solid var(--gray-200);
+            border-radius: 4px;
+            padding: 6px 8px;
+            background: #ffffff;
+            height: 100%;
+        }
+
+        .panel-title {
+            font-size: 7.2pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--primary);
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 3px;
+            margin-bottom: 4px;
+        }
+
+        .scale-grid {
+            display: table;
+            width: 100%;
+            font-size: 6.8pt;
+        }
+
+        .scale-item {
+            display: table-cell;
+            text-align: center;
+            padding: 2px;
+        }
+
+        .scale-item strong {
+            display: block;
+        }
+
+        /* ══════════════════════════════════════════════════════════════════════
+           SECCIÓN DE FIRMAS Y VALIDACIÓN CRIPTOGRÁFICA
+           ══════════════════════════════════════════════════════════════════════ */
+        .footer-validation-section {
+            page-break-inside: avoid;
+            margin-top: 15px;
+            border-top: 1.5px solid var(--gray-200);
+            padding-top: 12px;
+        }
+
+        .signatures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
+
+        .signatures-table td {
+            width: 50%;
+            text-align: center;
+            vertical-align: bottom;
+            padding: 0 20px;
+        }
+
+        .sig-line {
+            border-top: 1px solid #475569;
+            margin-bottom: 4px;
+        }
+
+        .sig-name {
+            font-size: 8pt;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .sig-role {
+            font-size: 7pt;
+            color: var(--gray-500);
+            text-transform: uppercase;
+        }
+
+        .crypto-verification-box {
+            display: table;
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 8px;
+        }
+
+        .qr-cell {
+            display: table-cell;
+            width: 80px;
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .qr-img {
+            width: 72px;
+            height: 72px;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .crypto-details-cell {
+            display: table-cell;
+            vertical-align: middle;
+            padding-left: 10px;
+            font-size: 6.8pt;
+            color: var(--gray-700);
+        }
+
+        .hash-code {
+            font-family: "Courier New", Courier, monospace;
+            background: #e2e8f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #0f172a;
+            letter-spacing: 1px;
+            font-size: 7.2pt;
+        }
+
+        .legal-notice {
+            margin-top: 3px;
+            color: #64748b;
+            line-height: 1.25;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         1. ENCABEZADO INSTITUCIONAL
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="inst-header">
+        <div class="header-logo-cell">
+            {% if b.institution.logo %}
+                <img src="{{ b.institution.logo.url }}" alt="Logo" class="inst-logo">
+            {% else %}
+                <div class="logo-placeholder">A</div>
+            {% endif %}
+        </div>
+        <div class="header-info-cell">
+            <h1 class="inst-name">{{ b.institution.institution_name }}</h1>
+            <p class="inst-subtitle">{{ b.institution.slogan }}</p>
+            <p class="inst-legal-meta">
+                {% if b.institution.dane_code %}CÓDIGO DANE: {{ b.institution.dane_code }} • {% endif %}
+                {% if b.institution.consecutive_resolution %}RESOLUCIÓN: {{ b.institution.consecutive_resolution }} • {% endif %}
+                RÉGIMEN: {{ b.institution.get_sector_mode_display|upper }}
+            </p>
+        </div>
+        <div class="header-badge-cell">
+            <div class="report-title-badge">
+                Boletín Oficial
+                <span class="period-highlight">{{ b.period.name|upper }}</span>
+                Año {{ b.academic_year.year }}
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         2. TARJETA METADATOS DEL ESTUDIANTE
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="student-card">
+        <table class="card-table">
+            <tr>
+                <td width="50%">
+                    <span class="meta-label">Estudiante:</span>
+                    <span class="meta-value-strong">{{ b.student.user.last_name }} {{ b.student.user.first_name }}</span>
+                </td>
+                <td width="25%">
+                    <span class="meta-label">Documento:</span>
+                    <span class="meta-value">{{ b.student.user.document_number|default:"Sin registro" }}</span>
+                </td>
+                <td width="25%">
+                    <span class="meta-label">Código:</span>
+                    <span class="meta-value">{{ b.student.student_code }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="meta-label">Curso / Grupo:</span>
+                    <span class="meta-value"><strong>{{ b.section.name }}</strong> ({{ b.section.grade_level.name }})</span>
+                </td>
+                <td>
+                    <span class="meta-label">Director de Grupo:</span>
+                    <span class="meta-value">{{ b.group_director.user.get_full_name|default:"Por asignar" }}</span>
+                </td>
+                <td>
+                    <span class="meta-label">Puesto en Curso:</span>
+                    <span class="metric-pill">
+                        <strong>{{ b.student_rank }}°</strong> de {{ b.total_students_section }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <span class="meta-label">Promedio Periodo:</span>
+                    <span class="metric-pill {% if b.is_overall_approved %}success{% else %}danger{% endif %}">
+                        {{ b.period_average }} — {{ b.overall_performance }}
+                    </span>
+                </td>
+                <td>
+                    <span class="meta-label">Asignaturas:</span>
+                    <span class="meta-value">{{ b.total_subjects_count }} Totales / {{ b.total_failed_count }} Reprobadas</span>
+                </td>
+                <td>
+                    <span class="meta-label">Inasistencias Periodo:</span>
+                    <span class="meta-value">{{ b.total_absences_period }} Horas/Faltas</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         3. TABLA DETALLADA DE CALIFICACIONES POR ÁREA Y ASIGNATURA
+         ══════════════════════════════════════════════════════════════════════ -->
+    <table class="grades-table">
+        <thead>
+            <tr>
+                <th width="48%">Áreas de Conocimiento y Asignaturas</th>
+                <th width="10%" class="center">Faltas (J/I)</th>
+                <th width="12%" class="center">Definitiva</th>
+                <th width="18%" class="center">Nivel Desempeño</th>
+                <th width="12%" class="center">Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for area_item in b.bulletin_areas %}
+                <!-- Fila de Cabecera de Área -->
+                <tr class="area-header-row">
+                    <td colspan="2">
+                        📁 {{ area_item.area.name|upper }}
+                    </td>
+                    <td class="center" style="font-weight: 800;">
+                        {{ area_item.area_average }}
+                    </td>
+                    <td colspan="2" class="center" style="font-size: 7pt; color: #475569;">
+                        Promedio del Área
+                    </td>
+                </tr>
+
+                <!-- Filas de Asignaturas del Área -->
+                {% for sub_item in area_item.subjects %}
+                    <tr class="subject-row">
+                        <td>
+                            <span class="sub-name">{{ sub_item.subject.name }}</span>
+                            <span class="sub-teacher">Docente: {{ sub_item.teacher.user.get_full_name|default:"Docente Titular" }}</span>
+                            {% if sub_item.feedback %}
+                                <div class="feedback-box">
+                                    "{{ sub_item.feedback }}"
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td class="center" style="color: #64748b;">
+                            {{ sub_item.justified_abs }} / {{ sub_item.unjustified_abs }}
+                        </td>
+                        <td class="score-cell {% if sub_item.is_approved %}approved{% else %}failed{% endif %}">
+                            {{ sub_item.final_score }}
+                        </td>
+                        <td class="center">
+                            <span class="badge-perf perf-{{ sub_item.performance_level }}">
+                                {{ sub_item.performance_level }}
+                            </span>
+                        </td>
+                        <td class="center">
+                            {% if sub_item.is_approved %}
+                                <span style="color: var(--success); font-weight: 700; font-size: 7.2pt;">APROBADA</span>
+                            {% else %}
+                                <span style="color: var(--danger); font-weight: 700; font-size: 7.2pt;">REPROBADA</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="center" style="padding: 20px; color: #94a3b8;">
+                        No existen calificaciones consolidadas para el periodo evaluado.
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         4. RESUMEN Y ESCALA DE VALORACIÓN INSTITUCIONAL
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="summary-container">
+        <div class="summary-col">
+            <div class="panel-box">
+                <div class="panel-title">⚖️ Escala de Valoración Nacional (Decreto 1290)</div>
+                <div class="scale-grid">
+                    <div class="scale-item">
+                        <span class="badge-perf perf-BAJO">BAJO</span>
+                        <strong>1.00 - 2.99</strong>
+                    </div>
+                    <div class="scale-item">
+                        <span class="badge-perf perf-BASICO">BÁSICO</span>
+                        <strong>3.00 - 3.99</strong>
+                    </div>
+                    <div class="scale-item">
+                        <span class="badge-perf perf-ALTO">ALTO</span>
+                        <strong>4.00 - 4.59</strong>
+                    </div>
+                    <div class="scale-item">
+                        <span class="badge-perf perf-SUPERIOR">SUPERIOR</span>
+                        <strong>4.60 - 5.00</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="summary-col">
+            <div class="panel-box">
+                <div class="panel-title">📊 Balance Estadístico del Periodo</div>
+                <table style="width: 100%; font-size: 6.8pt;">
+                    <tr>
+                        <td>Asignaturas Evaluadas: <strong>{{ b.total_subjects_count }}</strong></td>
+                        <td>Aprobadas: <strong style="color: var(--success);">{{ b.total_subjects_count|add:"-1"|default:b.total_subjects_count }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Asignaturas Reprobadas: <strong style="color: var(--danger);">{{ b.total_failed_count }}</strong></td>
+                        <td>Total Inasistencias: <strong>{{ b.total_absences_period }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         5. FIRMAS OFICIALES Y CÓDIGO QR CRIPTOGRÁFICO
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div class="footer-validation-section">
+        <table class="signatures-table">
+            <tr>
+                <td>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">{{ b.institution.term_director|default:"Rector(a)" }} Institucional</div>
+                    <div class="sig-role">Rectoría / Dirección General</div>
+                </td>
+                <td>
+                    <div class="sig-line"></div>
+                    <div class="sig-name">{{ b.group_director.user.get_full_name|default:"Director(a) de Grupo" }}</div>
+                    <div class="sig-role">Director(a) de Grupo</div>
+                </td>
+            </tr>
+        </table>
+
+        <div class="crypto-verification-box">
+            <div class="qr-cell">
+                {% if b.qr_base64 %}
+                    <img src="{{ b.qr_base64 }}" alt="QR Verificación" class="qr-img">
+                {% else %}
+                    <div style="font-size: 6pt; color: #94a3b8; text-align: center;">[QR Verificación]</div>
+                {% endif %}
+            </div>
+            <div class="crypto-details-cell">
+                <div><strong>VERIFICACIÓN DE AUTENTICIDAD E INMUTABILIDAD:</strong></div>
+                <div style="margin: 2px 0;">
+                    Firma Electrónica: <span class="hash-code">{{ b.verification_token }}</span>
+                </div>
+                <div class="legal-notice">
+                    Este documento oficial ha sido generado por el Sistema Académico <strong>ACADEMIX</strong>.
+                    Para comprobar su validez, escanee el código QR o consulte la URL:
+                    <span style="color: var(--primary); text-decoration: underline;">{{ b.verification_url }}</span>.
+                    Cualquier alteración, enmienda o tachadura anula la validez legal de este informe.
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

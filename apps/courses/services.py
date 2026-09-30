@@ -205,3 +205,186 @@ def create_course_section(academic_year, grade_level, name, classroom='', homero
 
     return section
 
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PILAR 1: MOTOR DE PARAMETRIZACIÓN INSTITUCIONAL (SAAS HÍBRIDO PÚBLICO/PRIVADO)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def get_institution_settings():
+    """
+    Selector centralizado para recuperar la parametrización institucional activa.
+    Singleton garantizado.
+    """
+    return InstitutionSetting.get_settings()
+
+
+def is_public_school_mode():
+    """Retorna True si la institución opera bajo el régimen oficial / público (gratuidad)."""
+    return get_institution_settings().is_public_institution
+
+
+def is_private_school_mode():
+    """Retorna True si la institución opera bajo el régimen privado / no oficial."""
+    return get_institution_settings().is_private_institution
+
+
+def get_grading_scale_config():
+    """
+    Retorna la configuración completa del sistema de evaluación activo.
+    """
+    setting = get_institution_settings()
+    return {
+        'scale_type': setting.grading_scale_type,
+        'min_grade': setting.min_grade,
+        'max_grade': setting.max_grade,
+        'passing_grade': setting.passing_grade,
+        'decimal_places': setting.grade_decimal_places,
+        'period_structure': setting.period_structure,
+    }
+
+
+def convert_score_to_performance_level(score, setting=None):
+    """
+    Convierte cualquier puntaje cuantitativo (ej. 3.8 en 5.0, 78 en 100, 7.5 en 10)
+    al nivel de desempeño oficial del MEN (Decreto 1290):
+    - SUPERIOR
+    - ALTO
+    - BASICO
+    - BAJO
+    """
+    from decimal import Decimal
+    if setting is None:
+        setting = get_institution_settings()
+
+    if score is None:
+        return 'BAJO', False
+
+    try:
+        score_dec = Decimal(str(score))
+    except Exception:
+        return 'BAJO', False
+
+    scale = setting.grading_scale_type
+    passing = setting.passing_grade
+
+    is_approved = score_dec >= passing
+
+    if scale == InstitutionSetting.GradingScaleType.NUMERIC_100:
+        if score_dec < Decimal('60.00'):
+            return 'BAJO', False
+        elif score_dec < Decimal('80.00'):
+            return 'BASICO', True
+        elif score_dec < Decimal('95.00'):
+            return 'ALTO', True
+        else:
+            return 'SUPERIOR', True
+
+    elif scale == InstitutionSetting.GradingScaleType.NUMERIC_10:
+        if score_dec < Decimal('6.00'):
+            return 'BAJO', False
+        elif score_dec < Decimal('8.00'):
+            return 'BASICO', True
+        elif score_dec < Decimal('9.20'):
+            return 'ALTO', True
+        else:
+            return 'SUPERIOR', True
+
+    else:
+        # NUMERIC_5 o CONCEPTUAL_MEN (1.00 a 5.00 estándar oficial colombiano)
+        if score_dec < Decimal('3.00'):
+            return 'BAJO', False
+        elif score_dec < Decimal('4.00'):
+            return 'BASICO', True
+        elif score_dec < Decimal('4.60'):
+            return 'ALTO', True
+        else:
+            return 'SUPERIOR', True
+
+
+def validate_score_input(score, setting=None):
+    """
+    Valida si una calificación numérica respeta los límites establecidos en la configuración del colegio.
+    Lanza ValidationError en caso de estar fuera de límites.
+    """
+    from decimal import Decimal
+    from django.core.exceptions import ValidationError
+
+    if setting is None:
+        setting = get_institution_settings()
+
+    if score is None or str(score).strip() == '':
+        return None
+
+    try:
+        val = Decimal(str(score).strip().replace(',', '.'))
+    except Exception:
+        raise ValidationError(f"Valor numérico no válido: {score}")
+
+    if val < setting.min_grade or val > setting.max_grade:
+        raise ValidationError(
+            f"La calificación debe encontrarse entre {setting.min_grade} y {setting.max_grade} según la escala activa de la institución."
+        )
+
+    return val
+
+
+def is_feature_active(feature_flag_name):
+    """
+    Evalúa si un módulo o característica específica está activa en la parametrización institucional.
+    Ej: 'enable_pae_module', 'enable_tuition_billing', 'enable_simat_integration'
+    """
+    setting = get_institution_settings()
+    return bool(getattr(setting, feature_flag_name, False))
+
+
+def can_download_report_card(student_profile):
+    """
+    Pilar 1 y 2: Regla de negocio de acceso a boletines de notas.
+    - Colegio Público: El acceso es universal e incondicional (no existe cobro ni retención legal).
+    - Colegio Privado: Si está habilitado el bloqueo por morosidad, valida estados de cuenta pendientes.
+    Retorna tupla: (puede_descargar: bool, motivo: str)
+    """
+    setting = get_institution_settings()
+
+    # Si es institución pública, NUNCA se bloquea por causales económicas
+    if setting.is_public_institution:
+        return True, "Acceso concedido bajo principio de gratuidad universal oficial (Colegio Público)."
+
+    # Si es institución privada pero no tiene activada la retención de boletines
+    if not setting.allows_report_card_debt_blocking:
+        return True, "Descarga de boletín habilitada institucionalmente."
+
+    # Si es privada y tiene activado el bloqueo, verificar deudas del estudiante/familia
+    # Se consulta si existe un modelo de cartera/pagos con morosidad
+    try:
+        if hasattr(student_profile, 'has_financial_debt') and student_profile.has_financial_debt():
+            return False, "La descarga del boletín se encuentra suspendida temporalmente por obligaciones financieras pendientes."
+    except Exception:
+        pass
+
+    return True, "Paz y salvo financiero verificado."
+
+
+@transaction.atomic
+def apply_institution_mode(sector_mode, user=None):
+    """
+    Conmuta en caliente el modo del SaaS entre Público y Privado y audita el evento.
+    """
+    setting = get_institution_settings()
+    old_sector = setting.sector_mode
+
+    setting.apply_sector_preset(sector_mode)
+
+    log_audit(
+        action='CONFIG_CHANGE',
+        table_name='InstitutionSetting',
+        record_id=setting.id,
+        old_values={'sector_mode': old_sector},
+        new_values={'sector_mode': sector_mode},
+        reason=f"Cambio de régimen institucional a {sector_mode} (SaaS Híbrido)",
+        user=user
+    )
+
+    return setting
+
+

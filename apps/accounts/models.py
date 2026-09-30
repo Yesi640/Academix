@@ -132,3 +132,50 @@ class CustomUser(AbstractUser):
             self.Role.PARENT: 'bg-secondary text-white',
         }
         return badge_map.get(self.role, 'bg-dark text-white')
+
+
+class SystemThemeSettings(models.Model):
+    """
+    Configuración Global de Tema definida por el Rector.
+    Singleton: Solo existe una fila. Cuando el Rector cambia el tema del sistema,
+    todos los usuarios (excepto los que ya tienen un tema personal guardado) verán
+    el nuevo tema institucional como base.
+    """
+    theme_data = models.JSONField(
+        default=dict,
+        verbose_name='Datos del Tema Global',
+        help_text='JSON completo con los tokens de color y tipografía del tema institucional.'
+    )
+    updated_by = models.ForeignKey(
+        CustomUser,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='theme_updates',
+        verbose_name='Actualizado Por'
+    )
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Última Actualización')
+
+    class Meta:
+        verbose_name = 'Configuración de Tema del Sistema'
+        verbose_name_plural = 'Configuración de Tema del Sistema'
+
+    def __str__(self):
+        return f'Tema Global — actualizado {self.updated_at.strftime("%d/%m/%Y %H:%M")} por {self.updated_by}'
+
+    @classmethod
+    def get_global_theme(cls):
+        """Retorna el tema global activo, o None si no ha sido configurado por el Rector."""
+        obj = cls.objects.first()
+        if obj and obj.theme_data:
+            return obj.theme_data
+        return None
+
+    @classmethod
+    def set_global_theme(cls, theme_data: dict, user):
+        """Guarda o actualiza el tema global institucional definido por el Rector."""
+        obj, _ = cls.objects.get_or_create(pk=1)
+        obj.theme_data = theme_data
+        obj.updated_by = user
+        obj.save()
+        return obj

@@ -596,9 +596,17 @@ def add_subject_norm_view(request, subject_id):
         code = request.POST.get('code', '').strip()
         title = request.POST.get('title', '').strip()
         description = request.POST.get('description', '').strip()
+        competency = request.POST.get('competency', '').strip()
+        domain = request.POST.get('domain', '').strip()
+        dimension = request.POST.get('dimension', '').strip()
+        indicator = request.POST.get('indicator', '').strip()
+        saber = request.POST.get('saber', '').strip()
+        hacer = request.POST.get('hacer', '').strip()
+        ser = request.POST.get('ser', '').strip()
+        evidence = request.POST.get('evidence', '').strip()
         order = request.POST.get('order', 1)
 
-        if code and title and description:
+        if code and title:
             try:
                 order_val = int(order)
             except ValueError:
@@ -609,11 +617,19 @@ def add_subject_norm_view(request, subject_id):
                 code=code,
                 title=title,
                 description=description,
+                competency=competency,
+                domain=domain,
+                dimension=dimension,
+                indicator=indicator,
+                saber=saber,
+                hacer=hacer,
+                ser=ser,
+                evidence=evidence,
                 order=order_val
             )
-            messages.success(request, f'Norma/Competencia "{code}" asociada correctamente a {subject.name}.')
+            messages.success(request, f'Resultado de Aprendizaje (RAP) "{code}" asociado correctamente a {subject.name}.')
         else:
-            messages.error(request, 'Todos los campos de la norma son obligatorios.')
+            messages.error(request, 'El código y título del RAP son requeridos.')
 
     return redirect(request.META.get('HTTP_REFERER', 'teachers:my_courses'))
 

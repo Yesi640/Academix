@@ -2,9 +2,11 @@ from django.shortcuts import render, redirect
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.http import require_POST
+import json
 from .forms import LoginForm, UserProfileForm
-from .models import CustomUser
+from .models import CustomUser, SystemThemeSettings
 from apps.audit.services import log_audit
 
 def login_view(request):
@@ -552,3 +554,54 @@ def change_password_view(request):
         'must_change': must_change,
         'user': user,
     })
+
+
+@login_required
+@require_POST
+def rector_save_global_theme(request):
+    """
+    Vista exclusiva del Rector para guardar el tema global del sistema.
+    Solo el rol RECTOR (o ADMIN) puede llamar a este endpoint.
+    El tema se persiste en base de datos y sera visible para todos los usuarios
+    como tema institucional base.
+    """
+    user = request.user
+    if user.role not in (CustomUser.Role.RECTOR, CustomUser.Role.ADMIN) and not user.is_superuser:
+        return JsonResponse({'ok': False, 'error': 'Sin permiso. Solo el Rector puede modificar el tema global.'}, status=403)
+
+    try:
+        body = json.loads(request.body)
+        theme_data = body.get('theme_data', {})
+        if not isinstance(theme_data, dict) or not theme_data:
+            return JsonResponse({'ok': False, 'error': 'Datos de tema invalidos.'}, status=400)
+
+        # Marcar que es el tema global del sistema
+        theme_data['_global'] = True
+        theme_data['_updated_by'] = user.get_full_name() or user.username
+
+        SystemThemeSettings.set_global_theme(theme_data, user)
+
+        log_audit(
+            user=user,
+            action='UPDATE',
+            table_name='SystemThemeSettings',
+            record_id=1,
+            reason=f'Rector actualizo tema global del sistema: {theme_data.get("name", "(sin nombre)")}',
+            request=request
+        )
+
+        return JsonResponse({'ok': True, 'message': 'Tema institucional guardado correctamente.'})
+    except (json.JSONDecodeError, Exception) as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+
+
+@login_required
+def get_global_theme_api(request):
+    """
+    Retorna el tema global del sistema como JSON.
+    Todos los usuarios autenticados pueden consultar este endpoint.
+    """
+    theme = SystemThemeSettings.get_global_theme()
+    if theme:
+        return JsonResponse({'ok': True, 'theme': theme})
+    return JsonResponse({'ok': False, 'theme': None})

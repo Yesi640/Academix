@@ -89,19 +89,31 @@ class SubjectNorm(models.Model):
         related_name='norms',
         verbose_name='Asignatura / Módulo'
     )
-    code = models.CharField(max_length=50, verbose_name='Código de Norma / Estándar')
-    title = models.CharField(max_length=200, verbose_name='Título de la Norma')
-    description = models.TextField(verbose_name='Descripción de la Competencia / Estándar')
+    code = models.CharField(max_length=50, verbose_name='Código de Norma / RAP')
+    title = models.CharField(max_length=200, verbose_name='Título del RAP / Competencia')
+    description = models.TextField(blank=True, default='', verbose_name='Descripción de la Competencia / Estándar')
+    competency = models.CharField(max_length=255, blank=True, default='', verbose_name='Competencia General')
+    domain = models.CharField(max_length=150, blank=True, default='', verbose_name='Dominio')
+    dimension = models.CharField(max_length=150, blank=True, default='', verbose_name='Dimensión')
+    indicator = models.TextField(blank=True, default='', verbose_name='Indicador de Logro / Desempeño')
+    saber = models.TextField(blank=True, default='', verbose_name='Saber (Cognitivo / Conceptual)')
+    hacer = models.TextField(blank=True, default='', verbose_name='Hacer (Procedimental / Desempeño)')
+    ser = models.TextField(blank=True, default='', verbose_name='Ser (Actitudinal / Convivencial)')
+    evidence = models.TextField(blank=True, default='', verbose_name='Elaborar (Evidencia de Aprendizaje / Producto)')
     order = models.PositiveSmallIntegerField(default=1, verbose_name='Orden')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = 'Norma / Competencia'
-        verbose_name_plural = 'Normas y Competencias'
+        verbose_name = 'Resultado de Aprendizaje (RAP)'
+        verbose_name_plural = 'Resultados de Aprendizaje (RAPs)'
         ordering = ['subject', 'order', 'code']
 
     def __str__(self):
-        return f"[{self.code}] {self.title} - {self.subject.code}"
+        return f"[RAP {self.order} - {self.code}] {self.title} ({self.subject.code})"
+
+    @property
+    def rap_label(self):
+        return f"RAP {self.order}"
 
 
 class GradeSubject(models.Model):

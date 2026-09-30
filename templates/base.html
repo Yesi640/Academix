@@ -30,67 +30,48 @@
     };
     </script>
 
-    <!-- Precarga de Tema, Rol y Tipografía en el Head para evitar parpadeos visuales -->
+    <!-- Tema Global del Sistema (definido por el Rector, inyectado desde BD) -->
+    <script>
+    window.ACADEMIX_GLOBAL_THEME = {{ global_theme_json|safe }};
+    </script>
+
+    <!-- Precarga del Tema Institucional (definido por el Rector) — evita parpadeos visuales -->
     <script>
     (function() {
         try {
-            var userKey = (window.ACADEMIX_CURRENT_USER && window.ACADEMIX_CURRENT_USER.id !== 'guest') 
-                ? ('academix_theme_user_' + window.ACADEMIX_CURRENT_USER.id) 
-                : 'academix_user_theme';
-            var saved = localStorage.getItem(userKey) || localStorage.getItem('academix_user_theme');
+            var t = window.ACADEMIX_GLOBAL_THEME;
             var r = document.documentElement;
-
-            if (saved) {
-                var t = JSON.parse(saved);
-                var isSystem = (t.key === 'system' || t.isSystemTheme);
+            if (t && t.primary) {
                 var isDark = (t.key === 'dark');
-
-                // REGLA 2: En Tema del Sistema, letras y fuentes se mantienen neutrales e intactas
-                if (isSystem) {
-                    t.textHeadings = '#1e1b4b';
-                    t.textMain = '#1e1b4b';
-                    t.textMuted = '#64748b';
-                    t.fontFamily = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
-                    t.fontSize = '1rem';
-                    t.cardBg = '#ffffff';
-                    t.bg = '#faf7fd';
-                } else if (!isDark) {
-                    // En temas claros por rol, asegurar contraste oscuro
-                    if (!t.textHeadings || t.textHeadings === '#ffffff' || t.textHeadings === '#f8fafc') t.textHeadings = '#1e1b4b';
-                    if (!t.textMain || t.textMain === '#ffffff' || t.textMain === '#f8fafc') t.textMain = '#1e1b4b';
-                    if (!t.cardBg || t.cardBg === '#1e293b') t.cardBg = '#ffffff';
-                }
-
-                if (t.primary) r.style.setProperty('--ac-primary', t.primary);
-                if (t.primaryDark) r.style.setProperty('--ac-primary-dark', t.primaryDark);
-                if (t.primaryLight) r.style.setProperty('--ac-primary-light', t.primaryLight);
-                if (t.primaryPastel) r.style.setProperty('--ac-primary-pastel', t.primaryPastel);
-                if (t.bg) r.style.setProperty('--ac-bg', t.bg);
-                if (t.cardBg) r.style.setProperty('--ac-card-bg', t.cardBg);
-                if (t.border) r.style.setProperty('--ac-border', t.border);
+                if (t.primary)         r.style.setProperty('--ac-primary', t.primary);
+                if (t.primaryDark)     r.style.setProperty('--ac-primary-dark', t.primaryDark);
+                if (t.primaryLight)    r.style.setProperty('--ac-primary-light', t.primaryLight);
+                if (t.primaryPastel)   r.style.setProperty('--ac-primary-pastel', t.primaryPastel);
+                if (t.bg)              r.style.setProperty('--ac-bg', t.bg);
+                if (t.cardBg)          r.style.setProperty('--ac-card-bg', t.cardBg);
+                if (t.border)          r.style.setProperty('--ac-border', t.border);
                 if (t.sidebarGradient) r.style.setProperty('--ac-sidebar-gradient', t.sidebarGradient);
-                if (t.shadow) r.style.setProperty('--ac-primary-shadow', t.shadow);
-                if (t.shadowHover) r.style.setProperty('--ac-primary-shadow-hover', t.shadowHover);
-                if (t.textMain) r.style.setProperty('--ac-text-main', t.textMain);
-                if (t.textHeadings) r.style.setProperty('--ac-text-headings', t.textHeadings);
-                if (t.textMuted) r.style.setProperty('--ac-text-muted', t.textMuted);
-                if (t.fontFamily) r.style.setProperty('--ac-font-family', t.fontFamily);
-                if (t.fontSize) r.style.setProperty('--ac-font-scale', t.fontSize);
-
+                if (t.shadow)          r.style.setProperty('--ac-primary-shadow', t.shadow);
+                if (t.shadowHover)     r.style.setProperty('--ac-primary-shadow-hover', t.shadowHover);
+                if (t.textMain)        r.style.setProperty('--ac-text-main', t.textMain);
+                if (t.textHeadings)    r.style.setProperty('--ac-text-headings', t.textHeadings);
+                if (t.textMuted)       r.style.setProperty('--ac-text-muted', t.textMuted);
                 r.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-                r.setAttribute('data-theme', isDark ? 'dark' : (isSystem ? 'system' : 'light'));
+                r.setAttribute('data-theme', isDark ? 'dark' : 'light');
             } else {
+                // Tema predeterminado si el Rector no ha configurado uno aún
                 r.setAttribute('data-bs-theme', 'light');
-                r.setAttribute('data-theme', 'system');
+                r.style.setProperty('--ac-primary', '#7c3aed');
                 r.style.setProperty('--ac-text-main', '#1e1b4b');
                 r.style.setProperty('--ac-text-headings', '#2e1065');
                 r.style.setProperty('--ac-text-muted', '#64748b');
-                r.style.setProperty('--ac-font-family', "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif");
-                r.style.setProperty('--ac-font-scale', '1rem');
             }
+            r.style.setProperty('--ac-font-family', "'Plus Jakarta Sans', system-ui, sans-serif");
+            r.style.setProperty('--ac-font-scale', '1rem');
         } catch(e) {}
     })();
     </script>
+
 
     <!-- HTMX 1.9.10 -->
     <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8nO7UC" crossorigin="anonymous"></script>
@@ -140,8 +121,8 @@
     <!-- Contenedor Global de Notificaciones y Toasts -->
     {% include 'partials/toasts.html' %}
 
-    {% if user.is_authenticated %}
-    <!-- Modal Global de Cambio de Tema (para todos los roles) -->
+    {% if user.is_authenticated and user.is_rector or user.is_authenticated and user.is_admin_role %}
+    <!-- Modal de Tema Institucional (exclusivo Rector/Admin) -->
     {% include 'partials/theme_modal.html' %}
     {% endif %}
 

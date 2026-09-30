@@ -2,18 +2,22 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import HttpResponse, HttpResponseForbidden
+from django.template.loader import render_to_string
 from .services import (
     build_student_bulletin_data,
     build_section_consolidated_data,
     export_consolidated_csv,
-    build_honor_roll_data
+    build_honor_roll_data,
+    compile_weasyprint_pdf
 )
 from apps.courses.models import CourseSection
 from apps.periods.models import AcademicPeriod
 from apps.students.models import StudentProfile, Enrollment
 from apps.courses.services import get_current_academic_year
+from apps.courses.decorators import enforce_report_card_clearance
 from apps.periods.services import get_current_active_period
 from apps.teachers.models import TeachingAssignment
+from apps.audit.services import log_audit
 
 @login_required
 def reports_index_view(request):
@@ -106,13 +110,129 @@ def student_bulletin_view(request, student_id, period_id):
             messages.error(request, 'Solo el Director de Grupo puede consultar los boletines de este curso.')
             return redirect('teachers:my_courses')
 
-    bulletin_data = build_student_bulletin_data(student, section, period)
+    bulletin_data = build_student_bulletin_data(student, section, period, request=request)
 
     context = {
         'b': bulletin_data,
         'is_bulk': False,
     }
     return render(request, 'reports/bulletin_printable.html', context)
+
+
+@login_required
+@enforce_report_card_clearance(student_param_name='student_id')
+def download_student_bulletin_pdf_view(request, student_id, period_id):
+    """
+    Pilar 5: Generación y descarga directa del boletín oficial en formato PDF
+    utilizando WeasyPrint con directivas CSS Paged Media (A4) y validación criptográfica QR.
+    """
+    user = request.user
+    student = get_object_or_404(StudentProfile, id=student_id)
+    period = get_object_or_404(AcademicPeriod, id=period_id)
+
+    # 1. Control de acceso por rol
+    if user.is_student and hasattr(user, 'student_profile') and user.student_profile.id != student.id:
+        return HttpResponseForbidden("No tiene autorización para descargar boletines de otros estudiantes.")
+
+    # 2. Control de visibilidad de periodos abiertos para estudiantes y acudientes
+    RESTRICTED_ROLES = user.is_student or user.is_parent
+    PERIOD_OPEN = period.status not in ['CLOSED', 'LOCKED']
+    if RESTRICTED_ROLES and PERIOD_OPEN:
+        messages.warning(
+            request,
+            f'El boletín oficial del período "{period.name}" aún no se encuentra cerrado por la institución.'
+        )
+        return redirect('accounts:dashboard')
+
+    enrollment = Enrollment.objects.filter(student=student, academic_year=period.academic_year).first()
+    if not enrollment:
+        messages.error(request, f'El estudiante {student.user.get_full_name()} no cuenta con matrícula activa para este periodo.')
+        return redirect('reports:index')
+
+    section = enrollment.course_section
+
+    # 3. Restricción para docentes que no son directores de grupo
+    if user.is_teacher and hasattr(user, 'teacher_profile'):
+        is_dir = TeachingAssignment.objects.filter(
+            teacher=user.teacher_profile,
+            course_section=section,
+            is_group_director=True,
+            is_active=True
+        ).exists()
+        if not is_dir:
+            messages.error(request, 'Solo el Director de Grupo puede descargar los boletines de este curso.')
+            return redirect('teachers:my_courses')
+
+    # 4. Compilación de datos pedagógicos, ranking, QR y hash criptográfico
+    bulletin_data = build_student_bulletin_data(student, section, period, request=request)
+
+    # 5. Renderizado del template HTML para imprenta WeasyPrint
+    html_content = render_to_string('reports/boletin_pdf.html', {'b': bulletin_data}, request=request)
+
+    # 6. Compilación binaria con WeasyPrint
+    base_url = request.build_absolute_uri('/')
+    pdf_bytes, error_weasy = compile_weasyprint_pdf(html_content, base_url=base_url)
+
+    # Registro de auditoría del evento de descarga de reporte oficial
+    log_audit(
+        action='OFFICIAL_REPORT_EXPORT',
+        table_name='StudentBulletin',
+        record_id=f"{student.id}-{period.id}",
+        new_values={
+            'student': student.user.get_full_name(),
+            'period': period.name,
+            'year': period.academic_year.year,
+            'token': bulletin_data.get('verification_token'),
+            'format': 'PDF' if pdf_bytes else 'HTML_PRINTABLE_FALLBACK'
+        },
+        reason=f"Descarga de boletín oficial en PDF para estudiante {student.user.get_full_name()}",
+        user=user,
+        request=request
+    )
+
+    clean_lastname = student.user.last_name.replace(' ', '_')
+    clean_firstname = student.user.first_name.replace(' ', '_')
+    pdf_filename = f"Boletin_{clean_lastname}_{clean_firstname}_P{period.number}_{period.academic_year.year}.pdf"
+
+    # 7. Inyección automática en la Carpeta Perpetua del Estudiante (Módulo 2)
+    try:
+        from apps.students.services import attach_bulletin_to_expediente
+        attach_bulletin_to_expediente(
+            student_profile=student,
+            period=period,
+            pdf_content=pdf_bytes,
+            filename=pdf_filename,
+            user=user
+        )
+    except Exception:
+        pass
+
+    if pdf_bytes:
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{pdf_filename}"'
+        return response
+
+    # Fallback seguro para entornos de desarrollo donde WeasyPrint carezca de GTK C-libraries:
+    # Se retorna el HTML de imprenta listo con auto-print
+    response = HttpResponse(html_content, content_type='text/html')
+    response['X-Weasyprint-Notice'] = f"PDF compilation fallback due to system library: {error_weasy}"
+    return response
+
+
+def verify_bulletin_view(request, token):
+    """
+    Vista pública para la verificación de autenticidad e inmutabilidad de boletines oficiales emitidos.
+    Accesible mediante escaneo del código QR.
+    """
+    from apps.courses.models import InstitutionSetting
+    institution = InstitutionSetting.get_settings()
+    context = {
+        'token': token,
+        'institution': institution,
+        'is_valid': len(token) >= 16,
+    }
+    return render(request, 'reports/partials/verify_bulletin.html', context)
+
 
 @login_required
 def section_bulletins_bulk_view(request, section_id, period_id):

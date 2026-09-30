@@ -124,6 +124,9 @@
                 </td>
                 <td class="text-end">
                     <div class="d-flex gap-1 justify-content-end flex-wrap">
+                        <a href="{% url 'students:expediente' enr.student.id %}" class="btn btn-outline-info btn-sm py-1 px-2 shadow-sm" title="Expediente Digital / Carpeta Perpetua">
+                            <i class="bi bi-folder2-open"></i>
+                        </a>
                         <a href="{% url 'students:observations' enr.student.id %}" class="btn btn-outline-primary btn-sm py-1 px-2 shadow-sm" title="Observaciones del estudiante">
                             <i class="bi bi-journal-text"></i>
                         </a>

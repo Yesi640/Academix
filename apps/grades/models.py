@@ -42,6 +42,14 @@ class EvaluationCriterion(models.Model):
         verbose_name='Ponderación Porcentual (%)'
     )
     order = models.PositiveSmallIntegerField(default=1, verbose_name='Orden en Planilla')
+    norm = models.ForeignKey(
+        'subjects.SubjectNorm',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='evaluation_criteria',
+        verbose_name='RAP Curricular Asociado'
+    )
 
     class Meta:
         verbose_name = 'Criterio de Evaluación'

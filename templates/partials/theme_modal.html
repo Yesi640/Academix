@@ -1,21 +1,24 @@
 <!-- ==========================================================================
-     MODAL DE PERSONALIZACIÓN DE TEMA, COLORES Y LETRAS ACADEMIX
-     Configurado por Roles con Soporte Estricto para "Tema del Sistema"
+     MODAL DE CONTROL DE TEMA INSTITUCIONAL — EXCLUSIVO RECTOR / ADMIN
+     Solo visible para usuarios con rol Rector o Administrador.
+     Permite cambiar el tema de toda la institución, persistido en BD.
      ========================================================================== -->
 <div class="modal fade" id="themeSettingsModal" tabindex="-1" aria-labelledby="themeSettingsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
-            <!-- Modal Header -->
-            <div class="modal-header border-bottom py-3 px-4 text-white" 
-                 style="background: linear-gradient(135deg, var(--ac-primary-light, #8b5cf6), var(--ac-primary, #7c3aed));">
+
+            <!-- Modal Header — estilo rector dorado -->
+            <div class="modal-header border-bottom py-3 px-4 text-white"
+                 style="background: linear-gradient(135deg, #b45309, #d97706, #f59e0b);">
                 <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-palette-fill fs-5"></i>
+                    <i class="bi bi-shield-star-fill fs-5"></i>
                     <div>
                         <h5 class="modal-title fw-bold mb-0" id="themeSettingsModalLabel" style="font-size:1.05rem;">
-                            Personalización Visual y Tipografía
+                            Control de Tema Institucional
                         </h5>
                         <small class="text-white-50" style="font-size:0.75rem;">
-                            Rol: <strong class="text-white">{{ user.get_role_display|default:'Usuario' }}</strong>
+                            Rol: <strong class="text-white">{{ user.get_role_display|default:'Rector' }}</strong>
+                            &mdash; Los cambios aplican a <strong class="text-white">toda la institución</strong>
                         </small>
                     </div>
                 </div>
@@ -25,659 +28,259 @@
             <!-- Modal Body -->
             <div class="modal-body p-4">
 
-                <!-- Selector de Modo de Personalización -->
-                <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-3 border" id="themeModeTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active py-2 rounded-2 fw-bold small" id="mode-role-tab" data-bs-toggle="pill" data-bs-target="#mode-role-panel" type="button" role="tab">
-                            <i class="bi bi-person-badge me-1"></i>Temas y Letras por Rol
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link py-2 rounded-2 fw-bold small" id="mode-system-tab" data-bs-toggle="pill" data-bs-target="#mode-system-panel" type="button" role="tab">
-                            <i class="bi bi-building me-1"></i>Tema del Sistema (Estándar)
-                        </button>
-                    </li>
-                </ul>
-
-                <div class="tab-content" id="themeModeTabsContent">
-                    
-                    <!-- ============================================================
-                         PANEL 1: TEMAS Y ADAPTACIÓN DE LETRAS POR ROL
-                         ============================================================ -->
-                    <div class="tab-pane fade show active" id="mode-role-panel" role="tabpanel">
-                        <div class="alert alert-info py-2 px-3 small d-flex align-items-center gap-2 mb-3 rounded-3 border-0 bg-info-subtle text-info-emphasis">
-                            <i class="bi bi-info-circle-fill fs-5 text-info"></i>
-                            <span>Las letras y contrastes se adaptan automáticamente a la paleta visual que elijas para tu rol.</span>
-                        </div>
-
-                        <!-- 1. Paleta de Temas Visuales -->
-                        <div class="mb-4">
-                            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                                <i class="bi bi-collection-fill text-primary"></i> 1. Elige tu Tema Visual:
-                            </label>
-
-                            <div class="row g-2" id="presetThemesGrid">
-                                <!-- Morado Real -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="purple"
-                                            onclick="AcademixTheme.setRolePreset('purple')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#7c3aed; width:28px; height:28px; border:2px solid #c4b5fd; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Morado Real</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Elegante y Vívido</small>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <!-- Verde Esmeralda -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="green"
-                                            onclick="AcademixTheme.setRolePreset('green')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#15803d; width:28px; height:28px; border:2px solid #86efac; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Verde Esmeralda</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Fresco y Natural</small>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <!-- Azul Océano -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="blue"
-                                            onclick="AcademixTheme.setRolePreset('blue')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#1d4ed8; width:28px; height:28px; border:2px solid #93c5fd; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Azul Océano</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Clásico Institucional</small>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <!-- Rubí Tradicional -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="rose"
-                                            onclick="AcademixTheme.setRolePreset('rose')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#be123c; width:28px; height:28px; border:2px solid #fda4af; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Rubí Borgoña</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Cálido y Distinguido</small>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <!-- Ámbar Solar -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="amber"
-                                            onclick="AcademixTheme.setRolePreset('amber')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#d97706; width:28px; height:28px; border:2px solid #fcd34d; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Ámbar Solar</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Activo y Cálido</small>
-                                        </div>
-                                    </button>
-                                </div>
-
-                                <!-- Modo Oscuro -->
-                                <div class="col-md-4 col-6">
-                                    <button type="button" class="theme-preset-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
-                                            data-theme-key="dark"
-                                            onclick="AcademixTheme.setRolePreset('dark')">
-                                        <span class="theme-swatch rounded-circle shadow-sm" style="background:#0f172a; width:28px; height:28px; border:2px solid #38bdf8; flex-shrink:0;"></span>
-                                        <div class="overflow-hidden">
-                                            <strong class="d-block small text-dark" style="font-size:0.8rem;">Modo Oscuro</strong>
-                                            <small class="text-muted" style="font-size:0.68rem;">Alto Contraste</small>
-                                        </div>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 2. Adaptación de Tipografía y Fuente -->
-                        <div class="mb-4">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-0">
-                                    <i class="bi bi-fonts text-primary"></i> 2. Tipografía:
-                                </label>
-                                <span class="badge bg-light text-muted border" id="typographyLockBadge" style="font-size:0.68rem;">Habilitada</span>
-                            </div>
-
-                            <div class="row g-2" id="fontStylesGrid">
-                                <div class="col-md-3 col-6">
-                                    <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
-                                            data-font-key="jakarta"
-                                            style="font-family:'Plus Jakarta Sans', sans-serif;"
-                                            onclick="AcademixTheme.setFont('jakarta')">
-                                        <strong class="d-block small text-dark" style="font-size:0.82rem;">Jakarta Sans</strong>
-                                        <span class="d-block text-muted" style="font-size:0.68rem;">Aa Bb · Moderna</span>
-                                    </button>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
-                                            data-font-key="inter"
-                                            style="font-family:'Inter', sans-serif;"
-                                            onclick="AcademixTheme.setFont('inter')">
-                                        <strong class="d-block small text-dark" style="font-size:0.82rem;">Inter</strong>
-                                        <span class="d-block text-muted" style="font-size:0.68rem;">Aa Bb · Limpia</span>
-                                    </button>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
-                                            data-font-key="outfit"
-                                            style="font-family:'Outfit', sans-serif;"
-                                            onclick="AcademixTheme.setFont('outfit')">
-                                        <strong class="d-block small text-dark" style="font-size:0.82rem;">Outfit</strong>
-                                        <span class="d-block text-muted" style="font-size:0.68rem;">Aa Bb · Estilizada</span>
-                                    </button>
-                                </div>
-                                <div class="col-md-3 col-6">
-                                    <button type="button" class="font-preset-btn w-100 p-2 rounded-3 border text-start"
-                                            data-font-key="roboto"
-                                            style="font-family:'Roboto', sans-serif;"
-                                            onclick="AcademixTheme.setFont('roboto')">
-                                        <strong class="d-block small text-dark" style="font-size:0.82rem;">Roboto</strong>
-                                        <span class="d-block text-muted" style="font-size:0.68rem;">Aa Bb · Formal</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 3. Escala Visual de Letra -->
-                        <div class="mb-4">
-                            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                                <i class="bi bi-type-size text-primary"></i> 3. Escala y Tamaño de Letras:
-                            </label>
-                            <div class="d-flex gap-2" id="fontSizeGrid">
-                                <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center"
-                                        data-size-key="compact"
-                                        onclick="AcademixTheme.setFontSize('compact')">
-                                    <small class="fw-bold d-block text-dark">Compacto</small>
-                                    <span class="text-muted" style="font-size:0.68rem;">94% Densidad</span>
-                                </button>
-                                <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center active"
-                                        data-size-key="normal"
-                                        onclick="AcademixTheme.setFontSize('normal')">
-                                    <small class="fw-bold d-block text-dark">Normal</small>
-                                    <span class="text-muted" style="font-size:0.68rem;">100% Estándar</span>
-                                </button>
-                                <button type="button" class="size-preset-btn flex-fill p-2 rounded-3 border text-center"
-                                        data-size-key="comfortable"
-                                        onclick="AcademixTheme.setFontSize('comfortable')">
-                                    <small class="fw-bold d-block text-dark">Cómodo</small>
-                                    <span class="text-muted" style="font-size:0.68rem;">108% Accesible</span>
-                                </button>
-                            </div>
-                        </div>
+                <!-- Aviso de poder rector -->
+                <div class="alert py-2 px-3 small d-flex align-items-start gap-2 mb-4 rounded-3"
+                     style="background:linear-gradient(135deg,#fef9c3,#fef3c7); border-left:4px solid #f59e0b;">
+                    <i class="bi bi-shield-star-fill fs-4" style="color:#d97706; flex-shrink:0;"></i>
+                    <div>
+                        <strong style="color:#92400e;">Control Total del Entorno</strong><br>
+                        <span style="color:#78350f;">
+                            El tema que elijas aquí se aplicará a <strong>todos los usuarios de la institución</strong>
+                            automáticamente. El cambio se guarda en la base de datos y es inmediato.
+                        </span>
                     </div>
+                </div>
 
-                    <!-- ============================================================
-                         PANEL 2: TEMA DEL SISTEMA (ESTÁNDAR ESTRICTO)
-                         ============================================================ -->
-                    <div class="tab-pane fade" id="mode-system-panel" role="tabpanel">
-                        <div class="alert alert-warning py-2 px-3 small d-flex align-items-center gap-2 mb-3 rounded-3 border-0 bg-warning-subtle text-warning-emphasis">
-                            <i class="bi bi-shield-lock-fill fs-5 text-warning"></i>
-                            <div>
-                                <strong>Regla del Tema del Sistema:</strong>
-                                <div>Únicamente se permite modificar el color global de acento de la interfaz. Los colores de las letras, fuentes y tipografías se mantienen neutrales e intactos según el estándar base.</div>
-                            </div>
-                        </div>
+                <!-- 1. Paleta de temas predefinidos -->
+                <div class="mb-4">
+                    <label class="form-label small fw-bold mb-3 d-flex align-items-center gap-2" style="color:#92400e;">
+                        <i class="bi bi-collection-fill"></i> Elige el Tema Institucional:
+                    </label>
+                    <div class="row g-2" id="rectorThemeGrid">
 
-                        <!-- Botón Activar Tema del Sistema -->
-                        <div class="p-3 rounded-3 bg-white border mb-3 shadow-xs d-flex align-items-center justify-content-between">
-                            <div>
-                                <h6 class="fw-bold text-dark mb-1">
-                                    <i class="bi bi-sliders me-1 text-primary"></i> Restablecer a Tema del Sistema
-                                </h6>
-                                <p class="text-muted small mb-0" style="font-size:0.75rem;">
-                                    Aplica la paleta institucional base y bloquea las fuentes a Plus Jakarta Sans estándar.
-                                </p>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-sm rounded-pill px-3" onclick="AcademixTheme.setSystemTheme('#7c3aed')">
-                                Aplicar Estándar
+                        <!-- Morado Real -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="purple"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('purple')">
+                                <span class="rounded-circle shadow-sm" style="background:#7c3aed; width:30px; height:30px; border:2.5px solid #c4b5fd; flex-shrink:0;"></span>
+                                <div>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Morado Real</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Elegante y Vívido</small>
+                                </div>
                             </button>
                         </div>
 
-                        <!-- Cambio de Color Global del Sistema -->
-                        <div class="p-3 rounded-3 bg-light border mb-3">
-                            <label class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                                <i class="bi bi-eyedropper text-primary"></i> Color Global de Acento de la Interfaz:
-                            </label>
-                            <div class="d-flex align-items-center gap-3">
-                                <input type="color" id="systemAccentPicker" value="#7c3aed" class="form-control form-control-color border-0 p-0 rounded-circle shadow-sm" style="width:38px; height:38px; cursor:pointer;">
+                        <!-- Verde Esmeralda -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="green"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('green')">
+                                <span class="rounded-circle shadow-sm" style="background:#15803d; width:30px; height:30px; border:2.5px solid #86efac; flex-shrink:0;"></span>
                                 <div>
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1" onclick="AcademixTheme.applySystemAccentPicker()">
-                                        Aplicar Acento Global
-                                    </button>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Verde Esmeralda</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Fresco y Natural</small>
                                 </div>
-                            </div>
-                            <small class="text-muted d-block mt-2" style="font-size:0.72rem;">
-                                Este cambio aplicará exclusivamente a botones, barras y acentos visuales sin alterar los textos ni tipografías institucionales.
-                            </small>
+                            </button>
                         </div>
+
+                        <!-- Azul Océano -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="blue"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('blue')">
+                                <span class="rounded-circle shadow-sm" style="background:#1d4ed8; width:30px; height:30px; border:2.5px solid #93c5fd; flex-shrink:0;"></span>
+                                <div>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Azul Océano</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Clásico Institucional</small>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Rubí Borgoña -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="rose"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('rose')">
+                                <span class="rounded-circle shadow-sm" style="background:#be123c; width:30px; height:30px; border:2.5px solid #fda4af; flex-shrink:0;"></span>
+                                <div>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Rubí Borgoña</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Cálido y Distinguido</small>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Ámbar Solar -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="amber"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('amber')">
+                                <span class="rounded-circle shadow-sm" style="background:#d97706; width:30px; height:30px; border:2.5px solid #fcd34d; flex-shrink:0;"></span>
+                                <div>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Ámbar Solar</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Activo y Cálido</small>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Modo Oscuro -->
+                        <div class="col-md-4 col-6">
+                            <button type="button" class="rector-theme-btn w-100 p-2 rounded-3 border text-start d-flex align-items-center gap-2"
+                                    data-rector-key="dark"
+                                    onclick="AcademixTheme.setRectorGlobalPreset('dark')">
+                                <span class="rounded-circle shadow-sm" style="background:#0f172a; width:30px; height:30px; border:2.5px solid #38bdf8; flex-shrink:0;"></span>
+                                <div>
+                                    <strong class="d-block small" style="font-size:0.82rem;">Modo Oscuro</strong>
+                                    <small class="text-muted" style="font-size:0.68rem;">Alto Contraste</small>
+                                </div>
+                            </button>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Previsualización en Tiempo Real -->
-                <div class="p-3 rounded-4 border bg-white shadow-sm mt-3" id="themePreviewBox">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1" style="font-size:0.72rem;">
-                            <i class="bi bi-eye me-1"></i>Vista Previa de la Interfaz
-                        </span>
-                        <small class="text-muted" id="previewThemeName">Modo: Tema del Sistema</small>
+                <!-- 2. Color personalizado -->
+                <div class="p-3 rounded-3 mb-4" style="background:#fffbeb; border:1.5px solid #fde68a;">
+                    <label class="form-label small fw-bold mb-2" style="color:#92400e;">
+                        <i class="bi bi-eyedropper me-1"></i>2. O elige un color institucional personalizado:
+                    </label>
+                    <div class="d-flex align-items-center gap-3 flex-wrap">
+                        <input type="color" id="rectorAccentPicker" value="#7c3aed"
+                               class="form-control form-control-color border-0 p-0 rounded-circle shadow-sm"
+                               style="width:42px; height:42px; cursor:pointer;"
+                               oninput="AcademixTheme.previewAccent(this.value)">
+                        <div>
+                            <div class="fw-semibold small" style="color:#78350f;">Selecciona el color de acento</div>
+                            <small class="text-muted" style="font-size:0.7rem;">Se pre-visualiza en tiempo real</small>
+                        </div>
+                        <button type="button" class="btn btn-sm rounded-pill px-4 ms-auto fw-bold"
+                                style="background:#d97706; color:#fff;"
+                                onclick="AcademixTheme.setRectorGlobalAccent()">
+                            <i class="bi bi-globe2 me-1"></i>Aplicar a Toda la Institución
+                        </button>
                     </div>
-                    <h5 class="fw-bold mb-1" id="previewTitle" style="color:var(--ac-text-headings, #1e1b4b);">
+                </div>
+
+                <!-- 3. Previsualización -->
+                <div class="p-3 rounded-4 border shadow-sm mb-4" id="themePreviewBox"
+                     style="background: var(--ac-card-bg, #fff);">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge px-2 py-1" style="background: var(--ac-primary-pastel,#c4b5fd); color: var(--ac-primary,#7c3aed); font-size:0.72rem;">
+                            <i class="bi bi-eye me-1"></i>Vista Previa
+                        </span>
+                        <small class="text-muted" id="previewThemeName">Tema actual</small>
+                    </div>
+                    <h5 class="fw-bold mb-1" style="color:var(--ac-text-headings, #1e1b4b);">
                         Plataforma Académica ACADEMIX
                     </h5>
-                    <p class="small mb-2" id="previewParagraph" style="color:var(--ac-text-muted, #64748b); line-height:1.5;">
-                        Los botones primarios, enlaces como <a href="javascript:void(0)" class="fw-bold text-decoration-underline">este enlace institucional</a> y componentes responden al modo seleccionado.
+                    <p class="small mb-2" style="color:var(--ac-text-muted, #64748b); line-height:1.5;">
+                        Botones, barras laterales, acentos y componentes responden al tema elegido.
                     </p>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-primary rounded-pill px-3">
-                            <i class="bi bi-check2-circle me-1"></i>Botón de Interfaz
+                            <i class="bi bi-check2-circle me-1"></i>Acción Principal
                         </button>
                         <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                            Botón Contorno
+                            Acción Secundaria
                         </button>
                     </div>
                 </div>
 
-            </div>
+                <!-- 4. Estado del tema global activo -->
+                <div class="p-3 rounded-3" style="background:#f0fdf4; border:1.5px solid #86efac;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <strong class="small" style="color:#064e3b;">Tema Institucional Activo:</strong>
+                    </div>
+                    <span class="badge rounded-pill px-3 py-1" id="rectorActivThemeBadge"
+                          style="background:#15803d; color:#fff; font-size:0.8rem;">
+                        {% if global_theme_json != 'null' %}Configurado por el Rector{% else %}Predeterminado del Sistema{% endif %}
+                    </span>
+                    <small class="d-block text-muted mt-1" style="font-size:0.7rem;" id="rectorThemeStatusText">
+                        {% if global_theme_json != 'null' %}El Rector ha definido el tema institucional activo.{% else %}Aún no se ha definido un tema global. Se usa el predeterminado del sistema.{% endif %}
+                    </small>
+                </div>
+
+            </div><!-- /modal-body -->
 
             <!-- Modal Footer -->
-            <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between">
-                <button type="button" class="btn btn-link text-muted text-decoration-none btn-sm px-0" style="font-size:0.78rem;" onclick="AcademixTheme.resetDefault()">
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer Valores Iniciales
+            <div class="modal-footer py-2 px-4 d-flex justify-content-between" style="background:#fffbeb; border-top:1.5px solid #fde68a;">
+                <button type="button" class="btn btn-link btn-sm text-muted text-decoration-none px-0"
+                        style="font-size:0.78rem;" onclick="AcademixTheme.resetToDefault()">
+                    <i class="bi bi-arrow-counterclockwise me-1"></i>Restablecer Predeterminado
                 </button>
-                <button type="button" class="btn btn-primary btn-sm rounded-pill px-4 fw-bold" data-bs-dismiss="modal">
-                    Guardar y Cerrar
+                <button type="button" class="btn btn-sm rounded-pill px-4 fw-bold text-white"
+                        style="background:#d97706;" data-bs-dismiss="modal">
+                    <i class="bi bi-check2 me-1"></i>Cerrar
                 </button>
             </div>
+
         </div>
     </div>
 </div>
 
 <style>
-.theme-preset-btn, .font-preset-btn, .size-preset-btn {
-    background: #ffffff;
+.rector-theme-btn {
+    background: #fffbeb;
     cursor: pointer;
     transition: all 0.2s ease;
+    border-color: #fde68a !important;
 }
-.theme-preset-btn:hover, .font-preset-btn:hover, .size-preset-btn:hover {
-    border-color: var(--ac-primary) !important;
-    background: color-mix(in srgb, var(--ac-primary-pastel, #c4b5fd) 18%, white 82%);
-    transform: translateY(-1px);
+.rector-theme-btn:hover {
+    background: #fef3c7;
+    border-color: #f59e0b !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245,158,11,0.2);
 }
-.theme-preset-btn.active, .font-preset-btn.active, .size-preset-btn.active {
-    border-color: var(--ac-primary) !important;
-    background: color-mix(in srgb, var(--ac-primary-pastel, #c4b5fd) 25%, white 75%);
-    box-shadow: 0 0 0 2px var(--ac-primary);
-}
-.font-preset-btn.disabled, .size-preset-btn.disabled {
-    opacity: 0.55;
-    pointer-events: none;
-    cursor: not-allowed;
+.rector-theme-btn.active {
+    background: #fef3c7;
+    border-color: #d97706 !important;
+    box-shadow: 0 0 0 2.5px #d97706;
 }
 </style>
 
-<!-- Theme & Typography Engine Script -->
+<!-- Theme Engine — Control Global Rector -->
 <script>
 window.AcademixTheme = (function() {
-    function getStorageKey() {
-        const uid = (window.ACADEMIX_CURRENT_USER && window.ACADEMIX_CURRENT_USER.id !== 'guest') 
-            ? window.ACADEMIX_CURRENT_USER.id 
-            : 'global';
-        return 'academix_theme_user_' + uid;
-    }
 
     const BASE_FONT = "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif";
     const BASE_SIZE = '1rem';
 
-    const FONTS = {
-        'jakarta': "'Plus Jakarta Sans', system-ui, -apple-system, sans-serif",
-        'inter': "'Inter', system-ui, -apple-system, sans-serif",
-        'outfit': "'Outfit', system-ui, -apple-system, sans-serif",
-        'roboto': "'Roboto', system-ui, -apple-system, sans-serif"
-    };
-
-    const SIZES = {
-        'compact': '0.94rem',
-        'normal': '1rem',
-        'comfortable': '1.08rem'
-    };
-
-    // Paleta estándar base del sistema
-    const SYSTEM_THEME_BASE = {
-        key: 'system',
-        name: 'Tema del Sistema (Estándar)',
-        isSystemTheme: true,
-        primary: '#7c3aed',
-        primaryDark: '#5b21b6',
-        primaryLight: '#8b5cf6',
-        primaryPastel: '#c4b5fd',
-        bg: '#faf7fd',
-        cardBg: '#ffffff',
-        textMain: '#1e1b4b',
-        textHeadings: '#1e1b4b',
-        textMuted: '#64748b',
-        border: '#ede9fe',
-        sidebarGradient: 'linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%)',
-        shadow: 'rgba(124, 58, 237, 0.35)',
-        shadowHover: 'rgba(124, 58, 237, 0.48)',
-        fontKey: 'jakarta',
-        fontFamily: BASE_FONT,
-        sizeKey: 'normal',
-        fontSize: BASE_SIZE
-    };
-
-    // Presets visuales personalizables por rol
-    const ROLE_PRESETS = {
+    // Paletas predefinidas
+    const PRESETS = {
         'purple': {
             name: 'Morado Real',
-            isSystemTheme: false,
-            primary: '#7c3aed',
-            primaryDark: '#5b21b6',
-            primaryLight: '#8b5cf6',
-            primaryPastel: '#c4b5fd',
-            bg: '#faf7fd',
-            cardBg: '#ffffff',
-            textMain: '#1e1b4b',
-            textHeadings: '#1e1b4b',
-            textMuted: '#64748b',
-            border: '#ede9fe',
-            sidebarGradient: 'linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%)',
-            shadow: 'rgba(124, 58, 237, 0.35)',
-            shadowHover: 'rgba(124, 58, 237, 0.48)'
+            primary: '#7c3aed', primaryDark: '#5b21b6', primaryLight: '#8b5cf6', primaryPastel: '#c4b5fd',
+            bg: '#faf7fd', cardBg: '#ffffff', textMain: '#1e1b4b', textHeadings: '#1e1b4b', textMuted: '#64748b',
+            border: '#ede9fe', sidebarGradient: 'linear-gradient(180deg, #180927 0%, #2e1065 50%, #1a0833 100%)',
+            shadow: 'rgba(124,58,237,0.35)', shadowHover: 'rgba(124,58,237,0.48)'
         },
         'green': {
             name: 'Verde Esmeralda',
-            isSystemTheme: false,
-            primary: '#15803d',
-            primaryDark: '#14532d',
-            primaryLight: '#22c55e',
-            primaryPastel: '#bbf7d0',
-            bg: '#f0fdf4',
-            cardBg: '#ffffff',
-            textMain: '#064e3b',
-            textHeadings: '#022c22',
-            textMuted: '#4b5563',
-            border: '#dcfce7',
-            sidebarGradient: 'linear-gradient(180deg, #052e16 0%, #14532d 50%, #052e16 100%)',
-            shadow: 'rgba(21, 128, 61, 0.35)',
-            shadowHover: 'rgba(21, 128, 61, 0.48)'
+            primary: '#15803d', primaryDark: '#14532d', primaryLight: '#22c55e', primaryPastel: '#bbf7d0',
+            bg: '#f0fdf4', cardBg: '#ffffff', textMain: '#064e3b', textHeadings: '#022c22', textMuted: '#4b5563',
+            border: '#dcfce7', sidebarGradient: 'linear-gradient(180deg, #052e16 0%, #14532d 50%, #052e16 100%)',
+            shadow: 'rgba(21,128,61,0.35)', shadowHover: 'rgba(21,128,61,0.48)'
         },
         'blue': {
             name: 'Azul Océano',
-            isSystemTheme: false,
-            primary: '#1d4ed8',
-            primaryDark: '#1e3a8a',
-            primaryLight: '#3b82f6',
-            primaryPastel: '#bfdbfe',
-            bg: '#eff6ff',
-            cardBg: '#ffffff',
-            textMain: '#0f172a',
-            textHeadings: '#172554',
-            textMuted: '#475569',
-            border: '#dbeafe',
-            sidebarGradient: 'linear-gradient(180deg, #081e3a 0%, #1e3a8a 50%, #081e3a 100%)',
-            shadow: 'rgba(29, 78, 216, 0.35)',
-            shadowHover: 'rgba(29, 78, 216, 0.48)'
+            primary: '#1d4ed8', primaryDark: '#1e3a8a', primaryLight: '#3b82f6', primaryPastel: '#bfdbfe',
+            bg: '#eff6ff', cardBg: '#ffffff', textMain: '#0f172a', textHeadings: '#172554', textMuted: '#475569',
+            border: '#dbeafe', sidebarGradient: 'linear-gradient(180deg, #081e3a 0%, #1e3a8a 50%, #081e3a 100%)',
+            shadow: 'rgba(29,78,216,0.35)', shadowHover: 'rgba(29,78,216,0.48)'
         },
         'rose': {
             name: 'Rubí Borgoña',
-            isSystemTheme: false,
-            primary: '#be123c',
-            primaryDark: '#881337',
-            primaryLight: '#f43f5e',
-            primaryPastel: '#fecdd3',
-            bg: '#fff1f2',
-            cardBg: '#ffffff',
-            textMain: '#4c0519',
-            textHeadings: '#2b0610',
-            textMuted: '#57534e',
-            border: '#ffe4e6',
-            sidebarGradient: 'linear-gradient(180deg, #2b0610 0%, #881337 50%, #2b0610 100%)',
-            shadow: 'rgba(190, 18, 60, 0.35)',
-            shadowHover: 'rgba(190, 18, 60, 0.48)'
+            primary: '#be123c', primaryDark: '#881337', primaryLight: '#f43f5e', primaryPastel: '#fecdd3',
+            bg: '#fff1f2', cardBg: '#ffffff', textMain: '#4c0519', textHeadings: '#2b0610', textMuted: '#57534e',
+            border: '#ffe4e6', sidebarGradient: 'linear-gradient(180deg, #2b0610 0%, #881337 50%, #2b0610 100%)',
+            shadow: 'rgba(190,18,60,0.35)', shadowHover: 'rgba(190,18,60,0.48)'
         },
         'amber': {
             name: 'Ámbar Solar',
-            isSystemTheme: false,
-            primary: '#d97706',
-            primaryDark: '#78350f',
-            primaryLight: '#f59e0b',
-            primaryPastel: '#fde68a',
-            bg: '#fffbeb',
-            cardBg: '#ffffff',
-            textMain: '#3d1d05',
-            textHeadings: '#451a03',
-            textMuted: '#57534e',
-            border: '#fef3c7',
-            sidebarGradient: 'linear-gradient(180deg, #2a1505 0%, #78350f 50%, #2a1505 100%)',
-            shadow: 'rgba(217, 119, 6, 0.35)',
-            shadowHover: 'rgba(217, 119, 6, 0.48)'
+            primary: '#d97706', primaryDark: '#78350f', primaryLight: '#f59e0b', primaryPastel: '#fde68a',
+            bg: '#fffbeb', cardBg: '#ffffff', textMain: '#3d1d05', textHeadings: '#451a03', textMuted: '#57534e',
+            border: '#fef3c7', sidebarGradient: 'linear-gradient(180deg, #2a1505 0%, #78350f 50%, #2a1505 100%)',
+            shadow: 'rgba(217,119,6,0.35)', shadowHover: 'rgba(217,119,6,0.48)'
         },
         'dark': {
             name: 'Modo Oscuro',
-            isSystemTheme: false,
-            primary: '#38bdf8',
-            primaryDark: '#0284c7',
-            primaryLight: '#7dd3fc',
-            primaryPastel: '#bae6fd',
-            bg: '#0b1120',
-            cardBg: '#1e293b',
-            textMain: '#f1f5f9',
-            textHeadings: '#ffffff',
-            textMuted: '#94a3b8',
-            border: '#334155',
-            sidebarGradient: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)',
-            shadow: 'rgba(56, 189, 248, 0.35)',
-            shadowHover: 'rgba(56, 189, 248, 0.48)'
+            primary: '#38bdf8', primaryDark: '#0284c7', primaryLight: '#7dd3fc', primaryPastel: '#bae6fd',
+            bg: '#0b1120', cardBg: '#1e293b', textMain: '#f1f5f9', textHeadings: '#ffffff', textMuted: '#94a3b8',
+            border: '#334155', sidebarGradient: 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #020617 100%)',
+            shadow: 'rgba(56,189,248,0.35)', shadowHover: 'rgba(56,189,248,0.48)'
         }
     };
-
-    function getCurrentSettings() {
-        try {
-            const key = getStorageKey();
-            const saved = localStorage.getItem(key) || localStorage.getItem('academix_user_theme');
-            return saved ? JSON.parse(saved) : Object.assign({}, SYSTEM_THEME_BASE);
-        } catch (e) {
-            return Object.assign({}, SYSTEM_THEME_BASE);
-        }
-    }
-
-    function applyTokens(tokens) {
-        const root = document.documentElement;
-        if (!tokens) return;
-
-        const isSystem = (tokens.key === 'system' || tokens.isSystemTheme);
-        const isDark = (tokens.key === 'dark');
-
-        // REGLA 2: En Tema del Sistema, fuentes y colores de letra se mantienen neutrales e intactos
-        if (isSystem) {
-            tokens.textHeadings = '#1e1b4b';
-            tokens.textMain = '#1e1b4b';
-            tokens.textMuted = '#64748b';
-            tokens.fontFamily = BASE_FONT;
-            tokens.fontSize = BASE_SIZE;
-            tokens.fontKey = 'jakarta';
-            tokens.sizeKey = 'normal';
-            tokens.cardBg = '#ffffff';
-            tokens.bg = '#faf7fd';
-        } else if (!isDark) {
-            if (!tokens.textHeadings || tokens.textHeadings === '#ffffff' || tokens.textHeadings === '#f8fafc') tokens.textHeadings = '#1e1b4b';
-            if (!tokens.textMain || tokens.textMain === '#ffffff' || tokens.textMain === '#f8fafc') tokens.textMain = '#1e1b4b';
-            if (!tokens.cardBg || tokens.cardBg === '#1e293b') tokens.cardBg = '#ffffff';
-        }
-
-        root.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-        root.setAttribute('data-theme', isDark ? 'dark' : (isSystem ? 'system' : 'light'));
-        if (document.body) {
-            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
-            document.body.setAttribute('data-theme', isDark ? 'dark' : (isSystem ? 'system' : 'light'));
-        }
-
-        // Color primario y acento
-        if (tokens.primary) root.style.setProperty('--ac-primary', tokens.primary);
-        if (tokens.primaryDark) root.style.setProperty('--ac-primary-dark', tokens.primaryDark);
-        if (tokens.primaryLight) root.style.setProperty('--ac-primary-light', tokens.primaryLight);
-        if (tokens.primaryPastel) root.style.setProperty('--ac-primary-pastel', tokens.primaryPastel);
-        if (tokens.bg) root.style.setProperty('--ac-bg', tokens.bg);
-        if (tokens.cardBg) root.style.setProperty('--ac-card-bg', tokens.cardBg);
-        if (tokens.border) root.style.setProperty('--ac-border', tokens.border);
-        if (tokens.sidebarGradient) root.style.setProperty('--ac-sidebar-gradient', tokens.sidebarGradient);
-        if (tokens.shadow) root.style.setProperty('--ac-primary-shadow', tokens.shadow);
-        if (tokens.shadowHover) root.style.setProperty('--ac-primary-shadow-hover', tokens.shadowHover);
-
-        // Textos y Letras
-        root.style.setProperty('--ac-text-main', tokens.textMain);
-        root.style.setProperty('--ac-text-headings', tokens.textHeadings);
-        root.style.setProperty('--ac-text-muted', tokens.textMuted);
-        root.style.setProperty('--ac-font-family', tokens.fontFamily);
-        root.style.setProperty('--ac-font-scale', tokens.fontSize);
-
-        // Actualizar UI del Modal
-        document.querySelectorAll('.theme-preset-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.getAttribute('data-theme-key') === tokens.key);
-        });
-
-        // Manejo de bloqueo de tipografía en Tema del Sistema
-        const fontBtns = document.querySelectorAll('.font-preset-btn');
-        const sizeBtns = document.querySelectorAll('.size-preset-btn');
-        const lockBadge = document.getElementById('typographyLockBadge');
-
-        if (isSystem) {
-            fontBtns.forEach(btn => {
-                btn.classList.add('disabled');
-                btn.classList.toggle('active', btn.getAttribute('data-font-key') === 'jakarta');
-            });
-            sizeBtns.forEach(btn => {
-                btn.classList.add('disabled');
-                btn.classList.toggle('active', btn.getAttribute('data-size-key') === 'normal');
-            });
-            if (lockBadge) {
-                lockBadge.textContent = '🔒 Bloqueada (Tema del Sistema)';
-                lockBadge.className = 'badge bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-            }
-        } else {
-            fontBtns.forEach(btn => {
-                btn.classList.remove('disabled');
-                btn.classList.toggle('active', btn.getAttribute('data-font-key') === (tokens.fontKey || 'jakarta'));
-            });
-            sizeBtns.forEach(btn => {
-                btn.classList.remove('disabled');
-                btn.classList.toggle('active', btn.getAttribute('data-size-key') === (tokens.sizeKey || 'normal'));
-            });
-            if (lockBadge) {
-                lockBadge.textContent = '✨ Adaptación Libre Habilitada';
-                lockBadge.className = 'badge bg-success-subtle text-success-emphasis border border-success-subtle';
-            }
-        }
-
-        // Actualizar previsualización
-        const previewName = document.getElementById('previewThemeName');
-        if (previewName) {
-            previewName.textContent = 'Modo: ' + (tokens.name || (isSystem ? 'Tema del Sistema' : 'Tema por Rol'));
-        }
-
-        const systemPicker = document.getElementById('systemAccentPicker');
-        if (systemPicker && tokens.primary && tokens.primary.startsWith('#')) {
-            systemPicker.value = tokens.primary;
-        }
-    }
-
-    // 1. REGLA 2: ACTIVAR TEMA DEL SISTEMA (Solo cambia acento global, mantiene letras neutrales)
-    function setSystemTheme(accentHex) {
-        const hex = accentHex || '#7c3aed';
-        const rgb = hexToRgb(hex);
-
-        const data = {
-            key: 'system',
-            name: 'Tema del Sistema (' + hex + ')',
-            isSystemTheme: true,
-            primary: hex,
-            primaryDark: `color-mix(in srgb, ${hex} 75%, black 25%)`,
-            primaryLight: `color-mix(in srgb, ${hex} 75%, white 25%)`,
-            primaryPastel: `color-mix(in srgb, ${hex} 25%, white 75%)`,
-            bg: '#faf7fd',
-            cardBg: '#ffffff',
-            textMain: '#1e1b4b',
-            textHeadings: '#1e1b4b',
-            textMuted: '#64748b',
-            border: '#ede9fe',
-            sidebarGradient: `linear-gradient(180deg, #180927 0%, color-mix(in srgb, ${hex} 70%, #000 30%) 50%, #1a0833 100%)`,
-            shadow: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.35)`,
-            shadowHover: `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, 0.48)`,
-            fontKey: 'jakarta',
-            fontFamily: BASE_FONT,
-            sizeKey: 'normal',
-            fontSize: BASE_SIZE
-        };
-
-        const storageKey = getStorageKey();
-        localStorage.setItem(storageKey, JSON.stringify(data));
-        localStorage.setItem('academix_user_theme', JSON.stringify(data));
-        applyTokens(data);
-    }
-
-    // 2. REGLA 1: ACTIVAR TEMA POR ROL (Adapta letras y permite tipografía personalizada)
-    function setRolePreset(key) {
-        const theme = ROLE_PRESETS[key];
-        if (!theme) return;
-
-        const current = getCurrentSettings();
-        const fontKey = (current.key !== 'system' && current.fontKey) ? current.fontKey : 'jakarta';
-        const sizeKey = (current.key !== 'system' && current.sizeKey) ? current.sizeKey : 'normal';
-
-        const data = Object.assign({}, theme, {
-            key: key,
-            isSystemTheme: false,
-            fontKey: fontKey,
-            fontFamily: FONTS[fontKey] || BASE_FONT,
-            sizeKey: sizeKey,
-            fontSize: SIZES[sizeKey] || BASE_SIZE
-        });
-
-        const storageKey = getStorageKey();
-        localStorage.setItem(storageKey, JSON.stringify(data));
-        localStorage.setItem('academix_user_theme', JSON.stringify(data));
-        applyTokens(data);
-    }
-
-    function setFont(fontKey) {
-        const current = getCurrentSettings();
-        if (current.key === 'system' || current.isSystemTheme) {
-            return; // Prohibido en Tema del Sistema
-        }
-        current.fontKey = fontKey;
-        current.fontFamily = FONTS[fontKey] || BASE_FONT;
-        const storageKey = getStorageKey();
-        localStorage.setItem(storageKey, JSON.stringify(current));
-        localStorage.setItem('academix_user_theme', JSON.stringify(current));
-        applyTokens(current);
-    }
-
-    function setFontSize(sizeKey) {
-        const current = getCurrentSettings();
-        if (current.key === 'system' || current.isSystemTheme) {
-            return; // Prohibido en Tema del Sistema
-        }
-        current.sizeKey = sizeKey;
-        current.fontSize = SIZES[sizeKey] || BASE_SIZE;
-        const storageKey = getStorageKey();
-        localStorage.setItem(storageKey, JSON.stringify(current));
-        localStorage.setItem('academix_user_theme', JSON.stringify(current));
-        applyTokens(current);
-    }
-
-    function applySystemAccentPicker() {
-        const picker = document.getElementById('systemAccentPicker');
-        if (!picker) return;
-        setSystemTheme(picker.value);
-    }
 
     function hexToRgb(hex) {
         hex = hex.replace('#', '');
@@ -686,30 +289,169 @@ window.AcademixTheme = (function() {
         return [(num >> 16) & 255, (num >> 8) & 255, num & 255];
     }
 
-    function resetDefault() {
-        setSystemTheme('#7c3aed');
+    function applyTokens(t) {
+        const r = document.documentElement;
+        const isDark = (t.key === 'dark');
+        if (t.primary)          r.style.setProperty('--ac-primary', t.primary);
+        if (t.primaryDark)      r.style.setProperty('--ac-primary-dark', t.primaryDark);
+        if (t.primaryLight)     r.style.setProperty('--ac-primary-light', t.primaryLight);
+        if (t.primaryPastel)    r.style.setProperty('--ac-primary-pastel', t.primaryPastel);
+        if (t.bg)               r.style.setProperty('--ac-bg', t.bg);
+        if (t.cardBg)           r.style.setProperty('--ac-card-bg', t.cardBg);
+        if (t.border)           r.style.setProperty('--ac-border', t.border);
+        if (t.sidebarGradient)  r.style.setProperty('--ac-sidebar-gradient', t.sidebarGradient);
+        if (t.shadow)           r.style.setProperty('--ac-primary-shadow', t.shadow);
+        if (t.shadowHover)      r.style.setProperty('--ac-primary-shadow-hover', t.shadowHover);
+        if (t.textMain)         r.style.setProperty('--ac-text-main', t.textMain);
+        if (t.textHeadings)     r.style.setProperty('--ac-text-headings', t.textHeadings);
+        if (t.textMuted)        r.style.setProperty('--ac-text-muted', t.textMuted);
+        r.style.setProperty('--ac-font-family', BASE_FONT);
+        r.style.setProperty('--ac-font-scale', BASE_SIZE);
+        r.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        r.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        if (document.body) {
+            document.body.setAttribute('data-bs-theme', isDark ? 'dark' : 'light');
+        }
+        // Actualizar preview del modal
+        const previewName = document.getElementById('previewThemeName');
+        if (previewName) previewName.textContent = 'Modo: ' + (t.name || t.key || '—');
+    }
+
+    function saveGlobalThemeToServer(themeData) {
+        const csrfToken = (document.querySelector('meta[name="csrf-token"]') || {}).getAttribute
+            ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            : '';
+        return fetch('/accounts/theme/global/save/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+            body: JSON.stringify({ theme_data: themeData })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                const badge = document.getElementById('rectorActivThemeBadge');
+                if (badge) badge.textContent = 'Configurado por el Rector ✓';
+                const status = document.getElementById('rectorThemeStatusText');
+                if (status) status.textContent = 'El Rector ha definido el tema institucional activo.';
+                // Toast de éxito
+                _showSuccessToast(themeData.name || 'Tema institucional');
+            } else {
+                alert('❌ Error al guardar: ' + (data.error || 'Error desconocido'));
+            }
+        })
+        .catch(err => alert('❌ Error de red: ' + err.message));
+    }
+
+    function _showSuccessToast(themeName) {
+        // Intentar con el sistema de toasts de Academix si existe
+        const container = document.getElementById('toast-container') || document.getElementById('toastContainer');
+        if (!container) { alert('✅ Tema "' + themeName + '" aplicado a toda la institución.'); return; }
+        const id = 'rector-toast-' + Date.now();
+        const html = `<div id="${id}" class="toast align-items-center text-white border-0 show" role="alert"
+                           style="background:linear-gradient(135deg,#d97706,#f59e0b);">
+            <div class="d-flex"><div class="toast-body fw-semibold">
+                <i class="bi bi-shield-star-fill me-2"></i>
+                ¡Tema "<strong>${themeName}</strong>" aplicado a toda la institución!
+            </div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>
+        </div>`;
+        container.insertAdjacentHTML('beforeend', html);
+        setTimeout(() => { const el = document.getElementById(id); if(el) el.remove(); }, 4000);
+    }
+
+    function setRectorGlobalPreset(key) {
+        const preset = PRESETS[key];
+        if (!preset) return;
+        const data = Object.assign({}, preset, {
+            key: key, _isGlobalRector: true,
+            fontFamily: BASE_FONT, fontKey: 'jakarta',
+            fontSize: BASE_SIZE, sizeKey: 'normal'
+        });
+        applyTokens(data);
+        saveGlobalThemeToServer(data);
+        document.querySelectorAll('.rector-theme-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-rector-key') === key);
+        });
+    }
+
+    function previewAccent(hex) {
+        // Solo pre-visualiza sin guardar
+        const r = document.documentElement;
+        r.style.setProperty('--ac-primary', hex);
+        r.style.setProperty('--ac-primary-light', `color-mix(in srgb, ${hex} 75%, white 25%)`);
+        r.style.setProperty('--ac-primary-pastel', `color-mix(in srgb, ${hex} 25%, white 75%)`);
+    }
+
+    function setRectorGlobalAccent() {
+        const picker = document.getElementById('rectorAccentPicker');
+        if (!picker) return;
+        const hex = picker.value;
+        const rgb = hexToRgb(hex);
+        const data = {
+            key: 'rector_custom',
+            name: 'Color Personalizado (' + hex + ')',
+            _isGlobalRector: true,
+            primary: hex,
+            primaryDark: `color-mix(in srgb, ${hex} 75%, black 25%)`,
+            primaryLight: `color-mix(in srgb, ${hex} 75%, white 25%)`,
+            primaryPastel: `color-mix(in srgb, ${hex} 25%, white 75%)`,
+            bg: '#faf7fd', cardBg: '#ffffff',
+            textMain: '#1e1b4b', textHeadings: '#1e1b4b', textMuted: '#64748b',
+            border: '#ede9fe',
+            sidebarGradient: `linear-gradient(180deg, #180927 0%, color-mix(in srgb, ${hex} 70%, #000 30%) 50%, #1a0833 100%)`,
+            shadow: `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.35)`,
+            shadowHover: `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0.48)`,
+            fontFamily: BASE_FONT, fontKey: 'jakarta',
+            fontSize: BASE_SIZE, sizeKey: 'normal'
+        };
+        applyTokens(data);
+        saveGlobalThemeToServer(data);
+        document.querySelectorAll('.rector-theme-btn').forEach(btn => btn.classList.remove('active'));
+    }
+
+    function resetToDefault() {
+        if (!confirm('¿Restablecer el tema predeterminado del sistema para toda la institución?')) return;
+        const data = Object.assign({}, PRESETS['purple'], {
+            key: 'purple', _isGlobalRector: true,
+            fontFamily: BASE_FONT, fontKey: 'jakarta',
+            fontSize: BASE_SIZE, sizeKey: 'normal'
+        });
+        applyTokens(data);
+        saveGlobalThemeToServer(data);
+        document.querySelectorAll('.rector-theme-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-rector-key') === 'purple');
+        });
     }
 
     function init() {
+        // Aplicar el tema global del Rector si existe (inyectado desde BD en base.html)
         try {
-            const current = getCurrentSettings();
-            applyTokens(current);
-        } catch (e) {
-            resetDefault();
-        }
+            const global = window.ACADEMIX_GLOBAL_THEME;
+            if (global && global.primary) {
+                applyTokens(global);
+                // Marcar botón activo si coincide con un preset
+                if (global.key) {
+                    document.querySelectorAll('.rector-theme-btn').forEach(btn => {
+                        btn.classList.toggle('active', btn.getAttribute('data-rector-key') === global.key);
+                    });
+                }
+            }
+        } catch(e) {}
     }
 
-    // Inicializar
-    init();
+    // Inicializar al cargar
+    document.addEventListener('DOMContentLoaded', init);
 
     return {
-        setSystemTheme: setSystemTheme,
-        setRolePreset: setRolePreset,
-        setFont: setFont,
-        setFontSize: setFontSize,
-        applySystemAccentPicker: applySystemAccentPicker,
-        resetDefault: resetDefault,
-        init: init
+        setRectorGlobalPreset: setRectorGlobalPreset,
+        setRectorGlobalAccent: setRectorGlobalAccent,
+        previewAccent: previewAccent,
+        resetToDefault: resetToDefault,
+        applyTokens: applyTokens,
+        init: init,
+        // Aliases por compatibilidad con base.html
+        setSystemTheme: function(hex) { /* no-op para otros */ },
+        setRolePreset: function() { /* no-op */ },
+        resetDefault: resetToDefault
     };
 })();
 </script>

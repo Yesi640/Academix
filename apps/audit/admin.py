@@ -3,10 +3,10 @@ from .models import AuditLog
 
 @admin.register(AuditLog)
 class AuditLogAdmin(admin.ModelAdmin):
-    list_display = ('timestamp', 'action', 'table_name', 'record_id', 'user', 'ip_address')
+    list_display = ('timestamp', 'action', 'table_name', 'record_id', 'user', 'ip_address', 'user_agent')
     list_filter = ('action', 'table_name', 'timestamp')
-    search_fields = ('record_id', 'reason', 'user__username', 'table_name', 'ip_address')
-    readonly_fields = ('user', 'timestamp', 'action', 'table_name', 'record_id', 'old_values', 'new_values', 'ip_address', 'reason')
+    search_fields = ('record_id', 'reason', 'user__username', 'table_name', 'ip_address', 'user_agent')
+    readonly_fields = ('user', 'timestamp', 'action', 'table_name', 'record_id', 'old_values', 'new_values', 'ip_address', 'user_agent', 'reason')
     ordering = ('-timestamp',)
 
     def has_add_permission(self, request):

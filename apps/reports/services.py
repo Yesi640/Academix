@@ -1,8 +1,15 @@
 import csv
 import io
+import hmac
+import hashlib
+import base64
+from io import BytesIO
 from decimal import Decimal, ROUND_HALF_UP
+from django.conf import settings
+from django.utils import timezone
 from django.db.models import Avg
-from apps.courses.models import CourseSection
+from apps.courses.models import CourseSection, InstitutionSetting
+from apps.courses.services import get_institution_settings, convert_score_to_performance_level
 from apps.subjects.models import Subject, KnowledgeArea
 from apps.periods.models import AcademicPeriod
 from apps.students.models import StudentProfile, Enrollment
@@ -10,11 +17,61 @@ from apps.teachers.models import TeachingAssignment
 from apps.grades.models import EvaluationCriterion, GradeRecord, PeriodFinalGrade
 from apps.attendance.models import AttendanceRecord
 
-def build_student_bulletin_data(student, section, period):
+def generate_bulletin_crypto_token(student_id, period_id, average_score, year):
+    """
+    Genera un hash criptográfico HMAC-SHA256 inmutable para garantizar
+    la autenticidad de las notas y evitar adulteraciones en impresiones o PDFs.
+    """
+    secret = getattr(settings, 'SECRET_KEY', 'academix-critical-key-2026')
+    payload = f"ACADEMIX-BULLETIN|STUDENT:{student_id}|PERIOD:{period_id}|AVG:{average_score}|YEAR:{year}"
+    token = hmac.new(secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256).hexdigest()
+    return token[:20].upper()
+
+def generate_bulletin_qr_base64(verification_url):
+    """
+    Genera un código QR enlazado a la URL pública de verificación y lo devuelve en formato base64
+    para incrustación directa en el PDF/HTML (data:image/png;base64,...).
+    """
+    try:
+        import qrcode
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=4,
+            border=2,
+        )
+        qr.add_data(verification_url)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="#0f172a", back_color="white")
+
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        encoded = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        return f"data:image/png;base64,{encoded}"
+    except Exception:
+        return ""
+
+def compile_weasyprint_pdf(html_string, base_url=None):
+    """
+    Compila el documento HTML optimizado con CSS Paged Media a PDF binario mediante WeasyPrint.
+    Si el host del sistema carece de librerías nativas Pango/Cairo (común en Windows local sin GTK),
+    captura el error y retorna (None, error_str) para permitir fallback seguro.
+    """
+    try:
+        import weasyprint
+        html_doc = weasyprint.HTML(string=html_string, base_url=base_url)
+        pdf_bytes = html_doc.write_pdf()
+        return pdf_bytes, None
+    except Exception as e:
+        return None, str(e)
+
+def build_student_bulletin_data(student, section, period, request=None):
     """
     Construye la estructura completa de datos del Boletín Oficial de Calificaciones
     de un estudiante conforme al Decreto 1290 y las áreas del plan de estudios.
+    Integra parametrización híbrida (Público/Privado), ranking, desempeños y firma criptográfica.
     """
+    institution = get_institution_settings()
     academic_year = section.academic_year
     enrollment = Enrollment.objects.filter(
         student=student,
@@ -102,8 +159,9 @@ def build_student_bulletin_data(student, section, period):
             total_absences_period += (unjustified_abs + justified_abs)
 
             score_val = final_grade.final_score if final_grade else Decimal('1.00')
-            is_approved = final_grade.is_approved if final_grade else (score_val >= Decimal('3.00'))
-            perf_level = final_grade.get_performance_level_display() if final_grade else 'Bajo'
+            
+            # Homologar desempeño según escala institucional activa
+            perf_level, is_approved = convert_score_to_performance_level(score_val, institution)
 
             if not is_approved:
                 total_failed_count += 1
@@ -139,9 +197,25 @@ def build_student_bulletin_data(student, section, period):
     else:
         period_average = Decimal('1.00')
 
+    # Desempeño del promedio general
+    overall_performance, is_overall_approved = convert_score_to_performance_level(period_average, institution)
+
     # Cálculo del puesto (ranking) en la sección
     ranking_data = calculate_section_ranking(section, period)
     student_rank = ranking_data.get(student.id, {'rank': 1, 'total': len(ranking_data)})
+
+    # Firma criptográfica inmutable
+    verification_token = generate_bulletin_crypto_token(student.id, period.id, period_average, academic_year.year)
+    
+    # URL de verificación
+    verification_url = f"https://academix.edu.co/verify/{verification_token}/"
+    if request:
+        try:
+            verification_url = request.build_absolute_uri(f"/reports/verify/{verification_token}/")
+        except Exception:
+            pass
+
+    qr_base64 = generate_bulletin_qr_base64(verification_url)
 
     # Estado de autorización de firma de la Rectora según bitácora de cierre
     from apps.rules.models import AcademicClosingLog
@@ -152,6 +226,7 @@ def build_student_bulletin_data(student, section, period):
     rector_signature_authorized = closing_log.rector_signature_authorized if closing_log else True
 
     return {
+        'institution': institution,
         'student': student,
         'enrollment': enrollment,
         'section': section,
@@ -160,12 +235,18 @@ def build_student_bulletin_data(student, section, period):
         'group_director': group_director,
         'bulletin_areas': bulletin_areas,
         'period_average': period_average,
+        'overall_performance': overall_performance,
+        'is_overall_approved': is_overall_approved,
         'student_rank': student_rank['rank'],
         'total_students_section': student_rank['total'],
         'total_subjects_count': total_subjects_count,
         'total_failed_count': total_failed_count,
         'total_absences_period': total_absences_period,
         'rector_signature_authorized': rector_signature_authorized,
+        'verification_token': verification_token,
+        'verification_url': verification_url,
+        'qr_base64': qr_base64,
+        'issued_at': timezone.now(),
     }
 
 def calculate_section_ranking(section, period):

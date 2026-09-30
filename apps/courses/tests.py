@@ -96,3 +96,134 @@ class CoursesTests(TestCase):
         # 4. Generación de cursos típicos
         sections = generate_default_sections_for_year(self.year2026, scope=InstitutionSetting.SchoolLevelScope.COMPLETA)
         self.assertEqual(len(sections), 12)
+
+
+class HybridInstitutionParametrizationTests(TestCase):
+    """
+    Pruebas unitarias para el Pilar 1: Motor de Parametrización Institucional (SaaS Híbrido Público/Privado).
+    """
+    def setUp(self):
+        from decimal import Decimal
+        from django.test import RequestFactory
+        from .models import InstitutionSetting
+        self.factory = RequestFactory()
+        self.setting = InstitutionSetting.get_settings()
+        self.setting.sector_mode = InstitutionSetting.SectorMode.PRIVATE
+        self.setting.enable_tuition_billing = True
+        self.setting.block_report_cards_on_debt = True
+        self.setting.grading_scale_type = InstitutionSetting.GradingScaleType.NUMERIC_5
+        self.setting.min_grade = Decimal('1.00')
+        self.setting.max_grade = Decimal('5.00')
+        self.setting.passing_grade = Decimal('3.00')
+        self.setting.save()
+
+    def test_switch_to_public_mode_preset(self):
+        """Al conmutar a público, se activan gratuidad, PAE y SIMAT, y se desactiva retención de boletines."""
+        self.setting.apply_sector_preset(self.setting.SectorMode.PUBLIC)
+        self.setting.refresh_from_db()
+
+        self.assertTrue(self.setting.is_public_institution)
+        self.assertFalse(self.setting.is_private_institution)
+        self.assertTrue(self.setting.enable_gratuity_control)
+        self.assertTrue(self.setting.enable_pae_module)
+        self.assertTrue(self.setting.enable_simat_integration)
+        self.assertFalse(self.setting.enable_tuition_billing)
+        self.assertFalse(self.setting.allows_report_card_debt_blocking)
+
+    def test_public_institution_cannot_block_report_cards(self):
+        """Por ley y constitución, un colegio público nunca puede tener activo el bloqueo de notas por deudas."""
+        self.setting.sector_mode = self.setting.SectorMode.PUBLIC
+        self.setting.block_report_cards_on_debt = True
+        self.setting.clean()
+        self.assertFalse(self.setting.block_report_cards_on_debt)
+        self.assertFalse(self.setting.allows_report_card_debt_blocking)
+
+    def test_performance_level_conversion_numeric_5(self):
+        """Conversión de escala 1.0 - 5.0 a niveles MEN (Bajo, Básico, Alto, Superior)."""
+        from .services import convert_score_to_performance_level
+        self.setting.grading_scale_type = self.setting.GradingScaleType.NUMERIC_5
+        self.setting.save()
+
+        level, approved = convert_score_to_performance_level('2.80', self.setting)
+        self.assertEqual(level, 'BAJO')
+        self.assertFalse(approved)
+
+        level, approved = convert_score_to_performance_level('3.50', self.setting)
+        self.assertEqual(level, 'BASICO')
+        self.assertTrue(approved)
+
+        level, approved = convert_score_to_performance_level('4.20', self.setting)
+        self.assertEqual(level, 'ALTO')
+        self.assertTrue(approved)
+
+        level, approved = convert_score_to_performance_level('4.80', self.setting)
+        self.assertEqual(level, 'SUPERIOR')
+        self.assertTrue(approved)
+
+    def test_performance_level_conversion_numeric_100(self):
+        """Conversión de escala 0 - 100 a niveles MEN."""
+        from .services import convert_score_to_performance_level
+        self.setting.grading_scale_type = self.setting.GradingScaleType.NUMERIC_100
+        self.setting.passing_grade = 60
+        self.setting.save()
+
+        level, approved = convert_score_to_performance_level('55.00', self.setting)
+        self.assertEqual(level, 'BAJO')
+        self.assertFalse(approved)
+
+        level, approved = convert_score_to_performance_level('85.00', self.setting)
+        self.assertEqual(level, 'ALTO')
+        self.assertTrue(approved)
+
+    def test_score_validation(self):
+        """Valida que una nota fuera de los límites de la institución sea rechazada."""
+        from django.core.exceptions import ValidationError
+        from .services import validate_score_input
+        self.setting.min_grade = 1
+        self.setting.max_grade = 5
+        self.setting.save()
+
+        # Nota válida
+        val = validate_score_input('4.5', self.setting)
+        self.assertEqual(val, 4.5)
+
+        # Nota fuera de rango superior
+        with self.assertRaises(ValidationError):
+            validate_score_input('6.0', self.setting)
+
+        # Nota fuera de rango inferior
+        with self.assertRaises(ValidationError):
+            validate_score_input('0.5', self.setting)
+
+    def test_decorators_hybrid_access_control(self):
+        """Prueba decoradores @require_public_school y @require_private_school."""
+        from django.core.exceptions import PermissionDenied
+        from django.http import HttpResponse
+        from .decorators import require_public_school, require_private_school
+
+        @require_public_school
+        def pae_view(request):
+            return HttpResponse("PAE")
+
+        @require_private_school
+        def billing_view(request):
+            return HttpResponse("Facturacion")
+
+        req = self.factory.get('/')
+
+        # 1. Configuración en PRIVADO
+        self.setting.apply_sector_preset(self.setting.SectorMode.PRIVATE)
+        resp = billing_view(req)
+        self.assertEqual(resp.status_code, 200)
+
+        with self.assertRaises(PermissionDenied):
+            pae_view(req)
+
+        # 2. Conmutar a PUBLICO
+        self.setting.apply_sector_preset(self.setting.SectorMode.PUBLIC)
+        resp_pae = pae_view(req)
+        self.assertEqual(resp_pae.status_code, 200)
+
+        with self.assertRaises(PermissionDenied):
+            billing_view(req)
+

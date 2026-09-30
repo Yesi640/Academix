@@ -1,11 +1,20 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from .models import StudentProfile, Enrollment
-from .services import enroll_student_in_section, get_or_create_student_profile
+from django.http import HttpResponse, HttpResponseForbidden, FileResponse
+from .models import StudentProfile, Enrollment, ExpedienteDocumento
+from .services import (
+    enroll_student_in_section,
+    get_or_create_student_profile,
+    can_user_access_student_expediente,
+    can_user_manage_student_expediente,
+    validate_admission_checklist,
+    verify_expediente_document
+)
 from apps.courses.models import CourseSection, AcademicYear
 from apps.accounts.models import CustomUser
 from apps.courses.services import get_current_academic_year
+from apps.audit.services import log_audit
 
 @login_required
 def students_list_view(request):
@@ -687,3 +696,174 @@ def cancel_enrollment_view(request, enrollment_id):
         )
 
     return redirect('students:list')
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MÓDULO 2: VISTAS DEL EXPEDIENTE DIGITAL Y CARPETA PERPETUA (CON RBAC)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@login_required
+def student_expediente_view(request, student_id):
+    """
+    Vista principal del Expediente Digital y Carpeta Perpetua del Estudiante.
+    Aplica RBAC estricto:
+    - Admin / Rector / Secretaría: Acceso total de consulta y verificación.
+    - Docente / Director de Grupo: Exclusivamente alumnos de su curso asignado.
+    - Acudiente / Padre: Exclusivamente sus hijos asociados.
+    - Alumno: Exclusivamente su propio expediente.
+    Retorna 403 Forbidden si no tiene autorización.
+    """
+    student = get_object_or_404(StudentProfile, id=student_id)
+
+    # Validación RBAC de acceso
+    if not can_user_access_student_expediente(request.user, student):
+        return HttpResponseForbidden("Acceso denegado: No cuenta con privilegios para consultar el expediente digital de este estudiante.")
+
+    can_manage = can_user_manage_student_expediente(request.user, student)
+    can_upload_admission = can_manage or (request.user.is_parent and student.parent_id == request.user.id)
+
+    # Documentos del estudiante agrupados por categoría
+    all_docs = student.expediente_documentos.select_related('academic_year', 'verified_by', 'uploaded_by').order_by('-uploaded_at')
+    
+    admission_docs = [d for d in all_docs if d.category == ExpedienteDocumento.Category.ADMISSION]
+    academic_docs = [d for d in all_docs if d.category == ExpedienteDocumento.Category.ACADEMIC]
+    convivencia_docs = [d for d in all_docs if d.category == ExpedienteDocumento.Category.CONVIVENCIA]
+    administrative_docs = [d for d in all_docs if d.category == ExpedienteDocumento.Category.ADMINISTRATIVE]
+
+    # Checklist de matrícula
+    checklist = validate_admission_checklist(student)
+
+    # Matrícula actual y año lectivo
+    current_year = get_current_academic_year()
+    enrollment = student.enrollments.filter(academic_year=current_year).first()
+
+    context = {
+        'student': student,
+        'enrollment': enrollment,
+        'current_year': current_year,
+        'all_docs': all_docs,
+        'admission_docs': admission_docs,
+        'academic_docs': academic_docs,
+        'convivencia_docs': convivencia_docs,
+        'administrative_docs': administrative_docs,
+        'checklist': checklist,
+        'can_manage': can_manage,
+        'can_upload_admission': can_upload_admission,
+        'category_choices': ExpedienteDocumento.Category.choices,
+        'document_type_choices': ExpedienteDocumento.DocumentType.choices,
+    }
+    return render(request, 'students/expediente_digital.html', context)
+
+
+@login_required
+def upload_expediente_document_view(request, student_id):
+    """
+    Sube un nuevo soporte digital al expediente del estudiante.
+    Valida permisos RBAC según la categoría del archivo.
+    """
+    student = get_object_or_404(StudentProfile, id=student_id)
+    can_manage = can_user_manage_student_expediente(request.user, student)
+    is_parent_of_student = (request.user.is_parent and student.parent_id == request.user.id)
+
+    if not (can_manage or is_parent_of_student):
+        return HttpResponseForbidden("No tiene permisos para adjuntar archivos a este expediente.")
+
+    if request.method == 'POST':
+        uploaded_file = request.FILES.get('file')
+        category = request.POST.get('category')
+        doc_type = request.POST.get('document_type', ExpedienteDocumento.DocumentType.OTRO)
+        title = request.POST.get('title', '').strip()
+        notes = request.POST.get('notes', '').strip()
+
+        # Padres solo pueden subir soportes de admisión/matrícula
+        if is_parent_of_student and not can_manage and category != ExpedienteDocumento.Category.ADMISSION:
+            return HttpResponseForbidden("Los acudientes solo pueden subir soportes correspondientes a la categoría de Admisión.")
+
+        if not uploaded_file:
+            messages.error(request, "Debe seleccionar un archivo válido (PDF o Imagen).")
+            return redirect('students:expediente', student_id=student.id)
+
+        if not title:
+            title = dict(ExpedienteDocumento.DocumentType.choices).get(doc_type, 'Documento de Soporte')
+
+        current_year = get_current_academic_year()
+
+        doc = ExpedienteDocumento.objects.create(
+            student=student,
+            category=category,
+            document_type=doc_type,
+            title=title,
+            file=uploaded_file,
+            academic_year=current_year,
+            uploaded_by=request.user,
+            notes=notes,
+            # Si lo sube secretaría o admin, queda auto-verificado opcionalmente
+            is_verified=can_manage and (request.POST.get('auto_verify') == '1'),
+            verified_by=request.user if (can_manage and request.POST.get('auto_verify') == '1') else None,
+            verified_at=timezone.now() if (can_manage and request.POST.get('auto_verify') == '1') else None
+        )
+
+        log_audit(
+            action='INSERT',
+            table_name='ExpedienteDocumento',
+            record_id=doc.id,
+            new_values={
+                'title': doc.title,
+                'category': doc.category,
+                'student': student.user.get_full_name(),
+                'filename': uploaded_file.name
+            },
+            reason=f"Archivo cargado al expediente digital de {student.user.get_full_name()}",
+            user=request.user,
+            request=request
+        )
+
+        messages.success(request, f"Documento '{doc.title}' incorporado exitosamente al expediente.")
+
+    return redirect('students:expediente', student_id=student.id)
+
+
+@login_required
+def verify_expediente_document_view(request, document_id):
+    """
+    Acción de Secretaría/Rectoría para marcar un soporte oficial como verificado.
+    """
+    doc = get_object_or_404(ExpedienteDocumento, id=document_id)
+    if not can_user_manage_student_expediente(request.user, doc.student):
+        return HttpResponseForbidden("Solo personal de secretaría o directivos pueden verificar documentos oficiales.")
+
+    if request.method == 'POST':
+        verify_expediente_document(doc.id, request.user)
+        messages.success(request, f"Documento '{doc.title}' verificado oficialmente con firma digital de secretaría.")
+
+    return redirect('students:expediente', student_id=doc.student_id)
+
+
+@login_required
+def download_expediente_document_view(request, document_id):
+    """
+    Descarga segura de soportes del expediente perpetuo con verificación RBAC.
+    """
+    doc = get_object_or_404(ExpedienteDocumento, id=document_id)
+
+    if not can_user_access_student_expediente(request.user, doc.student):
+        return HttpResponseForbidden("No tiene autorización para descargar documentos de este expediente.")
+
+    if not doc.file or not doc.file.storage.exists(doc.file.name):
+        messages.error(request, "El archivo solicitado no se encuentra disponible físicamente en el servidor de almacenamiento.")
+        return redirect('students:expediente', student_id=doc.student_id)
+
+    log_audit(
+        action='OFFICIAL_REPORT_EXPORT',
+        table_name='ExpedienteDocumento',
+        record_id=doc.id,
+        new_values={'title': doc.title, 'category': doc.category},
+        reason=f"Descarga de soporte de expediente: {doc.title}",
+        user=request.user,
+        request=request
+    )
+
+    response = FileResponse(doc.file.open('rb'))
+    response['Content-Disposition'] = f'inline; filename="{os.path.basename(doc.file.name)}"'
+    return response
+

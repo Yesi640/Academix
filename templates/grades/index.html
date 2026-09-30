@@ -19,37 +19,58 @@
     <div class="col-lg-8">
         <div class="card ac-card p-4 p-md-5">
             <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
-                <i class="bi bi-card-checklist text-primary"></i> Seleccionar Asignatura y Periodo
+                <i class="bi bi-card-checklist text-primary"></i> Seleccionar Grupo, Asignatura y Periodo
             </h4>
             <p class="text-muted small mb-4">
-                Seleccione el grupo escolar, la materia y el periodo lectivo correspondiente para ingresar a la matriz con autoguardado en tiempo real.
+                Seleccione el grupo escolar y el sistema filtrará automáticamente las asignaturas disponibles.
+                Solo el docente asignado puede ingresar y modificar notas.
             </p>
 
             <form method="GET" action="{% url 'grades:matrix' %}">
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary">Grupo / Sección Escolar</label>
-                        <select name="section_id" class="form-select form-select-lg" required>
-                            <option value="" disabled selected>-- Seleccione un curso --</option>
+
+                    <!-- PASO 1: Grupo -->
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-secondary" for="sel_section">
+                            <span class="badge bg-primary me-1" style="border-radius:50%;width:20px;height:20px;line-height:20px;padding:0;display:inline-flex;align-items:center;justify-content:center;">1</span>
+                            Grupo / Sección Escolar
+                        </label>
+                        <select name="section_id" id="sel_section" class="form-select form-select-lg" required>
+                            <option value="" disabled selected>— Seleccione un curso —</option>
                             {% for section in sections %}
-                            <option value="{{ section.id }}">{{ section.name }} (Grado {{ section.grade_level.name }})</option>
+                            <option value="{{ section.id }}">{{ section.name }} — Grado {{ section.grade_level.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
 
+                    <!-- PASO 2: Asignatura (se filtra según grupo) -->
                     <div class="col-md-6">
-                        <label class="form-label small fw-semibold text-secondary">Asignatura</label>
-                        <select name="subject_id" class="form-select form-select-lg" required>
-                            <option value="" disabled selected>-- Seleccione la asignatura --</option>
+                        <label class="form-label small fw-semibold text-secondary" for="sel_subject">
+                            <span class="badge bg-info me-1" style="border-radius:50%;width:20px;height:20px;line-height:20px;padding:0;display:inline-flex;align-items:center;justify-content:center;">2</span>
+                            Asignatura
+                        </label>
+                        <select name="subject_id" id="sel_subject" class="form-select form-select-lg" required disabled>
+                            <option value="" disabled selected>— Primero seleccione el grupo —</option>
                             {% for asg in assignments %}
-                            <option value="{{ asg.subject.id }}">{{ asg.subject.name }} ({{ asg.course_section.name }})</option>
+                            <option value="{{ asg.subject.id }}"
+                                    data-section="{{ asg.course_section.id }}"
+                                    class="subject-opt">
+                                {{ asg.subject.name }}
+                            </option>
                             {% endfor %}
                         </select>
+                        <div id="no_subjects_msg" class="text-muted small mt-1" style="display:none;">
+                            <i class="bi bi-info-circle me-1"></i>Sin asignaturas configuradas para este grupo.
+                        </div>
                     </div>
 
-                    <div class="col-md-12">
-                        <label class="form-label small fw-semibold text-secondary">Periodo Lectivo</label>
-                        <select name="period_id" class="form-select form-select-lg" required>
+                    <!-- PASO 3: Periodo -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-semibold text-secondary" for="sel_period">
+                            <span class="badge bg-success me-1" style="border-radius:50%;width:20px;height:20px;line-height:20px;padding:0;display:inline-flex;align-items:center;justify-content:center;">3</span>
+                            Periodo Lectivo
+                        </label>
+                        <select name="period_id" id="sel_period" class="form-select form-select-lg" required>
                             {% for p in periods %}
                             <option value="{{ p.id }}" {% if p == active_period %}selected{% endif %}>
                                 {{ p.name }} - {{ p.get_status_display }} ({{ p.percentage }}%)
@@ -59,8 +80,22 @@
                     </div>
                 </div>
 
+                <!-- Vista previa de selección -->
+                <div id="selection_preview" class="alert alert-light border rounded-3 p-3 mb-4 small" style="display:none;">
+                    <div class="fw-semibold text-dark mb-1">
+                        <i class="bi bi-eye me-1 text-primary"></i>Resumen de selección:
+                    </div>
+                    <div class="d-flex flex-wrap gap-3 text-secondary">
+                        <span><i class="bi bi-collection me-1"></i><strong>Grupo:</strong> <span id="prev_section">—</span></span>
+                        <span><i class="bi bi-journal-bookmark me-1"></i><strong>Asignatura:</strong> <span id="prev_subject">—</span></span>
+                        <span><i class="bi bi-calendar2 me-1"></i><strong>Periodo:</strong> <span id="prev_period">—</span></span>
+                    </div>
+                </div>
+
                 <div class="d-grid">
-                    <button type="submit" class="btn btn-primary btn-lg fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm">
+                    <button type="submit" id="btn_open_matrix"
+                            class="btn btn-primary btn-lg fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                            disabled>
                         <i class="bi bi-grid-3x3-gap-fill"></i>
                         <span>Abrir Matriz de Calificaciones</span>
                     </button>
@@ -69,4 +104,75 @@
         </div>
     </div>
 </div>
+
+<script>
+(function() {
+    var selSection  = document.getElementById('sel_section');
+    var selSubject  = document.getElementById('sel_subject');
+    var selPeriod   = document.getElementById('sel_period');
+    var noSubjMsg   = document.getElementById('no_subjects_msg');
+    var btnOpen     = document.getElementById('btn_open_matrix');
+    var preview     = document.getElementById('selection_preview');
+    var prevSection = document.getElementById('prev_section');
+    var prevSubject = document.getElementById('prev_subject');
+    var prevPeriod  = document.getElementById('prev_period');
+
+    // Guardar todas las opciones de asignatura antes de filtrar
+    var allOpts = Array.from(selSubject.querySelectorAll('.subject-opt'));
+    allOpts.forEach(function(opt) { opt.parentNode.removeChild(opt); });
+
+    function updatePreview() {
+        var sIdx = selSection.selectedIndex;
+        var aIdx = selSubject.selectedIndex;
+        var pIdx = selPeriod.selectedIndex;
+        if (selSection.value && selSubject.value) {
+            preview.style.display = 'block';
+            prevSection.textContent = sIdx >= 0 ? selSection.options[sIdx].text : '—';
+            prevSubject.textContent = aIdx >= 0 ? selSubject.options[aIdx].text : '—';
+            prevPeriod.textContent  = pIdx >= 0 ? selPeriod.options[pIdx].text  : '—';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+
+    function checkReady() {
+        var ready = selSection.value && selSubject.value && selPeriod.value;
+        btnOpen.disabled = !ready;
+        updatePreview();
+    }
+
+    selSection.addEventListener('change', function() {
+        var sectionId = this.value;
+
+        // Reconstruir select de asignatura con opciones filtradas
+        selSubject.innerHTML = '';
+        var placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+
+        var visible = allOpts.filter(function(opt) {
+            return opt.dataset.section === sectionId;
+        });
+
+        if (visible.length === 0) {
+            placeholder.textContent = '— Sin asignaturas para este grupo —';
+            selSubject.appendChild(placeholder);
+            selSubject.disabled = true;
+            noSubjMsg.style.display = 'block';
+        } else {
+            placeholder.textContent = '— Seleccione la asignatura —';
+            selSubject.appendChild(placeholder);
+            visible.forEach(function(opt) { selSubject.appendChild(opt); });
+            selSubject.disabled = false;
+            noSubjMsg.style.display = 'none';
+        }
+
+        checkReady();
+    });
+
+    selSubject.addEventListener('change', checkReady);
+    selPeriod.addEventListener('change', checkReady);
+})();
+</script>
 {% endblock %}

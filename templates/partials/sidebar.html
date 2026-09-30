@@ -208,12 +208,6 @@
         {% if user.is_rector %}
         <li class="sidebar-menu-header">Supervisión Directiva</li>
         <li class="sidebar-item">
-            <a href="{% url 'courses:institution_settings' %}" class="sidebar-link {% if 'institution-settings' in request.path %}active{% endif %}">
-                <i class="bi bi-sliders2 text-primary"></i>
-                <span>Adaptabilidad Institucional</span>
-            </a>
-        </li>
-        <li class="sidebar-item">
             <a href="{% url 'audit:list' %}" class="sidebar-link">
                 <i class="bi bi-journal-text"></i>
                 <span>Trazabilidad y Cierres</span>
@@ -228,12 +222,14 @@
                 <span>Mi Perfil</span>
             </a>
         </li>
+        {% if user.is_rector or user.is_admin_role %}
         <li class="sidebar-item">
             <a href="#" class="sidebar-link" data-bs-toggle="modal" data-bs-target="#themeSettingsModal">
                 <i class="bi bi-palette-fill text-warning"></i>
-                <span>Cambiar Tema</span>
+                <span>Tema Institucional <span class="badge bg-warning text-dark" style="font-size:0.55rem; vertical-align:middle;">RECTOR</span></span>
             </a>
         </li>
+        {% endif %}
         <li class="sidebar-item">
             <a href="{% url 'accounts:logout' %}" class="sidebar-link text-danger">
                 <i class="bi bi-power"></i>

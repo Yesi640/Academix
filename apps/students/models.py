@@ -1,5 +1,7 @@
+import os
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
 
 class StudentProfile(models.Model):
     """
@@ -214,4 +216,173 @@ class StudentObservation(models.Model):
             self.Severity.CRITICAL: 'bg-danger-subtle text-danger-emphasis border-danger-subtle',
         }
         return mapping.get(self.severity, 'bg-secondary text-white')
+
+
+def expediente_upload_path(instance, filename):
+    """
+    Ruta dinámica y organizada en el servidor para el Expediente Digital Perpetuo:
+    media/expedientes/student_<id>/<category>/<document_type>_<timestamp>.<ext>
+    """
+    ext = os.path.splitext(filename)[1].lower()
+    timestamp = timezone.now().strftime('%Y%m%d_%H%M%S')
+    doc_type = instance.document_type.lower() if instance.document_type else 'doc'
+    clean_filename = f"{doc_type}_{timestamp}{ext}"
+    return f"expedientes/student_{instance.student_id}/{instance.category.lower()}/{clean_filename}"
+
+
+class ExpedienteDocumento(models.Model):
+    """
+    Módulo 2: Carpeta Perpetua y Expediente Digital del Estudiante.
+    Almacena de forma inmutable, categorizada y verificable todos los soportes
+    académicos, de admisión, convivenciales y administrativos a lo largo de la vida escolar del alumno.
+    """
+    class Category(models.TextChoices):
+        ADMISSION = 'ADMISSION', '1. Admisión e Ingreso'
+        ACADEMIC = 'ACADEMIC', '2. Académico'
+        CONVIVENCIA = 'CONVIVENCIA', '3. Convivencia y Disciplina'
+        ADMINISTRATIVE = 'ADMINISTRATIVE', '4. Administrativo y Financiero'
+
+    class DocumentType(models.TextChoices):
+        # 1. Admisión
+        REGISTRO_CIVIL = 'REGISTRO_CIVIL', 'Registro Civil de Nacimiento'
+        TARJETA_IDENTIDAD = 'TARJETA_IDENTIDAD', 'Tarjeta de Identidad / Cédula / DNI'
+        CARNET_VACUNAS = 'CARNET_VACUNAS', 'Carnet de Vacunación'
+        CERTIFICADO_EPS = 'CERTIFICADO_EPS', 'Certificado de Afiliación a EPS'
+        CERTIFICADO_ESTUDIO_ANT = 'CERTIFICADO_ESTUDIO_ANT', 'Certificado de Estudios de Años Anteriores'
+        FOTO_DOCUMENTO = 'FOTO_DOCUMENTO', 'Fotografía Digital Tipo Documento'
+        
+        # 2. Académico
+        BOLETIN_OFICIAL = 'BOLETIN_OFICIAL', 'Boletín Oficial de Calificaciones'
+        CERTIFICADO_ESTUDIO = 'CERTIFICADO_ESTUDIO', 'Certificado Oficial de Estudios'
+        ACTA_GRADO = 'ACTA_GRADO', 'Acta de Grado / Diploma'
+        INFORME_PEDAGOGICO = 'INFORME_PEDAGOGICO', 'Informe Psicopedagógico / Inclusión (PIAR)'
+        
+        # 3. Convivencia
+        ACTA_COMPROMISO = 'ACTA_COMPROMISO', 'Acta de Compromiso Convivencial'
+        DESCARGOS_DISCIPLINA = 'DESCARGOS_DISCIPLINA', 'Formato de Descargos Disciplinarios'
+        CITACION_ACUDIENTE = 'CITACION_ACUDIENTE', 'Citación Formal a Acudiente'
+        EXCUSA_MEDICA = 'EXCUSA_MEDICA', 'Incapacidad / Excusa Médica Validada'
+        
+        # 4. Administrativo
+        CONTRATO_MATRICULA = 'CONTRATO_MATRICULA', 'Contrato de Matrícula y Prestación de Servicios'
+        PAGARE = 'PAGARE', 'Pagaré y Carta de Instrucciones'
+        PAZ_Y_SALVO = 'PAZ_Y_SALVO', 'Paz y Salvo Institucional'
+        AUTORIZACION_DATOS = 'AUTORIZACION_DATOS', 'Autorización de Tratamiento de Datos (Habeas Data)'
+        OTRO = 'OTRO', 'Otro Documento Institucional'
+
+    student = models.ForeignKey(
+        StudentProfile,
+        on_delete=models.CASCADE,
+        related_name='expediente_documentos',
+        verbose_name='Estudiante'
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        db_index=True,
+        verbose_name='Categoría del Expediente'
+    )
+    document_type = models.CharField(
+        max_length=30,
+        choices=DocumentType.choices,
+        default=DocumentType.OTRO,
+        db_index=True,
+        verbose_name='Tipo de Documento'
+    )
+    title = models.CharField(
+        max_length=150,
+        verbose_name='Título Descriptivo del Documento'
+    )
+    file = models.FileField(
+        upload_to=expediente_upload_path,
+        verbose_name='Archivo Digital (PDF, JPG, PNG)'
+    )
+    academic_year = models.ForeignKey(
+        'courses.AcademicYear',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='expediente_documentos',
+        verbose_name='Año Lectivo Asociado'
+    )
+    is_verified = models.BooleanField(
+        default=False,
+        db_index=True,
+        verbose_name='¿Verificado Oficialmente por Secretaría?'
+    )
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_expediente_docs',
+        verbose_name='Funcionario que Verificó'
+    )
+    verified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha y Hora de Verificación'
+    )
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='uploaded_expediente_docs',
+        verbose_name='Subido por'
+    )
+    uploaded_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Fecha y Hora de Subida'
+    )
+    notes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name='Observaciones / Número de Folio Físico'
+    )
+
+    class Meta:
+        verbose_name = 'Documento del Expediente'
+        verbose_name_plural = 'Documentos del Expediente (Carpeta Perpetua)'
+        ordering = ['category', '-uploaded_at']
+        indexes = [
+            models.Index(fields=['student', 'category']),
+            models.Index(fields=['student', 'document_type']),
+        ]
+
+    def __str__(self):
+        status = " [VERIFICADO]" if self.is_verified else " [PENDIENTE]"
+        return f"{self.get_category_display()} - {self.title}{status}"
+
+    def verify(self, user):
+        """Marca formalmente el documento como verificado por secretaría."""
+        self.is_verified = True
+        self.verified_by = user
+        self.verified_at = timezone.now()
+        self.save(update_fields=['is_verified', 'verified_by', 'verified_at'])
+
+    @property
+    def file_extension(self):
+        if self.file and self.file.name:
+            return os.path.splitext(self.file.name)[1].lower().replace('.', '')
+        return ''
+
+    @property
+    def is_pdf(self):
+        return self.file_extension == 'pdf'
+
+    @property
+    def is_image(self):
+        return self.file_extension in ['jpg', 'jpeg', 'png', 'webp']
+
+    @property
+    def category_badge_class(self):
+        mapping = {
+            self.Category.ADMISSION: 'bg-primary-subtle text-primary border border-primary-subtle',
+            self.Category.ACADEMIC: 'bg-success-subtle text-success border border-success-subtle',
+            self.Category.CONVIVENCIA: 'bg-warning-subtle text-warning-emphasis border border-warning-subtle',
+            self.Category.ADMINISTRATIVE: 'bg-info-subtle text-info-emphasis border border-info-subtle',
+        }
+        return mapping.get(self.category, 'bg-secondary-subtle text-secondary')
+
 

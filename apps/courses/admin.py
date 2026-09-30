@@ -29,7 +29,27 @@ class InstitutionSettingAdmin(admin.ModelAdmin):
     """
     fieldsets = (
         ('🏛️ Identidad de la Institución', {
-            'fields': ('institution_type', 'school_scope', 'institution_name', 'slogan'),
+            'fields': ('institution_type', 'sector_mode', 'school_scope', 'institution_name', 'slogan', 'dane_code', 'consecutive_resolution'),
+        }),
+        ('📊 Sistema de Evaluación y Periodos', {
+            'fields': (
+                'grading_scale_type', 'min_grade', 'max_grade', 'passing_grade',
+                'grade_decimal_places', 'period_structure'
+            ),
+            'description': 'Configura la escala de notas cuantitativa o conceptual (MEN Decreto 1290) y la estructura del calendario.',
+        }),
+        ('💼 Módulo Privado: Facturación, Admisiones y Cartera', {
+            'fields': (
+                'enable_tuition_billing', 'block_report_cards_on_debt',
+                'enable_payment_gateway', 'enable_online_admissions'
+            ),
+            'description': 'Aplica para Colegios Privados. Permite facturación recurrente, cobros y retención de boletines.',
+        }),
+        ('🇨🇴 Módulo Oficial: Gratuidad, PAE y SIMAT', {
+            'fields': (
+                'enable_gratuity_control', 'enable_pae_module', 'enable_simat_integration'
+            ),
+            'description': 'Aplica para Colegios Públicos/Estatales. Activa cupos PAE, gratuidad universal y generación SIMAT.',
         }),
         ('🎨 Branding e Identidad Visual', {
             'fields': ('logo', 'hero_image', 'primary_color', 'secondary_color'),
@@ -63,5 +83,7 @@ class InstitutionSettingAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False  # No permitir borrar la única config
 
-    list_display = ('institution_name', 'institution_type', 'primary_color', 'secondary_color', 'updated_at')
+    list_display = ('institution_name', 'institution_type', 'sector_mode', 'grading_scale_type', 'updated_at')
+    list_filter = ('sector_mode', 'institution_type', 'grading_scale_type')
     readonly_fields = ('updated_at',)
+

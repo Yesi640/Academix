@@ -240,44 +240,51 @@
                             <th style="width: 110px;" class="text-nowrap"><i class="bi bi-upc me-1 text-primary"></i>Código</th>
                             <th style="min-width: 180px;"><i class="bi bi-person me-1 text-primary"></i>Estudiante</th>
                         {% for crit in criteria %}
-                            <th class="text-center" style="min-width: 170px; max-width: 220px; vertical-align: top;">
+                            <th class="text-center" style="min-width: 175px; max-width: 230px; vertical-align: top;">
                                 <div class="d-flex align-items-center justify-content-center gap-1 mb-1">
-                                    <span class="fw-bold text-dark" id="crit-name-label-{{ crit.id }}" style="font-size: 0.8rem; letter-spacing: 0.2px;">
-                                        {{ crit.name }}
+                                    <span class="badge bg-primary text-white fw-bold px-2 py-1 rounded-pill shadow-xs" style="font-size: 0.72rem; letter-spacing: 0.3px;">
+                                        {% if crit.norm %}RAP {{ crit.norm.order }}{% else %}RAP {{ forloop.counter }}{% endif %}
                                     </span>
+                                    {% if crit.norm %}
+                                    <button type="button" class="btn btn-xs btn-outline-primary p-0 px-1 border-0" 
+                                            data-bs-toggle="modal" data-bs-target="#rapInfoModal-{{ crit.id }}" 
+                                            title="Ver detalle curricular del RAP {{ crit.norm.order }} (Saber, Hacer, Ser)">
+                                        <i class="bi bi-info-circle-fill" style="font-size: 0.85rem;"></i>
+                                    </button>
+                                    {% endif %}
                                 </div>
-                                <div>
-                                    <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.7rem;">
+                                <div class="fw-bold text-dark small text-truncate px-1 mb-1" id="crit-name-label-{{ crit.id }}" style="font-size: 0.76rem;" title="{{ crit.name }}">
+                                    {{ crit.name|cut:"RAP 1: "|cut:"RAP 2: "|cut:"RAP 3: "|cut:"RAP 4: " }}
+                                </div>
+                                <div class="d-flex align-items-center justify-content-center gap-1 mb-1 flex-wrap">
+                                    <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.68rem;">
                                         {{ crit.percentage|floatformat:2 }}%
                                     </span>
+                                    {% if crit.norm %}
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle" style="font-size: 0.62rem;" title="SABER: {{ crit.norm.saber }}">Saber</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.62rem;" title="HACER: {{ crit.norm.hacer }}">Hacer</span>
+                                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle" style="font-size: 0.62rem;" title="SER: {{ crit.norm.ser }}">Ser</span>
+                                    {% endif %}
                                 </div>
                                 {% if is_editable %}
                                 <div class="mt-2">
                                     <div class="input-group input-group-sm shadow-xs rounded">
                                         <span class="input-group-text bg-white border-end-0 text-muted px-2 py-0" style="font-size: 0.7rem;">
-                                            <i class="bi bi-tag-fill text-primary opacity-75"></i>
+                                            <i class="bi bi-pencil-square text-primary opacity-75"></i>
                                         </span>
                                         <input type="text"
                                                class="form-control form-control-sm text-center criterion-topic-input border-start-0 py-1"
-                                               style="font-size:0.75rem; background: #ffffff; font-weight: 500;"
+                                               style="font-size:0.72rem; background: #ffffff; font-weight: 500;"
                                                value="{{ crit.topic }}"
-                                               {% if "evaluac" in crit.name|lower or "quiz" in crit.name|lower %}
-                                               placeholder="Ej: Evaluación 1 - La Célula"
-                                               {% elif "taller" in crit.name|lower or "actividad" in crit.name|lower %}
-                                               placeholder="Ej: Taller 1 - Fracciones"
-                                               {% elif "actitud" in crit.name|lower %}
-                                               placeholder="Ej: Convivencia y puntualidad"
-                                               {% else %}
-                                               placeholder="Nombre / Tema de actividad..."
-                                               {% endif %}
+                                               placeholder="Evidencia / Producto..."
                                                data-criterion-id="{{ crit.id }}"
                                                data-topic-url="{% url 'grades:update_criterion_topic' %}"
-                                               title="Escribe el nombre del taller, evaluación o actividad realizada"
+                                               title="Evidencia de aprendizaje evaluada en este RAP"
                                                autocomplete="off">
                                     </div>
                                 </div>
                                 {% elif crit.topic %}
-                                <div class="badge bg-light text-secondary border mt-1 px-2 py-1 text-truncate d-block" style="font-size:0.72rem; max-width:160px; margin: 0 auto;" title="{{ crit.topic }}">
+                                <div class="badge bg-light text-secondary border mt-1 px-2 py-1 text-truncate d-block" style="font-size:0.7rem; max-width:170px; margin: 0 auto;" title="{{ crit.topic }}">
                                     <i class="bi bi-tag-fill me-1 text-primary"></i>{{ crit.topic }}
                                 </div>
                                 {% endif %}
@@ -639,6 +646,64 @@
                 </div>
             </div>
 
+            <!-- Jerarquía Curricular Pedagógica (Esquema Cliente: Área -> Materia -> Indicadores/Dominios/Dimensiones/Competencias -> RAPs) -->
+            <div class="card ac-card border-0 shadow-sm rounded-4 p-3 mb-4" style="background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%); border-left: 5px solid #4f46e5 !important;">
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-circle p-2 text-white bg-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                            <i class="bi bi-diagram-3-fill"></i>
+                        </span>
+                        <div>
+                            <h6 class="fw-bold text-dark mb-0">Jerarquía Pedagógica de la Malla Curricular</h6>
+                            <small class="text-muted" style="font-size: 0.72rem;">Estructura multinivel: Área &bull; Materia &bull; Indicadores/Dominios/Dimensiones/Competencias &bull; RAPs</small>
+                        </div>
+                    </div>
+                    <span class="badge bg-purple text-white px-2 py-1 font-monospace" style="background: #7c3aed; font-size: 0.7rem;">
+                        Modelo Pedagógico Institucional
+                    </span>
+                </div>
+
+                <div class="row g-2 pt-2 text-center align-items-center">
+                    <!-- Nivel 1 -->
+                    <div class="col-12 col-md-3">
+                        <div class="p-2 rounded-3 bg-primary-subtle text-primary border border-primary-subtle h-100">
+                            <span class="badge bg-primary text-white mb-1" style="font-size:0.62rem;">NIVEL 1</span>
+                            <div class="fw-bold" style="font-size: 0.8rem;"><i class="bi bi-folder-fill me-1"></i>Área</div>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Campos de conocimiento fundamental</small>
+                        </div>
+                    </div>
+                    <!-- Nivel 2 -->
+                    <div class="col-12 col-md-3">
+                        <div class="p-2 rounded-3 bg-info-subtle text-dark border border-info-subtle h-100">
+                            <span class="badge bg-info text-white mb-1" style="font-size:0.62rem;">NIVEL 2</span>
+                            <div class="fw-bold" style="font-size: 0.8rem;"><i class="bi bi-journal-bookmark-fill text-info me-1"></i>Materia / Asignatura</div>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Módulos y disciplinas específicas</small>
+                        </div>
+                    </div>
+                    <!-- Nivel 3 -->
+                    <div class="col-12 col-md-3">
+                        <div class="p-2 rounded-3 bg-secondary-subtle text-dark border border-secondary-subtle h-100">
+                            <span class="badge bg-secondary text-white mb-1" style="font-size:0.62rem;">NIVEL 3</span>
+                            <div class="fw-bold" style="font-size: 0.8rem;"><i class="bi bi-bullseye text-secondary me-1"></i>Competencias / Indicadores</div>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Dominios, dimensiones y logros</small>
+                        </div>
+                    </div>
+                    <!-- Nivel 4 -->
+                    <div class="col-12 col-md-3">
+                        <div class="p-2 rounded-3 border h-100" style="background:#faf5ff; border-color:#d8b4fe !important;">
+                            <span class="badge text-white mb-1" style="background:#7c3aed; font-size:0.62rem;">NIVEL 4</span>
+                            <div class="fw-bold" style="font-size: 0.8rem; color:#6b21a8;"><i class="bi bi-award-fill me-1"></i>RAPs de Aprendizaje</div>
+                            <div class="d-flex justify-content-center gap-1 mt-1 flex-wrap" style="font-size: 0.6rem;">
+                                <span class="badge bg-primary text-white px-1">Saber</span>
+                                <span class="badge bg-success text-white px-1">Hacer</span>
+                                <span class="badge bg-warning text-dark px-1">Ser</span>
+                                <span class="badge bg-dark text-white px-1">Elaborar</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Grilla Modular: Áreas de Conocimiento y Materias (Estilo LMS Corporativo) -->
             {% if curriculum_by_area %}
             <div class="row g-4 align-items-stretch mb-4">
@@ -785,6 +850,58 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4 small">
+                        <!-- DIAGRAMA VISUAL DE JERARQUÍA CURRICULAR (ESQUEMA CLIENTE) -->
+                        <div class="card border rounded-3 p-3 mb-4 shadow-xs" style="background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%); border-left: 4px solid #3b82f6 !important;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="fw-bold text-dark small text-uppercase d-flex align-items-center gap-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">
+                                    <i class="bi bi-diagram-3-fill text-primary"></i>Jerarquía Pedagógica Curricular
+                                </span>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace" style="font-size: 0.68rem;">Esquema Institucional</span>
+                            </div>
+
+                            <!-- Nivel 1: Área -->
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-primary text-white rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem;">1</span>
+                                <div class="p-1 px-2 rounded-2 bg-primary-subtle text-primary border border-primary-subtle flex-grow-1 d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold" style="font-size: 0.78rem;"><i class="bi bi-folder-fill me-1"></i>Área: {{ item.subject.area.name }}</span>
+                                    <small class="text-uppercase" style="font-size: 0.65rem;">NIVEL 1</small>
+                                </div>
+                            </div>
+                            <!-- Conector -->
+                            <div class="ps-3 my-0 text-primary opacity-50" style="font-size: 0.7rem; line-height: 1;"><i class="bi bi-arrow-down"></i></div>
+
+                            <!-- Nivel 2: Materia -->
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-info text-white rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem;">2</span>
+                                <div class="p-1 px-2 rounded-2 bg-info-subtle text-dark border border-info-subtle flex-grow-1 d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold" style="font-size: 0.78rem;"><i class="bi bi-journal-bookmark-fill text-info me-1"></i>Materia: {{ item.subject.name }} ({{ item.subject.code }})</span>
+                                    <small class="text-uppercase text-secondary" style="font-size: 0.65rem;">NIVEL 2</small>
+                                </div>
+                            </div>
+                            <!-- Conector -->
+                            <div class="ps-3 my-0 text-info opacity-50" style="font-size: 0.7rem; line-height: 1;"><i class="bi bi-arrow-down"></i></div>
+
+                            <!-- Nivel 3: Indicadores / Dominios / Dimensiones / Competencias -->
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="badge bg-secondary text-white rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem;">3</span>
+                                <div class="p-1 px-2 rounded-2 bg-light border flex-grow-1 d-flex align-items-center justify-content-between">
+                                    <span class="fw-semibold text-secondary" style="font-size: 0.75rem;"><i class="bi bi-bullseye me-1 text-primary"></i>Competencias &bull; Dominios &bull; Dimensiones &bull; Indicadores</span>
+                                    <small class="text-uppercase text-secondary" style="font-size: 0.65rem;">NIVEL 3</small>
+                                </div>
+                            </div>
+                            <!-- Conector -->
+                            <div class="ps-3 my-0 text-secondary opacity-50" style="font-size: 0.7rem; line-height: 1;"><i class="bi bi-arrow-down"></i></div>
+
+                            <!-- Nivel 4: RAPs -->
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge text-white rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 22px; height: 22px; font-size: 0.65rem; background: #4f46e5;">4</span>
+                                <div class="p-1 px-2 rounded-2 border flex-grow-1 d-flex align-items-center justify-content-between" style="background:#faf5ff; border-color:#d8b4fe !important;">
+                                    <span class="fw-bold" style="font-size: 0.75rem; color:#6b21a8;"><i class="bi bi-award-fill me-1"></i>RAPs: Saber &bull; Hacer &bull; Ser &bull; Elaborar</span>
+                                    <span class="badge bg-purple text-white font-monospace rounded-pill" style="background:#7c3aed; font-size:0.65rem;">{{ item.norms|length }} RAPs</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Horas en este curso -->
                         <div class="d-flex justify-content-between align-items-center p-3 bg-primary-subtle text-primary rounded-3 mb-4 border border-primary-subtle">
                             <div>
@@ -821,29 +938,64 @@
                             </div>
                         </div>
 
-                        <!-- Competencias y DBA del Módulo -->
+                        <!-- RAPs y Competencias del Módulo -->
                         <div>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="fw-bold text-dark mb-0">
-                                    <i class="bi bi-award-fill me-1 text-warning"></i>Competencias y Estándares DBA ({{ item.norms|length }}):
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <label class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                    <i class="bi bi-diagram-3-fill text-primary"></i>Resultados de Aprendizaje (RAPs) ({{ item.norms|length }}):
                                 </label>
-                                <span class="badge bg-light text-muted border font-monospace">{{ item.norms|length }} registradas</span>
+                                <span class="badge bg-primary text-white font-monospace rounded-pill">{{ item.norms|length }} RAPs</span>
                             </div>
                             {% if item.norms %}
-                            <div class="d-flex flex-column gap-2" style="max-height: 220px; overflow-y: auto;">
+                            <div class="d-flex flex-column gap-3" style="max-height: 400px; overflow-y: auto;">
                                 {% for norm in item.norms %}
-                                <div class="p-3 bg-white rounded-3 border shadow-none">
-                                    <div class="d-flex align-items-center gap-2 mb-1">
-                                        <span class="badge bg-secondary-subtle text-secondary font-monospace">{{ norm.code }}</span>
+                                <div class="p-3 bg-white rounded-3 border shadow-xs" style="border-left: 4px solid #4f46e5 !important;">
+                                    <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                                        <span class="badge bg-primary text-white font-monospace rounded-pill">RAP {{ norm.order }}</span>
+                                        <span class="badge bg-light text-secondary border font-monospace">{{ norm.code }}</span>
                                         <strong class="text-dark">{{ norm.title }}</strong>
                                     </div>
-                                    <div class="text-muted mt-1" style="font-size:0.78rem;">{{ norm.description }}</div>
+
+                                    {% if norm.competency or norm.indicator %}
+                                    <div class="p-2 bg-light rounded-2 border mb-2 small">
+                                        {% if norm.competency %}
+                                        <div class="mb-1"><strong class="text-primary">Competencia:</strong> <span class="text-secondary">{{ norm.competency }}</span></div>
+                                        {% endif %}
+                                        {% if norm.indicator %}
+                                        <div><strong class="text-success">Indicador:</strong> <span class="text-secondary">{{ norm.indicator }}</span></div>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="row g-1 mb-2 small">
+                                        <div class="col-4">
+                                            <div class="p-1 px-2 rounded bg-primary-subtle text-primary border border-primary-subtle" style="font-size:0.75rem;">
+                                                <strong>📘 Saber:</strong> {{ norm.saber|default:norm.description|truncatewords:8 }}
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="p-1 px-2 rounded bg-success-subtle text-success border border-success-subtle" style="font-size:0.75rem;">
+                                                <strong>🛠️ Hacer:</strong> {{ norm.hacer|default:"Práctica y modelación"|truncatewords:8 }}
+                                            </div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="p-1 px-2 rounded bg-warning-subtle text-dark border border-warning-subtle" style="font-size:0.75rem;">
+                                                <strong>🤝 Ser:</strong> {{ norm.ser|default:"Ética y convivencia"|truncatewords:8 }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% if norm.evidence %}
+                                    <div class="small text-muted" style="font-size: 0.75rem;">
+                                        <strong>📝 Elaborar:</strong> {{ norm.evidence }}
+                                    </div>
+                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             </div>
                             {% else %}
                             <div class="p-3 text-center bg-light rounded-3 border text-muted small">
-                                <i class="bi bi-info-circle me-1"></i>No hay competencias DBA registradas para este módulo aún.
+                                <i class="bi bi-info-circle me-1"></i>No hay RAPs registrados para este módulo aún.
                             </div>
                             {% endif %}
                         </div>
@@ -853,47 +1005,83 @@
                         <button type="button" class="btn btn-primary btn-sm fw-bold d-flex align-items-center gap-1" 
                                 data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#addNormModal-{{ item.subject.id }}">
                             <i class="bi bi-plus-lg"></i>
-                            <span>Agregar Nueva Norma / DBA</span>
+                            <span>Agregar Nuevo RAP Curricular</span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Modal para Asociar Norma a la Asignatura -->
+        <!-- Modal para Asociar RAP a la Asignatura -->
         <div class="modal fade" id="addNormModal-{{ item.subject.id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow">
                     <form method="post" action="{% url 'teachers:add_norm' item.subject.id %}">
                         {% csrf_token %}
                         <div class="modal-header bg-primary text-white py-2 px-3">
                             <h6 class="modal-title fw-bold">
-                                <i class="bi bi-award-fill me-2"></i>Asociar Norma a {{ item.subject.name }}
+                                <i class="bi bi-award-fill me-2"></i>Nuevo RAP para {{ item.subject.name }}
                             </h6>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body p-3 small">
-                            <div class="mb-2">
-                                <label class="form-label small fw-bold text-secondary mb-1">Código de la Norma / DBA *</label>
-                                <input type="text" name="code" class="form-control form-control-sm" placeholder="Ej: MAT-DBA1" required>
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-4">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Código del RAP *</label>
+                                    <input type="text" name="code" class="form-control form-control-sm" placeholder="Ej: MAT-RAP5" required>
+                                </div>
+                                <div class="col-sm-2">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Orden</label>
+                                    <input type="number" name="order" class="form-control form-control-sm" value="1" min="1">
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Título del RAP *</label>
+                                    <input type="text" name="title" class="form-control form-control-sm" placeholder="Ej: Pensamiento Numérico..." required>
+                                </div>
+                            </div>
+                            <div class="row g-2 mb-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Competencia General</label>
+                                    <input type="text" name="competency" class="form-control form-control-sm" placeholder="Competencia a desarrollar...">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Dimensión</label>
+                                    <input type="text" name="dimension" class="form-control form-control-sm" placeholder="Dimensión curricular...">
+                                </div>
+                                <div class="col-sm-3">
+                                    <label class="form-label small fw-bold text-secondary mb-1">Dominio</label>
+                                    <input type="text" name="domain" class="form-control form-control-sm" placeholder="Dominio...">
+                                </div>
                             </div>
                             <div class="mb-2">
-                                <label class="form-label small fw-bold text-secondary mb-1">Título de la Competencia *</label>
-                                <input type="text" name="title" class="form-control form-control-sm" placeholder="Ej: Pensamiento Numérico" required>
+                                <label class="form-label small fw-bold text-secondary mb-1">Indicador de Logro / Desempeño</label>
+                                <input type="text" name="indicator" class="form-control form-control-sm" placeholder="Criterio de desempeño esperado...">
+                            </div>
+                            <div class="p-2 bg-light rounded border mb-2">
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-primary mb-1">📘 Saber (Cognitivo)</label>
+                                        <textarea name="saber" rows="2" class="form-control form-control-sm" placeholder="Conceptos clave..."></textarea>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-success mb-1">🛠️ Hacer (Procedimental)</label>
+                                        <textarea name="hacer" rows="2" class="form-control form-control-sm" placeholder="Prácticas y técnicas..."></textarea>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label small fw-bold text-warning mb-1">🤝 Ser (Actitudinal)</label>
+                                        <textarea name="ser" rows="2" class="form-control form-control-sm" placeholder="Actitudes y ética..."></textarea>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-2">
-                                <label class="form-label small fw-bold text-secondary mb-1">Descripción Curricular *</label>
-                                <textarea name="description" rows="2" class="form-control form-control-sm" placeholder="Criterios de desempeño..." required></textarea>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small fw-bold text-secondary mb-1">Orden</label>
-                                <input type="number" name="order" class="form-control form-control-sm" value="1" min="1">
+                                <label class="form-label small fw-bold text-secondary mb-1">📝 Elaborar (Evidencia de Aprendizaje)</label>
+                                <input type="text" name="evidence" class="form-control form-control-sm" placeholder="Producto o evidencia a entregar...">
                             </div>
                         </div>
                         <div class="modal-footer py-2 px-3 bg-light">
                             <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
                             <button type="submit" class="btn btn-primary btn-sm fw-bold">
-                                <i class="bi bi-save me-1"></i>Guardar Norma
+                                <i class="bi bi-save me-1"></i>Guardar RAP Curricular
                             </button>
                         </div>
                     </form>
@@ -914,12 +1102,32 @@
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
-                        <!-- Botón para cargar automáticamente las 5 actividades estándar -->
-                        <div class="card border border-primary-subtle bg-primary-subtle p-3 rounded-3 mb-4">
+                        <!-- Botón Principal: Sincronizar RAPs de la Malla Curricular -->
+                        <div class="card border border-primary bg-primary-subtle p-3 rounded-3 mb-3 shadow-xs">
                             <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                 <div>
-                                    <div class="fw-bold text-primary"><i class="bi bi-magic me-1"></i>Plantilla Estándar: 5 Actividades (20% c/u)</div>
-                                    <div class="text-muted small">Crea/ajusta automáticamente: <strong>Evaluación 1 (20%)</strong>, <strong>Evaluación 2 (20%)</strong>, <strong>Taller 1 (20%)</strong>, <strong>Taller 2 (20%)</strong> y <strong>Actitudinal (20%)</strong>.</div>
+                                    <div class="fw-bold text-primary fs-6"><i class="bi bi-diagram-3-fill me-1"></i>Modelo Pedagógico por RAPs (Malla Curricular)</div>
+                                    <div class="text-secondary small">Estructura las columnas de la planilla exactamente con los <strong>RAPs (RAP 1, RAP 2, RAP 3...)</strong> definidos en la Malla Curricular con <em>Saber, Hacer y Ser</em>.</div>
+                                </div>
+                                <form method="POST" action="{% url 'grades:configure_criteria' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="course_section_id" value="{{ section.id }}">
+                                    <input type="hidden" name="subject_id" value="{{ selected_subject.id }}">
+                                    <input type="hidden" name="period_id" value="{{ selected_period.id }}">
+                                    <input type="hidden" name="preset" value="raps">
+                                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm">
+                                        <i class="bi bi-arrow-repeat me-1"></i>Sincronizar RAPs de la Malla
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Botón secundario para cargar 5 actividades estándar -->
+                        <div class="card border bg-light p-3 rounded-3 mb-4">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div>
+                                    <div class="fw-bold text-dark"><i class="bi bi-magic me-1"></i>Plantilla Tradicional: 5 Actividades (20% c/u)</div>
+                                    <div class="text-muted small">Crea: <strong>Evaluación 1, 2</strong>, <strong>Taller 1, 2</strong> y <strong>Actitudinal</strong>.</div>
                                 </div>
                                 <form method="POST" action="{% url 'grades:configure_criteria' %}" class="d-inline">
                                     {% csrf_token %}
@@ -989,6 +1197,70 @@
             </div>
         </div>
         {% endif %}
+
+        <!-- Modales Informativos de los RAPs de la Planilla -->
+        {% for crit in criteria %}
+        {% if crit.norm %}
+        <div class="modal fade" id="rapInfoModal-{{ crit.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header bg-primary text-white py-2 px-3">
+                        <h6 class="modal-title fw-bold mb-0">
+                            <i class="bi bi-award-fill me-1"></i>RAP {{ crit.norm.order }} — {{ crit.norm.title }}
+                        </h6>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-3 small">
+                        <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+                            <span class="badge bg-primary text-white font-monospace">RAP {{ crit.norm.order }}</span>
+                            <span class="badge bg-light text-secondary border font-monospace">{{ crit.norm.code }}</span>
+                            <span class="badge bg-info-subtle text-info border font-monospace">{{ crit.percentage|floatformat:2 }}% en Planilla</span>
+                        </div>
+
+                        {% if crit.norm.competency %}
+                        <div class="p-2 rounded bg-light border mb-2">
+                            <strong class="text-primary d-block" style="font-size:0.75rem;">COMPETENCIA GENERAL:</strong>
+                            <span class="text-secondary">{{ crit.norm.competency }}</span>
+                        </div>
+                        {% endif %}
+
+                        {% if crit.norm.indicator %}
+                        <div class="p-2 rounded bg-light border mb-2">
+                            <strong class="text-success d-block" style="font-size:0.75rem;">INDICADOR DE LOGRO / DESEMPEÑO:</strong>
+                            <span class="text-secondary">{{ crit.norm.indicator }}</span>
+                        </div>
+                        {% endif %}
+
+                        <div class="p-2 rounded border mb-2" style="background:#eff6ff;">
+                            <strong class="text-primary d-block" style="font-size:0.75rem;">📘 SABER (Cognitivo / Conceptual):</strong>
+                            <span class="text-secondary">{{ crit.norm.saber|default:crit.norm.description }}</span>
+                        </div>
+
+                        <div class="p-2 rounded border mb-2" style="background:#f0fdf4;">
+                            <strong class="text-success d-block" style="font-size:0.75rem;">🛠️ HACER (Procedimental / Desempeño):</strong>
+                            <span class="text-secondary">{{ crit.norm.hacer|default:"Aplicación práctica en situaciones reales y resolución de problemas." }}</span>
+                        </div>
+
+                        <div class="p-2 rounded border mb-2" style="background:#fffbeb;">
+                            <strong class="text-warning d-block" style="font-size:0.75rem; color:#b45309 !important;">🤝 SER (Actitudinal / Convivencial):</strong>
+                            <span class="text-secondary">{{ crit.norm.ser|default:"Ética, responsabilidad, trabajo colaborativo y respeto mutuo." }}</span>
+                        </div>
+
+                        {% if crit.norm.evidence %}
+                        <div class="p-2 rounded border" style="background:#f8fafc;">
+                            <strong class="text-dark d-block" style="font-size:0.75rem;">📝 ELABORAR (Evidencia de Aprendizaje / Producto):</strong>
+                            <span class="text-secondary">{{ crit.norm.evidence }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer py-1 px-3 bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
 
     </div>
 </div>

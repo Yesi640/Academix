@@ -170,3 +170,99 @@ class ReportsAndBulletinsTestCase(TestCase):
         self.client.force_login(self.admin)
         res = self.client.get(reverse('reports:honor_roll'))
         self.assertRedirects(res, reverse('reports:index'))
+
+
+class WeasyPrintAndQRBulletinTests(TestCase):
+    """
+    Pruebas unitarias para el Nuevo Módulo de Boletines Inteligentes con WeasyPrint y QR.
+    """
+    def setUp(self):
+        self.client = Client()
+        self.admin = CustomUser.objects.create_superuser('admin_pdf', 'admin_pdf@test.com', 'Pass123*')
+        self.student_user = CustomUser.objects.create_user(
+            'est_pdf', 'est_pdf@test.com', 'Pass123*',
+            role=CustomUser.Role.STUDENT, first_name='Mateo', last_name='Gómez'
+        )
+        self.student = StudentProfile.objects.create(user=self.student_user, student_code='EST-PDF-01')
+
+        self.year = AcademicYear.objects.create(
+            year=2026,
+            name='Año 2026',
+            start_date='2026-02-01',
+            end_date='2026-11-30',
+            status=AcademicYear.Status.ACTIVE,
+            is_current=True
+        )
+        self.grade = GradeLevel.objects.create(name='Séptimo', code='7')
+        self.section = CourseSection.objects.create(academic_year=self.year, grade_level=self.grade, name='7-B')
+        self.enrollment = Enrollment.objects.create(
+            student=self.student, course_section=self.section, academic_year=self.year, status=Enrollment.Status.ACTIVE
+        )
+
+        self.period = AcademicPeriod.objects.create(
+            academic_year=self.year,
+            number=1,
+            name='Primer Periodo',
+            start_date='2026-02-01',
+            end_date='2026-04-30',
+            percentage=Decimal('25.00'),
+            status=AcademicPeriod.Status.CLOSED
+        )
+
+        self.area = KnowledgeArea.objects.create(name='Ciencias Naturales')
+        self.subject = Subject.objects.create(name='Biología', code='BIO-01', area=self.area)
+        PeriodFinalGrade.objects.create(
+            student=self.student,
+            course_section=self.section,
+            subject=self.subject,
+            academic_period=self.period,
+            final_score=Decimal('4.50'),
+            performance_level='ALTO',
+            is_approved=True
+        )
+
+    def test_crypto_token_and_qr_generation(self):
+        """Verifica generación de token criptográfico HMAC-SHA256 y QR base64."""
+        from apps.reports.services import generate_bulletin_crypto_token, generate_bulletin_qr_base64
+        token = generate_bulletin_crypto_token(self.student.id, self.period.id, Decimal('4.50'), 2026)
+        self.assertIsNotNone(token)
+        self.assertTrue(len(token) >= 16)
+
+        qr_b64 = generate_bulletin_qr_base64("https://academix.edu.co/verify/" + token)
+        self.assertTrue(qr_b64.startswith("data:image/png;base64,"))
+
+    def test_build_bulletin_data_structure(self):
+        """Verifica que el servicio compile los metadatos de ranking, token y QR."""
+        from apps.reports.services import build_student_bulletin_data
+        data = build_student_bulletin_data(self.student, self.section, self.period)
+
+        self.assertEqual(data['student'], self.student)
+        self.assertEqual(data['period_average'], Decimal('4.50'))
+        self.assertEqual(data['overall_performance'], 'ALTO')
+        self.assertTrue(data['is_overall_approved'])
+        self.assertEqual(data['student_rank'], 1)
+        self.assertIn('verification_token', data)
+        self.assertTrue(data['qr_base64'].startswith('data:image/png;base64,'))
+
+    def test_download_pdf_view_response(self):
+        """Prueba endpoint de descarga de PDF por administrador."""
+        self.client.force_login(self.admin)
+        url = reverse('reports:download_student_bulletin_pdf', kwargs={
+            'student_id': self.student.id,
+            'period_id': self.period.id
+        })
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertTrue(
+            resp.headers.get('Content-Type') in ['application/pdf', 'text/html']
+        )
+
+    def test_public_verify_view(self):
+        """Prueba vista pública de verificación criptográfica del boletín."""
+        token = "ACADEMIX-TOKEN-TEST-2026"
+        url = reverse('reports:verify_bulletin', kwargs={'token': token})
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, token)
+        self.assertContains(resp, "Documento Oficial Auténtico")
+

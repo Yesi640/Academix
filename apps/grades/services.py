@@ -6,17 +6,50 @@ from apps.audit.services import log_audit
 
 def get_or_create_default_criteria(course_section, subject, academic_period):
     """
-    Recupera o inicializa los criterios estándar de evaluación adaptados al tipo de institución:
-    - SENA: RAP 1, RAP 2, RAP 3 (Desempeño y Producto)
-    - Universidad: Corte 1, Corte 2, Examen Final / Proyecto
-    - Academia: Módulo Práctico, Proyecto Final Asincrónico
-    - Colegio: Evaluaciones/Quices, Talleres/Tareas, Actitudinal
+    Recupera o inicializa los criterios de evaluación adaptados al modelo pedagógico por RAPs:
+    - Si la asignatura cuenta con RAPs (SubjectNorms) configurados en la Malla Curricular,
+      estos se convierten directamente en las columnas de evaluación (RAP 1, RAP 2, RAP 3...).
+    - En caso contrario, recurre a la parametrización institucional por defecto.
     """
     criteria = list(EvaluationCriterion.objects.filter(
         course_section=course_section,
         subject=subject,
         academic_period=academic_period
-    ).order_by('order'))
+    ).select_related('norm').order_by('order'))
+
+    norms = list(subject.norms.all().order_by('order'))
+
+    if not criteria and norms:
+        num_raps = len(norms)
+        base_pct = (Decimal('100.00') / Decimal(num_raps)).quantize(Decimal('0.01'))
+        remainder = Decimal('100.00') - (base_pct * Decimal(num_raps))
+
+        criteria = []
+        for idx, norm in enumerate(norms, 1):
+            pct = base_pct + (remainder if idx == num_raps else Decimal('0.00'))
+            crit = EvaluationCriterion.objects.create(
+                course_section=course_section,
+                subject=subject,
+                academic_period=academic_period,
+                name=f"RAP {norm.order}: {norm.title}",
+                topic=norm.evidence or norm.indicator or '',
+                percentage=pct,
+                order=norm.order,
+                norm=norm
+            )
+            criteria.append(crit)
+        return criteria
+
+    # Si ya existen criterios pero no están asociados a los RAPs de la materia, intentar vincularlos
+    if criteria and norms:
+        for idx, crit in enumerate(criteria):
+            if not crit.norm and idx < len(norms):
+                norm = norms[idx]
+                crit.norm = norm
+                crit.name = f"RAP {norm.order}: {norm.title}"
+                if not crit.topic:
+                    crit.topic = norm.evidence or norm.indicator or ''
+                crit.save(update_fields=['norm', 'name', 'topic'])
 
     if not criteria:
         inst_type = 'COLEGIO'
@@ -41,7 +74,6 @@ def get_or_create_default_criteria(course_section, subject, academic_period):
                 ('Proyecto Final / Evaluación Asincrónica', Decimal('50.00'), 2),
             ]
         else:
-            # Colegio: criterios específicos por tipo de actividad
             default_defs = [
                 ('Evaluación 1', Decimal('20.00'), 1),
                 ('Evaluación 2', Decimal('20.00'), 2),

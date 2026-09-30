@@ -10,14 +10,18 @@ def get_current_ip():
     """Retorna la IP actual almacenada en el hilo de ejecución."""
     return getattr(_thread_locals, 'ip', None)
 
+def get_current_user_agent():
+    """Retorna el User-Agent almacenado en el hilo de ejecución."""
+    return getattr(_thread_locals, 'user_agent', None)
+
 def get_current_request():
     """Retorna el objeto request actual."""
     return getattr(_thread_locals, 'request', None)
 
 class AuditMiddleware:
     """
-    Middleware para capturar el usuario autenticado y la dirección IP
-    del cliente en cada petición HTTP, facilitando la auditoría inmutable.
+    Middleware para capturar el usuario autenticado, la dirección IP
+    y el User-Agent del cliente en cada petición HTTP, facilitando la auditoría inmutable.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -30,8 +34,13 @@ class AuditMiddleware:
         else:
             ip = request.META.get('REMOTE_ADDR')
 
-        _thread_locals.user = getattr(request, 'user', None) if request.user.is_authenticated else None
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
+        if user_agent:
+            user_agent = user_agent[:255]
+
+        _thread_locals.user = getattr(request, 'user', None) if (hasattr(request, 'user') and request.user.is_authenticated) else None
         _thread_locals.ip = ip
+        _thread_locals.user_agent = user_agent
         _thread_locals.request = request
 
         response = self.get_response(request)
@@ -39,6 +48,7 @@ class AuditMiddleware:
         # Limpiar al finalizar el ciclo de la petición
         _thread_locals.user = None
         _thread_locals.ip = None
+        _thread_locals.user_agent = None
         _thread_locals.request = None
 
         return response

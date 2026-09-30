@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Expediente Digital — {{ student.user.get_full_name }} | ACADEMIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+
+    <!-- Navegación Superior de Retorno -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a href="{% url 'students:list' %}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1">
+            <i class="bi bi-arrow-left"></i> Volver a Estudiantes
+        </a>
+        <div class="d-flex gap-2">
+            <a href="{% url 'students:observations' student_id=student.id %}" class="btn btn-outline-warning btn-sm d-inline-flex align-items-center gap-1 shadow-sm">
+                <i class="bi bi-journal-text"></i> Observador Escolar
+            </a>
+            {% if can_upload_admission or can_manage %}
+            <button type="button" class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                <i class="bi bi-cloud-arrow-up-fill"></i> Adjuntar Soporte al Expediente
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- TARJETA CABECERA DEL EXPEDIENTE DEL ESTUDIANTE -->
+    <div class="card ac-card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow"
+                         style="width: 72px; height: 72px; font-size: 26px; background: linear-gradient(135deg, {{ institution.primary_color|default:'#7c3aed' }}, {{ institution.secondary_color|default:'#c4b5fd' }});">
+                        {{ student.user.first_name|first|upper }}{{ student.user.last_name|first|upper }}
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <h4 class="fw-bold text-dark mb-0">{{ student.user.get_full_name }}</h4>
+                        <span class="badge bg-light text-dark border">Cód: {{ student.student_code }}</span>
+                        {% if enrollment %}
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ enrollment.course_section.name }}</span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">{{ enrollment.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Sin Matrícula Activa</span>
+                        {% endif %}
+                    </div>
+                    <div class="text-muted small d-flex flex-wrap gap-3">
+                        <span><i class="bi bi-card-heading me-1"></i>Doc: {{ student.user.document_type }} {{ student.user.document_number|default:"No registrado" }}</span>
+                        <span><i class="bi bi-droplet me-1 text-danger"></i>RH: {{ student.blood_type }}</span>
+                        <span><i class="bi bi-hospital me-1 text-info"></i>EPS: {{ student.eps|default:"Sin EPS registrada" }}</span>
+                        {% if student.parent %}
+                            <span><i class="bi bi-person-heart me-1 text-secondary"></i>Acudiente: {{ student.parent.get_full_name }} ({{ student.parent.phone|default:"Sin teléfono" }})</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Mini Panel de Checklist de Matrícula -->
+                <div class="col-lg-4 col-md-5 mt-3 mt-md-0 border-start ps-md-4">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small fw-bold text-dark">Checklist de Matrícula:</span>
+                        {% if checklist.is_complete %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Completo (100%)</span>
+                        {% else %}
+                            <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Pendiente ({{ checklist.percentage }}%)</span>
+                        {% endif %}
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar {% if checklist.is_complete %}bg-success{% else %}bg-warning{% endif %}"
+                             role="progressbar" style="width: {{ checklist.percentage }}%;"
+                             aria-valuenow="{{ checklist.percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted small mt-1">
+                        <span>{{ checklist.completed_count }} de {{ checklist.total_required }} obligatorios</span>
+                        <span>{{ checklist.verified_count }} verificados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PESTAÑAS DEL EXPEDIENTE DIGITAL -->
+    <div class="card ac-card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom p-0">
+            <ul class="nav nav-tabs card-header-tabs mx-3 mt-2" id="expedienteTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold d-flex align-items-center gap-2 py-3" id="admision-tab" data-bs-toggle="tab" data-bs-target="#admision-pane" type="button" role="tab">
+                        <i class="bi bi-folder-fill text-primary"></i>
+                        <span>1. Admisión e Ingreso</span>
+                        <span class="badge rounded-pill bg-primary-subtle text-primary">{{ admission_docs|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold d-flex align-items-center gap-2 py-3" id="academico-tab" data-bs-toggle="tab" data-bs-target="#academico-pane" type="button" role="tab">
+                        <i class="bi bi-mortarboard-fill text-success"></i>
+                        <span>2. Académico</span>
+                        <span class="badge rounded-pill bg-success-subtle text-success">{{ academic_docs|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold d-flex align-items-center gap-2 py-3" id="convivencia-tab" data-bs-toggle="tab" data-bs-target="#convivencia-pane" type="button" role="tab">
+                        <i class="bi bi-shield-exclamation text-warning"></i>
+                        <span>3. Convivencia</span>
+                        <span class="badge rounded-pill bg-warning-subtle text-warning">{{ convivencia_docs|length }}</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold d-flex align-items-center gap-2 py-3" id="administrativo-tab" data-bs-toggle="tab" data-bs-target="#administrativo-pane" type="button" role="tab">
+                        <i class="bi bi-file-earmark-ruled text-info"></i>
+                        <span>4. Administrativo y Financiero</span>
+                        <span class="badge rounded-pill bg-info-subtle text-info">{{ administrative_docs|length }}</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="tab-content" id="expedienteTabContent">
+
+                <!-- PANE 1: ADMISIÓN E INGRESO -->
+                <div class="tab-pane fade show active" id="admision-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">Documentos de Identidad, Salud y Antecedentes Escolares</h6>
+                        <span class="text-muted small">Requisitos para formalización y reporte oficial</span>
+                    </div>
+
+                    {% if admission_docs %}
+                        {% include 'students/partials/expediente_table.html' with docs=admission_docs %}
+                    {% else %}
+                        <div class="text-center py-5 border border-dashed rounded bg-light">
+                            <i class="bi bi-folder2-open text-muted fs-1 mb-2"></i>
+                            <h6 class="fw-bold text-secondary">No hay documentos de admisión registrados</h6>
+                            <p class="text-muted small mb-3">Adjunte el registro civil, carnet de vacunas o certificado EPS del estudiante.</p>
+                            {% if can_upload_admission or can_manage %}
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#uploadDocModal">
+                                <i class="bi bi-plus-circle me-1"></i>Adjuntar Soporte de Admisión
+                            </button>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- PANE 2: ACADÉMICO -->
+                <div class="tab-pane fade" id="academico-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">Boletines Oficiales, Actas y Certificados de Estudio</h6>
+                        <span class="text-muted small">Histórico inmutable generado por el sistema</span>
+                    </div>
+
+                    {% if academic_docs %}
+                        {% include 'students/partials/expediente_table.html' with docs=academic_docs %}
+                    {% else %}
+                        <div class="text-center py-5 border border-dashed rounded bg-light">
+                            <i class="bi bi-award text-muted fs-1 mb-2"></i>
+                            <h6 class="fw-bold text-secondary">Aún no se han emitido boletines o certificados oficiales</h6>
+                            <p class="text-muted small">Los boletines descargados se inyectan automáticamente en esta sección.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- PANE 3: CONVIVENCIA -->
+                <div class="tab-pane fade" id="convivencia-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">Compromisos, Citaciones, Excusas Médicas y Descargos</h6>
+                        <span class="text-muted small">Trazabilidad disciplinaria y seguimiento</span>
+                    </div>
+
+                    {% if convivencia_docs %}
+                        {% include 'students/partials/expediente_table.html' with docs=convivencia_docs %}
+                    {% else %}
+                        <div class="text-center py-5 border border-dashed rounded bg-light">
+                            <i class="bi bi-shield-check text-success fs-1 mb-2"></i>
+                            <h6 class="fw-bold text-success">Expediente convivencial impecable</h6>
+                            <p class="text-muted small">No existen actas de compromiso ni sanciones registradas para este estudiante.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- PANE 4: ADMINISTRATIVO Y FINANCIERO -->
+                <div class="tab-pane fade" id="administrativo-pane" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-dark mb-0">Contratos de Matrícula, Pagarés y Paz y Salvos</h6>
+                        <span class="text-muted small">Soportes legales y financieros</span>
+                    </div>
+
+                    {% if administrative_docs %}
+                        {% include 'students/partials/expediente_table.html' with docs=administrative_docs %}
+                    {% else %}
+                        <div class="text-center py-5 border border-dashed rounded bg-light">
+                            <i class="bi bi-file-earmark-lock text-muted fs-1 mb-2"></i>
+                            <h6 class="fw-bold text-secondary">No hay contratos o soportes administrativos cargados</h6>
+                            <p class="text-muted small">Aquí se archivan contratos de matrícula y paz y salvos institucionales.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- MODAL PARA ADJUNTAR DOCUMENTO AL EXPEDIENTE -->
+{% if can_upload_admission or can_manage %}
+<div class="modal fade" id="uploadDocModal" tabindex="-1" aria-labelledby="uploadDocModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form action="{% url 'students:upload_expediente_document' student_id=student.id %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h6 class="modal-title fw-bold" id="uploadDocModalLabel">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i>Adjuntar Soporte al Expediente Digital
+                    </h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Categoría del Documento <span class="text-danger">*</span></label>
+                        <select name="category" class="form-select form-select-sm" required>
+                            {% for cat_key, cat_label in category_choices %}
+                                {% if can_manage or cat_key == 'ADMISSION' %}
+                                <option value="{{ cat_key }}">{{ cat_label }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Tipo Específico de Soporte <span class="text-danger">*</span></label>
+                        <select name="document_type" class="form-select form-select-sm" required>
+                            {% for type_key, type_label in document_type_choices %}
+                                <option value="{{ type_key }}">{{ type_label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Título Descriptivo</label>
+                        <input type="text" name="title" class="form-control form-control-sm" placeholder="Ej. Tarjeta de Identidad Actualizada 2026">
+                        <div class="form-text small">Si se deja vacío, tomará el nombre del tipo de documento seleccionado.</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Archivo Digital (PDF o Imagen) <span class="text-danger">*</span></label>
+                        <input type="file" name="file" class="form-control form-control-sm" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Observaciones / Número de Folio Físico</label>
+                        <textarea name="notes" rows="2" class="form-control form-control-sm" placeholder="Ej. Folio 45 - Carpeta 3 del archivo central..."></textarea>
+                    </div>
+
+                    {% if can_manage %}
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" name="auto_verify" value="1" id="autoVerifyCheck" checked>
+                        <label class="form-check-label small fw-bold text-success" for="autoVerifyCheck">
+                            Marcar inmediatamente como Verificado por Secretaría
+                        </label>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer bg-light py-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Guardar en Expediente</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

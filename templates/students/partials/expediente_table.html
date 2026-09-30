@@ -1,0 +1,75 @@
+<div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size: 0.88rem;">
+        <thead class="table-light">
+            <tr>
+                <th style="width: 35%;">Título del Documento</th>
+                <th style="width: 20%;">Tipo / Clasificación</th>
+                <th style="width: 15%;">Fecha de Carga</th>
+                <th style="width: 15%; text-align: center;">Estado Verificación</th>
+                <th style="width: 15%; text-align: right;">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in docs %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        {% if doc.is_pdf %}
+                            <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                        {% elif doc.is_image %}
+                            <i class="bi bi-file-earmark-image-fill text-primary fs-4"></i>
+                        {% else %}
+                            <i class="bi bi-file-earmark-text-fill text-secondary fs-4"></i>
+                        {% endif %}
+                        <div>
+                            <div class="fw-bold text-dark">{{ doc.title }}</div>
+                            {% if doc.notes %}
+                                <div class="text-muted" style="font-size: 0.75rem;">{{ doc.notes }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark border">{{ doc.get_document_type_display }}</span>
+                    {% if doc.academic_year %}
+                        <div class="text-muted" style="font-size: 0.75rem;">Año: {{ doc.academic_year.year }}</div>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="text-dark">{{ doc.uploaded_at|date:"d/m/Y H:i" }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">Por: {{ doc.uploaded_by.get_full_name|default:doc.uploaded_by.username|default:"Sistema" }}</div>
+                </td>
+                <td class="text-center">
+                    {% if doc.is_verified %}
+                        <span class="badge bg-success-subtle text-success border border-success-subtle d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill"></i> Verificado
+                        </span>
+                        {% if doc.verified_by %}
+                            <div class="text-muted" style="font-size: 0.72rem;">{{ doc.verified_by.get_full_name|default:doc.verified_by.username }} ({{ doc.verified_at|date:"d/m/Y" }})</div>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle d-inline-flex align-items-center gap-1">
+                            <i class="bi bi-clock-history"></i> Pendiente
+                        </span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'students:download_expediente_document' document_id=doc.id %}" target="_blank" class="btn btn-outline-primary" title="Descargar o Visualizar">
+                            <i class="bi bi-download"></i>
+                        </a>
+                        {% if can_manage and not doc.is_verified %}
+                        <form action="{% url 'students:verify_expediente_document' document_id=doc.id %}" method="POST" class="d-inline" onsubmit="return confirm('¿Confirmar verificación oficial de este soporte?');">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-success" title="Marcar como Verificado por Secretaría">
+                                <i class="bi bi-shield-check"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

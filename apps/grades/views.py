@@ -211,20 +211,35 @@ def grades_matrix_view(request):
     subject = get_object_or_404(Subject, id=subject_id)
     period = get_object_or_404(AcademicPeriod, id=period_id)
 
-    # Secretaría solo lectura; Docente verifica asignación
-    is_editable = period.is_editable
-    if request.user.is_secretary:
-        is_editable = False
-    elif request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
-        has_assignment = TeachingAssignment.objects.filter(
-            teacher=request.user.teacher_profile,
-            course_section=section,
-            subject=subject,
-            academic_year=section.academic_year,
-            is_active=True
-        ).exists()
-        if not has_assignment:
-            is_editable = False
+    # ─── Regla de negocio: SOLO el docente asignado puede editar ───────────────
+    # Rector, Secretaría, Admin y cualquier otro rol tienen acceso de solo lectura.
+    is_editable = False
+    can_edit_reason = None
+
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        # Verificar que el periodo esté abierto Y que el docente tenga la asignación
+        if not period.is_editable:
+            can_edit_reason = 'El periodo está cerrado para edición.'
+        else:
+            has_assignment = TeachingAssignment.objects.filter(
+                teacher=request.user.teacher_profile,
+                course_section=section,
+                subject=subject,
+                academic_year=section.academic_year,
+                is_active=True
+            ).exists()
+            if has_assignment:
+                is_editable = True
+            else:
+                can_edit_reason = 'No eres el docente asignado a esta asignatura en este grupo.'
+    elif request.user.is_secretary:
+        can_edit_reason = 'Secretaría tiene acceso de solo lectura a las planillas.'
+    elif request.user.is_rector:
+        can_edit_reason = 'Rectoría tiene acceso de solo lectura a las planillas. Solo el docente puede modificar notas.'
+    elif request.user.is_admin_role:
+        can_edit_reason = 'Administración tiene acceso de solo lectura a las planillas.'
+    else:
+        can_edit_reason = 'No tienes permisos para editar esta planilla.'
 
     criteria = get_or_create_default_criteria(section, subject, period)
 
@@ -295,6 +310,7 @@ def grades_matrix_view(request):
         'criteria': criteria,
         'matrix_rows': matrix_rows,
         'is_editable': is_editable,
+        'can_edit_reason': can_edit_reason,
         'kpis': kpis,
     }
     return render(request, 'grades/matrix.html', context)
@@ -558,7 +574,52 @@ def configure_criteria_view(request):
             messages.error(request, 'No tienes permisos para modificar criterios en esta materia.')
             return redirect('teachers:course_workspace', section_id=section.id)
 
-    if preset == 'standard_5':
+    if preset in ['raps', 'sync_raps']:
+        norms = list(subject.norms.all().order_by('order'))
+        if not norms:
+            messages.warning(request, f'La materia {subject.name} no tiene RAPs configurados en la Malla Curricular.')
+        else:
+            num_raps = len(norms)
+            base_pct = (Decimal('100.00') / Decimal(num_raps)).quantize(Decimal('0.01'))
+            remainder = Decimal('100.00') - (base_pct * Decimal(num_raps))
+
+            existing = list(EvaluationCriterion.objects.filter(
+                course_section=section,
+                subject=subject,
+                academic_period=period
+            ).order_by('order'))
+
+            for i, norm in enumerate(norms, 1):
+                pct = base_pct + (remainder if i == num_raps else Decimal('0.00'))
+                name = f"RAP {norm.order}: {norm.title}"
+                topic = norm.evidence or norm.indicator or ''
+                if i - 1 < len(existing):
+                    c = existing[i - 1]
+                    c.name = name
+                    c.topic = topic
+                    c.percentage = pct
+                    c.order = norm.order
+                    c.norm = norm
+                    c.save()
+                else:
+                    EvaluationCriterion.objects.create(
+                        course_section=section,
+                        subject=subject,
+                        academic_period=period,
+                        name=name,
+                        topic=topic,
+                        percentage=pct,
+                        order=norm.order,
+                        norm=norm
+                    )
+            if len(existing) > len(norms):
+                for extra_crit in existing[len(norms):]:
+                    if not extra_crit.records.filter(score__isnull=False).exists():
+                        extra_crit.delete()
+
+            messages.success(request, f'¡Planilla adaptada a los {num_raps} RAPs de la Malla Curricular exitosamente!')
+
+    elif preset == 'standard_5':
         # Definir las 5 actividades estándar
         default_defs = [
             ('Evaluación 1', Decimal('20.00'), 1),

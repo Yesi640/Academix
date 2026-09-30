@@ -1,5 +1,7 @@
+from decimal import Decimal
 from django.db import models
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 class AcademicYear(models.Model):
     """
@@ -139,11 +141,34 @@ class InstitutionSetting(models.Model):
         PRIMARIA = 'PRIMARIA', 'Solo Primaria (Transición, 1° a 5°)'
         SECUNDARIA = 'SECUNDARIA', 'Solo Secundaria y Media (6° a 11°)'
 
+    class SectorMode(models.TextChoices):
+        PUBLIC = 'PUBLICO', 'Colegio Oficial / Público (Estatal - Gratuidad)'
+        PRIVATE = 'PRIVADO', 'Colegio Privado / No Oficial'
+
+    class GradingScaleType(models.TextChoices):
+        NUMERIC_5 = 'NUMERIC_5', 'Cuantitativa Tradicional (1.00 - 5.00)'
+        NUMERIC_100 = 'NUMERIC_100', 'Cuantitativa Centesimal (0.00 - 100.00)'
+        NUMERIC_10 = 'NUMERIC_10', 'Cuantitativa Decimal (1.00 - 10.00)'
+        CONCEPTUAL_MEN = 'CONCEPTUAL_MEN', 'Conceptual Oficial MEN (Superior, Alto, Básico, Bajo)'
+
+    class PeriodStructure(models.TextChoices):
+        PERIODS_4 = 'PERIODS_4', '4 Periodos Académicos (25% c/u - Estándar Oficial)'
+        TRIMESTERS_3 = 'TRIMESTERS_3', '3 Trimestres (33.33% c/u)'
+        SEMESTERS_2 = 'SEMESTERS_2', '2 Semestres (50% c/u)'
+
     institution_type = models.CharField(
         max_length=20,
         choices=InstitutionType.choices,
         default=InstitutionType.COLEGIO,
         verbose_name='Tipo de Institución'
+    )
+    sector_mode = models.CharField(
+        max_length=15,
+        choices=SectorMode.choices,
+        default=SectorMode.PRIVATE,
+        db_index=True,
+        verbose_name='Sector Institucional',
+        help_text='Pilar 1 SaaS Híbrido: Determina si rigen normas estatales (gratuidad, SIMAT, PAE) o comerciales (facturación, admisiones).'
     )
     school_scope = models.CharField(
         max_length=20,
@@ -152,6 +177,91 @@ class InstitutionSetting(models.Model):
         verbose_name='Enfoque del Colegio',
         help_text='Aplica para Colegios: Define si ofrece Primaria, Secundaria o Ambos niveles.'
     )
+
+    # ── Parametrización Académica y Evaluación ──────────────────────────────
+    grading_scale_type = models.CharField(
+        max_length=20,
+        choices=GradingScaleType.choices,
+        default=GradingScaleType.NUMERIC_5,
+        verbose_name='Escala de Calificación Activa'
+    )
+    min_grade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('1.00'),
+        verbose_name='Nota Mínima Posible'
+    )
+    max_grade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('5.00'),
+        verbose_name='Nota Máxima Posible'
+    )
+    passing_grade = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=Decimal('3.00'),
+        verbose_name='Nota Mínima Aprobatoria'
+    )
+    grade_decimal_places = models.PositiveSmallIntegerField(
+        default=2,
+        verbose_name='Cifras Decimales en Notas'
+    )
+    period_structure = models.CharField(
+        max_length=20,
+        choices=PeriodStructure.choices,
+        default=PeriodStructure.PERIODS_4,
+        verbose_name='Estructura de Periodos del Año'
+    )
+
+    # ── Parametrización Privada: Financiero, Pasarelas y Cobros ──────────────
+    enable_tuition_billing = models.BooleanField(
+        default=True,
+        verbose_name='Habilitar Facturación de Matrículas y Pensiones',
+        help_text='Habilita el módulo de cobro recurrente para instituciones privadas.'
+    )
+    block_report_cards_on_debt = models.BooleanField(
+        default=False,
+        verbose_name='Bloqueo de Boletines por Morosidad Económica',
+        help_text='Bloquea la descarga de boletines a familias con saldo pendiente. En colegios oficiales se fuerza a inactivo por ley.'
+    )
+    enable_payment_gateway = models.BooleanField(
+        default=False,
+        verbose_name='Habilitar Pasarela de Pagos en Línea (PSE/Wompi/Stripe)'
+    )
+    enable_online_admissions = models.BooleanField(
+        default=True,
+        verbose_name='Habilitar Admisiones en Línea y Contratos'
+    )
+
+    # ── Parametrización Pública: Gratuidad, PAE y SIMAT Oficial ──────────────
+    enable_gratuity_control = models.BooleanField(
+        default=False,
+        verbose_name='Control de Gratuidad Estatal',
+        help_text='Aplica para Colegios Públicos: Garantiza gratuidad universal en matrículas y certificados.'
+    )
+    enable_pae_module = models.BooleanField(
+        default=False,
+        verbose_name='Módulo de Alimentación Escolar (PAE / Refrigerios)',
+        help_text='Control diario de cupos, entregas de refrigerios y beneficiarios PAE.'
+    )
+    enable_simat_integration = models.BooleanField(
+        default=False,
+        verbose_name='Integración y Exportación de Archivos Oficiales SIMAT (MEN)'
+    )
+    dane_code = models.CharField(
+        max_length=25,
+        blank=True,
+        default='',
+        verbose_name='Código DANE de la Sede Educativa'
+    )
+    consecutive_resolution = models.CharField(
+        max_length=150,
+        blank=True,
+        default='',
+        verbose_name='Resolución de Reconocimiento Oficial / NIT'
+    )
+
     institution_name = models.CharField(
         max_length=150,
         default='ACADEMIX',
@@ -263,6 +373,70 @@ class InstitutionSetting(models.Model):
         """
         return self.institution_type == self.InstitutionType.COLEGIO
 
+    @property
+    def is_public_institution(self):
+        """Indica si la institución educativa es oficial/pública (gratuidad, SIMAT, PAE)."""
+        return self.sector_mode == self.SectorMode.PUBLIC
+
+    @property
+    def is_private_institution(self):
+        """Indica si la institución es privada / no oficial (facturación, pasarelas, admisiones)."""
+        return self.sector_mode == self.SectorMode.PRIVATE
+
+    @property
+    def allows_report_card_debt_blocking(self):
+        """
+        Regla de negocio crítica: Un colegio público NO puede retener boletines por morosidad
+        financiera por prohibición legal y constitucional de gratuidad universal.
+        Solo se permite si la institución es privada Y tiene la bandera encendida.
+        """
+        return self.is_private_institution and self.block_report_cards_on_debt
+
+    def clean(self):
+        super().clean()
+        if self.is_public_institution and self.block_report_cards_on_debt:
+            # Corrección automática para asegurar cumplimiento legal
+            self.block_report_cards_on_debt = False
+
+        if self.min_grade >= self.max_grade:
+            raise ValidationError({'min_grade': 'La nota mínima debe ser estrictamente menor a la nota máxima.'})
+
+        if not (self.min_grade <= self.passing_grade <= self.max_grade):
+            raise ValidationError({'passing_grade': 'La nota aprobatoria debe encontrarse entre la nota mínima y máxima.'})
+
+    def apply_sector_preset(self, sector):
+        """
+        Aprovisiona y conmuta en caliente todas las reglas del SaaS Híbrido:
+        - Modo Público: Gratuidad activa, PAE activo, SIMAT activo, 4 periodos estándar,
+          retención de boletines bloqueada por ley.
+        - Modo Privado: Facturación activa, admisiones activas, pasarela de pagos activa,
+          bloqueo de boletines por morosidad disponible.
+        """
+        self.sector_mode = sector
+        if sector == self.SectorMode.PUBLIC:
+            self.enable_tuition_billing = False
+            self.block_report_cards_on_debt = False
+            self.enable_payment_gateway = False
+            self.enable_online_admissions = False
+            self.enable_gratuity_control = True
+            self.enable_pae_module = True
+            self.enable_simat_integration = True
+            self.period_structure = self.PeriodStructure.PERIODS_4
+            self.grading_scale_type = self.GradingScaleType.NUMERIC_5
+            self.min_grade = Decimal('1.00')
+            self.max_grade = Decimal('5.00')
+            self.passing_grade = Decimal('3.00')
+            self.grade_decimal_places = 2
+        else: # PRIVADO
+            self.enable_tuition_billing = True
+            self.block_report_cards_on_debt = True
+            self.enable_payment_gateway = True
+            self.enable_online_admissions = True
+            self.enable_gratuity_control = False
+            self.enable_pae_module = False
+            self.enable_simat_integration = False
+        self.save()
+
     def apply_preset(self, preset_type):
         """Aplica terminología estándar según el tipo de entidad educativa."""
         self.institution_type = preset_type
@@ -317,4 +491,8 @@ class InstitutionSetting(models.Model):
         except Exception as e:
             import logging
             logging.getLogger(__name__).warning(f"Error al aprovisionar entorno {preset_type}: {e}")
+
+
+# Alias solicitado en la arquitectura para acceso semántico
+InstitutionSettings = InstitutionSetting
 

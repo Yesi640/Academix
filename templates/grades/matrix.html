@@ -15,9 +15,19 @@
             <i class="bi bi-mortarboard-fill me-1 text-primary"></i>Planilla Oficial de Notas &bull; Año: {{ section.academic_year.year }} &bull; Ponderación de Periodo: <strong>{{ period.percentage }}%</strong>
         </p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
         {% if not is_editable %}
-        <span class="badge bg-danger p-2"><i class="bi bi-lock-fill me-1"></i>Periodo Cerrado - Modo Solo Lectura</span>
+        <span class="badge bg-warning text-dark p-2 d-flex align-items-center gap-1">
+            <i class="bi bi-eye-fill me-1"></i>
+            Solo Lectura
+            {% if can_edit_reason %}
+            <span class="fw-normal ms-1" style="font-size:0.72rem;">— {{ can_edit_reason }}</span>
+            {% endif %}
+        </span>
+        {% else %}
+        <span class="badge bg-success-subtle text-success border border-success-subtle p-2 d-flex align-items-center gap-1" style="font-size:0.75rem;">
+            <i class="bi bi-pencil-square me-1"></i>Edición activa — guarda al salir del campo
+        </span>
         {% endif %}
         <a href="{% url 'grades:index' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
             <i class="bi bi-arrow-left"></i>
@@ -132,11 +142,25 @@
                 <th style="width: 120px;">Código</th>
                 <th>Estudiante</th>
                 {% for crit in criteria %}
-                <th class="text-center" style="min-width: 140px;">
-                    <div class="fw-bold">{{ crit.name }}</div>
-                    <span class="badge bg-primary-subtle text-primary font-monospace" style="font-size: 0.7rem;">
-                        {{ crit.percentage }}%
+                <th class="text-center" style="min-width: 150px;">
+                    <div class="mb-1">
+                        <span class="badge bg-primary text-white fw-bold px-2 py-1 rounded-pill" style="font-size:0.72rem;">
+                            {% if crit.norm %}RAP {{ crit.norm.order }}{% else %}RAP {{ forloop.counter }}{% endif %}
+                        </span>
+                    </div>
+                    <div class="fw-bold text-dark small text-truncate px-1" title="{{ crit.name }}">
+                        {{ crit.name|cut:"RAP 1: "|cut:"RAP 2: "|cut:"RAP 3: "|cut:"RAP 4: " }}
+                    </div>
+                    <span class="badge bg-primary-subtle text-primary font-monospace mt-1" style="font-size: 0.7rem;">
+                        {{ crit.percentage|floatformat:2 }}%
                     </span>
+                    {% if crit.norm %}
+                    <div class="mt-1 d-flex gap-1 justify-content-center">
+                        <span class="badge bg-info-subtle text-info" style="font-size:0.6rem;" title="SABER: {{ crit.norm.saber }}">Saber</span>
+                        <span class="badge bg-success-subtle text-success" style="font-size:0.6rem;" title="HACER: {{ crit.norm.hacer }}">Hacer</span>
+                        <span class="badge bg-warning-subtle text-dark" style="font-size:0.6rem;" title="SER: {{ crit.norm.ser }}">Ser</span>
+                    </div>
+                    {% endif %}
                 </th>
                 {% endfor %}
                 <th class="text-center text-primary" style="width: 120px;">

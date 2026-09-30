@@ -121,8 +121,13 @@
                 <button type="button" class="btn btn-outline-light btn-sm" onclick="window.close(); window.history.back();">
                     <i class="bi bi-arrow-left me-1"></i>Regresar
                 </button>
+                {% if not is_bulk and b.student and b.period %}
+                <a href="{% url 'reports:download_student_bulletin_pdf' student_id=b.student.id period_id=b.period.id %}" class="btn btn-success btn-sm fw-bold px-3">
+                    <i class="bi bi-file-earmark-pdf-fill me-1"></i>Descargar PDF (WeasyPrint)
+                </a>
+                {% endif %}
                 <button type="button" class="btn btn-primary btn-sm fw-bold px-3" onclick="window.print();">
-                    <i class="bi bi-printer-fill me-1"></i>Imprimir / Guardar en PDF
+                    <i class="bi bi-printer-fill me-1"></i>Imprimir Navegador
                 </button>
             </div>
         </div>

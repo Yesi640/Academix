@@ -107,6 +107,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'apps.courses.context_processors.institution_context',
+                'apps.accounts.context_processors.global_theme',
             ],
         },
     },
