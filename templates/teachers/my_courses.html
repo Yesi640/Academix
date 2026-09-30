@@ -153,24 +153,14 @@
                         </div>
                     </a>
 
-                    <!-- Botones Secundarios: Asistencia y Malla Curricular -->
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=asistencia"
-                           class="lms-action-btn lms-action-btn-outline w-50 justify-content-center py-2 px-2 text-decoration-none"
-                           style="font-size: 0.8rem; font-weight: 600;"
-                           title="Tomar Asistencia del Curso">
-                            <i class="bi bi-calendar-check-fill text-success fs-6"></i>
-                            <span>Asistencia</span>
-                        </a>
-
-                        <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=malla"
-                           class="lms-action-btn lms-action-btn-outline w-50 justify-content-center py-2 px-2 text-decoration-none"
-                           style="font-size: 0.8rem; font-weight: 600;"
-                           title="Ver Malla Modular y DBA">
-                            <i class="bi bi-diagram-3-fill text-primary fs-6"></i>
-                            <span>Malla</span>
-                        </a>
-                    </div>
+                    <!-- Botón Secundario: Asistencia -->
+                    <a href="{% url 'teachers:course_workspace' c.section.id %}?tab=asistencia"
+                       class="lms-action-btn lms-action-btn-outline w-100 justify-content-center py-2 px-2 text-decoration-none"
+                       style="font-size: 0.8rem; font-weight: 600;"
+                       title="Tomar Asistencia del Curso">
+                        <i class="bi bi-calendar-check-fill text-success fs-6"></i>
+                        <span>Asistencia</span>
+                    </a>
                 </div>
             </div>
         </div>
