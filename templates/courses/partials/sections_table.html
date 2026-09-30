@@ -9,7 +9,7 @@
                 <th>Aula / Espacio</th>
                 <th>Cupo / Matriculados</th>
                 <th>Estado</th>
-                <th class="text-end">Malla Curricular</th>
+                <th class="text-end">Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -47,9 +47,9 @@
                     {% endif %}
                 </td>
                 <td class="text-end">
-                    <a href="{% url 'teachers:course_workspace' section.id %}?tab=malla" class="btn btn-outline-primary btn-sm py-1 px-2 d-inline-flex align-items-center gap-1 shadow-sm" title="Ver Malla Curricular y Asignaturas de {{ section.name }}">
-                        <i class="bi bi-diagram-3-fill"></i>
-                        <span>Ver Malla</span>
+                    <a href="{% url 'teachers:course_workspace' section.id %}" class="btn btn-outline-primary btn-sm py-1 px-2 d-inline-flex align-items-center gap-1 shadow-sm" title="Abrir Espacio de Trabajo de {{ section.name }}">
+                        <i class="bi bi-grid-fill"></i>
+                        <span>Espacio de Trabajo</span>
                     </a>
                 </td>
             </tr>
