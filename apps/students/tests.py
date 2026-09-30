@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 from django.test import TestCase
 from apps.accounts.models import CustomUser
 from apps.accounts.services import create_institutional_user
