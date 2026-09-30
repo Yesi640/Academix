@@ -29,6 +29,8 @@ urlpatterns = [
     # Módulos del Sprint 5
     path('rules/', include('apps.rules.urls', namespace='rules')),
     path('reports/', include('apps.reports.urls', namespace='reports')),
+    path('discipline/', include('apps.discipline.urls', namespace='discipline')),
+    path('finance/', include('apps.finance.urls', namespace='finance')),
 ]
 
 if settings.DEBUG:

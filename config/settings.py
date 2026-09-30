@@ -69,6 +69,8 @@ LOCAL_APPS = [
     # Módulos del Sprint 5
     'apps.rules',         # Sprint 5: Motor de validaciones académicas, promociones y cierres
     'apps.reports',       # Sprint 5: Boletines oficiales, consolidados y estadísticas
+    'apps.discipline',    # Observador del Estudiante y Convivencia Escolar (Ley 1620)
+    'apps.finance',       # Gestión Financiera, Cartera y Pensiones (Modo Privado)
 ]
 
 THIRD_PARTY_APPS = [

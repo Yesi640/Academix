@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+
+{% block title %}Estado de Cuenta — {{ student.user.get_full_name }} | ACADEMIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Encabezado Financiero -->
+    <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: linear-gradient(135deg, #064e3b 0%, #047857 100%); color: #ffffff;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-3 text-white shadow-sm"
+                     style="width: 68px; height: 68px; background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.4);">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="badge bg-warning text-dark font-monospace px-2 py-1" style="font-size: 0.72rem;">
+                            {{ student.student_code }}
+                        </span>
+                        {% if status_data.is_paz_y_salvo %}
+                        <span class="badge bg-success text-white px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-check-circle-fill me-1"></i>Paz y Salvo Financiero
+                        </span>
+                        {% else %}
+                        <span class="badge bg-danger text-white px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Saldo Pendiente
+                        </span>
+                        {% endif %}
+                    </div>
+                    <h3 class="fw-bold mb-0 text-white">{{ student.user.get_full_name|default:student.user.username }}</h3>
+                    <div class="text-white-50 small mt-1">
+                        Año Lectivo: <strong>{{ current_year.name }}</strong> &bull; Acudiente: <strong>{{ student.parent.get_full_name|default:"Sin acudiente asignado" }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'students:expediente' student.id %}" class="btn btn-outline-light btn-sm px-3 shadow-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Expediente Digital</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tarjetas de Saldo y Resumen -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card ac-card p-4 border-0 shadow-xs h-100 bg-white">
+                <small class="text-muted text-uppercase fw-bold" style="font-size:0.7rem;">Total Facturado</small>
+                <div class="fs-3 fw-bold text-dark mt-1">${{ status_data.total_charged|floatformat:0 }}</div>
+                <small class="text-muted">Total cuotas y matrículas asignadas</small>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card ac-card p-4 border-0 shadow-xs h-100 bg-white">
+                <small class="text-muted text-uppercase fw-bold" style="font-size:0.7rem;">Total Pagado / Recaudado</small>
+                <div class="fs-3 fw-bold text-success mt-1">${{ status_data.total_paid|floatformat:0 }}</div>
+                <small class="text-muted">Abonos efectivos registrados</small>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card ac-card p-4 border-0 shadow-xs h-100 bg-white">
+                <small class="text-muted text-uppercase fw-bold" style="font-size:0.7rem;">Saldo Pendiente / Deuda</small>
+                <div class="fs-3 fw-bold {% if status_data.total_debt > 0 %}text-danger{% else %}text-success{% endif %} mt-1">
+                    ${{ status_data.total_debt|floatformat:0 }}
+                </div>
+                <small class="{% if status_data.overdue_count > 0 %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                    {% if status_data.overdue_count > 0 %}{{ status_data.overdue_count }} cuota(s) en mora{% else %}Al día con los pagos{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Obligaciones y Cuotas -->
+    <div class="card ac-card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-receipt text-primary"></i>
+            <span>Historial de Cuotas y Obligaciones</span>
+        </h5>
+
+        {% if status_data.obligations %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase">
+                        <th>Concepto</th>
+                        <th>Mes</th>
+                        <th>Vencimiento</th>
+                        <th>Monto</th>
+                        <th>Abonado</th>
+                        <th>Saldo</th>
+                        <th>Estado</th>
+                        {% if is_staff %}<th class="text-end">Acción</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in status_data.obligations %}
+                    {% with obl=item.obligation %}
+                    <tr>
+                        <td class="fw-bold text-dark">{{ obl.concept.name }}</td>
+                        <td class="small font-monospace">{% if obl.month %}Mes {{ obl.month }}{% else %}Anual{% endif %}</td>
+                        <td class="small {% if item.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                            {{ obl.due_date|date:"d/m/Y" }}
+                        </td>
+                        <td class="fw-bold font-monospace">${{ obl.amount|floatformat:0 }}</td>
+                        <td class="text-success font-monospace">${{ obl.paid_amount|floatformat:0 }}</td>
+                        <td class="font-monospace fw-bold {% if item.balance > 0 %}text-danger{% else %}text-muted{% endif %}">
+                            ${{ item.balance|floatformat:0 }}
+                        </td>
+                        <td>
+                            <span class="badge {% if obl.status == 'PAID' %}bg-success{% elif item.is_overdue %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                {{ obl.get_status_display }}
+                            </span>
+                        </td>
+                        {% if is_staff %}
+                        <td class="text-end">
+                            {% if item.balance > 0 %}
+                            <button type="button" class="btn btn-sm btn-primary fw-bold px-2 py-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#payModal-{{ obl.id }}">
+                                <i class="bi bi-cash me-1"></i>Recaudar
+                            </button>
+                            {% else %}
+                            <span class="text-success small fw-bold"><i class="bi bi-check2-circle me-1"></i>Saldado</span>
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                    </tr>
+
+                    <!-- Modal de Recaudo para Secretaría -->
+                    {% if is_staff and item.balance > 0 %}
+                    <div class="modal fade" id="payModal-{{ obl.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow">
+                                <form method="POST" action="{% url 'finance:pay_obligation' obl.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header bg-primary text-white py-2 px-3">
+                                        <h6 class="modal-title fw-bold"><i class="bi bi-cash-stack me-1"></i>Registrar Pago de {{ obl.concept.name }}</h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-3 small">
+                                        <div class="p-2 bg-light rounded mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Saldo Pendiente:</span>
+                                                <strong class="text-danger">${{ item.balance|floatformat:0 }}</strong>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold text-secondary mb-1">Monto a Pagar ($) *</label>
+                                            <input type="number" name="amount" class="form-control form-control-sm font-monospace fw-bold" value="{{ item.balance|floatformat:0 }}" max="{{ item.balance }}" min="1" step="any" required>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold text-secondary mb-1">Medio de Pago *</label>
+                                            <select name="payment_method" class="form-select form-select-sm" required>
+                                                {% for val, label in payment_methods %}
+                                                <option value="{{ val }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="form-label small fw-bold text-secondary mb-1">Observaciones / Referencia</label>
+                                            <input type="text" name="notes" class="form-control form-control-sm" placeholder="Ej: Transferencia Bancolombia #12345">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer py-2 px-3 bg-light">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="submit" class="btn btn-primary btn-sm fw-bold">Generar Recibo</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-wallet2 fs-1 text-muted d-block mb-2"></i>
+            <h6 class="fw-bold text-dark">Sin obligaciones registradas</h6>
+            <p class="small mb-0">No se han generado cobros o cuotas para este estudiante en el año escolar.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

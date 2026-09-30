@@ -3,6 +3,7 @@ import io
 import hmac
 import hashlib
 import base64
+import uuid
 from io import BytesIO
 from decimal import Decimal, ROUND_HALF_UP
 from django.conf import settings
@@ -405,6 +406,259 @@ def export_consolidated_csv(section, period):
         writer.writerow(line)
 
     return output.getvalue()
+
+def export_consolidated_excel(section, period):
+    """
+    Exporta la sábana consolidada en formato XLSX con openpyxl.
+    Incluye estilos institucionales, colores por desempeño y autofit de columnas.
+    Retorna bytes del archivo Excel.
+    """
+    try:
+        import openpyxl
+        from openpyxl.styles import (
+            Font, PatternFill, Alignment, Border, Side, GradientFill
+        )
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        raise ImportError("Se requiere la librería 'openpyxl'. Instálala con: pip install openpyxl")
+
+    data = build_section_consolidated_data(section, period)
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"Consolidado {section.name[:25]}"
+
+    # ── Paleta de colores institucional ──
+    COLOR_HEADER_BG   = "0F172A"   # Azul oscuro
+    COLOR_HEADER_FONT = "FFFFFF"
+    COLOR_SUBHEADER   = "1E3A5F"
+    COLOR_EXCEL_SUP   = "16A34A"   # Verde: Superior ≥ 4.6
+    COLOR_EXCEL_ALTO  = "22C55E"   # Verde claro: Alto ≥ 4.0
+    COLOR_EXCEL_BAS   = "F59E0B"   # Ámbar: Básico ≥ 3.0
+    COLOR_EXCEL_BAJ   = "EF4444"   # Rojo: Bajo < 3.0
+    COLOR_ALTERNADO   = "F1F5F9"   # Gris claro filas alternas
+    COLOR_WHITE       = "FFFFFF"
+
+    thin = Side(style='thin', color="CBD5E1")
+    border_cell = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    # ── Fila 1: Título institucional ──
+    institution = get_institution_settings()
+    ws.merge_cells(f"A1:{get_column_letter(4 + len(data['subjects']) + 1)}1")
+    title_cell = ws['A1']
+    title_cell.value = f"{institution.name.upper()} – SÁBANA CONSOLIDADA DE CALIFICACIONES"
+    title_cell.font = Font(name='Calibri', bold=True, size=13, color=COLOR_HEADER_FONT)
+    title_cell.fill = PatternFill('solid', fgColor=COLOR_HEADER_BG)
+    title_cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    ws.row_dimensions[1].height = 24
+
+    # ── Fila 2: Subtítulo sección y periodo ──
+    ws.merge_cells(f"A2:{get_column_letter(4 + len(data['subjects']) + 1)}2")
+    subtitle_cell = ws['A2']
+    subtitle_cell.value = (
+        f"Grupo: {section.name}  |  "
+        f"Año Lectivo: {section.academic_year.year}  |  "
+        f"Período: {period.name}  |  "
+        f"Generado: {timezone.now().strftime('%d/%m/%Y %H:%M')}"
+    )
+    subtitle_cell.font = Font(name='Calibri', italic=True, size=10, color=COLOR_HEADER_FONT)
+    subtitle_cell.fill = PatternFill('solid', fgColor=COLOR_SUBHEADER)
+    subtitle_cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.row_dimensions[2].height = 18
+
+    # ── Fila 3: Encabezados de columnas ──
+    header_style = Font(name='Calibri', bold=True, size=10, color=COLOR_HEADER_FONT)
+    header_fill  = PatternFill('solid', fgColor=COLOR_SUBHEADER)
+    header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+
+    headers = ['#', 'Código', 'Apellidos y Nombres', 'Documento']
+    for sub in data['subjects']:
+        headers.append(f"{sub.code}\n{sub.name[:18]}")
+    headers.extend(['Promedio', 'Reprobadas'])
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=3, column=col_idx, value=header)
+        cell.font = header_style
+        cell.fill = header_fill
+        cell.alignment = header_align
+        cell.border = border_cell
+    ws.row_dimensions[3].height = 36
+
+    # ── Filas de datos ──
+    def score_fill(score_val):
+        """Devuelve un PatternFill basado en la nota."""
+        sc = float(score_val)
+        if sc >= 4.6:
+            return PatternFill('solid', fgColor=COLOR_EXCEL_SUP)
+        elif sc >= 4.0:
+            return PatternFill('solid', fgColor=COLOR_EXCEL_ALTO)
+        elif sc >= 3.0:
+            return PatternFill('solid', fgColor=COLOR_EXCEL_BAS)
+        else:
+            return PatternFill('solid', fgColor=COLOR_EXCEL_BAJ)
+
+    def score_font(score_val):
+        sc = float(score_val)
+        color = COLOR_WHITE if sc < 3.0 or sc >= 4.6 else "000000"
+        return Font(name='Calibri', size=10, bold=(sc < 3.0), color=color)
+
+    for row_idx, row in enumerate(data['rows'], start=4):
+        alt_fill = PatternFill('solid', fgColor=(COLOR_ALTERNADO if row_idx % 2 == 0 else COLOR_WHITE))
+        st = row['student']
+        base_cells = [
+            row['rank'],
+            st.student_code,
+            st.user.get_full_name() or st.user.username,
+            st.user.document_number or '',
+        ]
+        for col_idx, val in enumerate(base_cells, start=1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=val)
+            cell.font = Font(name='Calibri', size=10)
+            cell.fill = alt_fill
+            cell.alignment = Alignment(horizontal='center' if col_idx in [1, 2, 4] else 'left', vertical='center')
+            cell.border = border_cell
+
+        # Notas por asignatura
+        for sub_idx, sub in enumerate(data['subjects'], start=5):
+            score_data = row['scores'].get(sub.id)
+            sc = score_data['score'] if score_data else Decimal('1.00')
+            cell = ws.cell(row=row_idx, column=sub_idx, value=float(sc))
+            cell.number_format = '0.00'
+            cell.fill = score_fill(sc)
+            cell.font = score_font(sc)
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.border = border_cell
+
+        # Promedio y reprobadas
+        avg_col = 5 + len(data['subjects'])
+        avg_cell = ws.cell(row=row_idx, column=avg_col, value=float(row['average']))
+        avg_cell.number_format = '0.00'
+        avg_cell.fill = score_fill(row['average'])
+        avg_cell.font = score_font(row['average'])
+        avg_cell.alignment = Alignment(horizontal='center', vertical='center')
+        avg_cell.border = border_cell
+
+        rep_col = avg_col + 1
+        rep_cell = ws.cell(row=row_idx, column=rep_col, value=row['failed_count'])
+        rep_fill = PatternFill('solid', fgColor=COLOR_EXCEL_BAJ) if row['failed_count'] > 0 else alt_fill
+        rep_font_color = COLOR_WHITE if row['failed_count'] > 0 else '000000'
+        rep_cell.fill = rep_fill
+        rep_cell.font = Font(name='Calibri', size=10, bold=(row['failed_count'] > 0), color=rep_font_color)
+        rep_cell.alignment = Alignment(horizontal='center', vertical='center')
+        rep_cell.border = border_cell
+        ws.row_dimensions[row_idx].height = 16
+
+    # ── Autofit de columnas ──
+    ws.column_dimensions['A'].width = 5
+    ws.column_dimensions['B'].width = 14
+    ws.column_dimensions['C'].width = 30
+    ws.column_dimensions['D'].width = 14
+    for i, sub in enumerate(data['subjects'], start=5):
+        col_letter = get_column_letter(i)
+        ws.column_dimensions[col_letter].width = max(10, min(len(sub.name), 18))
+    avg_letter = get_column_letter(5 + len(data['subjects']))
+    ws.column_dimensions[avg_letter].width = 10
+    ws.column_dimensions[get_column_letter(6 + len(data['subjects']))].width = 10
+
+    # ── Fila de leyenda de desempeños ──
+    leyenda_row = 4 + len(data['rows']) + 1
+    ws.cell(row=leyenda_row, column=1, value='LEYENDA:').font = Font(bold=True, size=9)
+    legend_items = [
+        ('≥ 4.6 Superior', COLOR_EXCEL_SUP, COLOR_WHITE),
+        ('≥ 4.0 Alto', COLOR_EXCEL_ALTO, '000000'),
+        ('≥ 3.0 Básico', COLOR_EXCEL_BAS, '000000'),
+        ('< 3.0 Bajo', COLOR_EXCEL_BAJ, COLOR_WHITE),
+    ]
+    for li_idx, (label, bg, fg) in enumerate(legend_items, start=2):
+        c = ws.cell(row=leyenda_row, column=li_idx, value=label)
+        c.fill = PatternFill('solid', fgColor=bg)
+        c.font = Font(size=9, color=fg)
+        c.alignment = Alignment(horizontal='center')
+
+    # ── Congelar encabezado ──
+    ws.freeze_panes = 'A4'
+
+    # Serializar a bytes
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return output.getvalue()
+
+
+def build_certificate_data(student, certificate_type='ESTUDIO', academic_year=None, request=None):
+    """
+    Construye los datos para generar una Constancia o Certificado de Estudio oficial.
+    Tipos soportados:
+      - ESTUDIO: Constancia básica de que el estudiante pertenece a la institución.
+      - RENDIMIENTO: Certificado con promedio general del año.
+      - MATRICULA: Certificado de matrícula activa (inicio de año).
+    Incluye código único de verificación QR.
+    """
+    institution = get_institution_settings()
+    if academic_year is None:
+        from apps.courses.services import get_current_academic_year
+        academic_year = get_current_academic_year()
+
+    enrollment = None
+    section = None
+    if academic_year:
+        enrollment = Enrollment.objects.filter(
+            student=student,
+            academic_year=academic_year,
+            status=Enrollment.Status.ACTIVE
+        ).select_related('course_section__grade_level').first()
+        if enrollment:
+            section = enrollment.course_section
+
+    # Calcular promedio anual si es RENDIMIENTO
+    annual_average = None
+    if certificate_type == 'RENDIMIENTO' and academic_year:
+        from apps.grades.models import PeriodFinalGrade
+        grades_qs = PeriodFinalGrade.objects.filter(
+            student=student,
+            course_section=section,
+            academic_period__academic_year=academic_year
+        ) if section else PeriodFinalGrade.objects.none()
+        if grades_qs.exists():
+            total = sum(g.final_score for g in grades_qs)
+            annual_average = (total / Decimal(str(grades_qs.count()))).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+    # Generar token único de verificación
+    secret = getattr(settings, 'SECRET_KEY', 'academix-critical-key-2026')
+    payload = f"CERT|STUDENT:{student.id}|TYPE:{certificate_type}|YEAR:{academic_year.year if academic_year else 'N/A'}|TS:{timezone.now().strftime('%Y%m%d')}"
+    raw_token = hmac.new(secret.encode('utf-8'), payload.encode('utf-8'), hashlib.sha256).hexdigest()
+    cert_token = raw_token[:16].upper()
+
+    verification_url = f"https://academix.edu.co/verify/cert/{cert_token}/"
+    if request:
+        try:
+            verification_url = request.build_absolute_uri(f"/reports/verify/{cert_token}/")
+        except Exception:
+            pass
+
+    qr_base64 = generate_bulletin_qr_base64(verification_url)
+
+    certificate_type_labels = {
+        'ESTUDIO': 'CONSTANCIA DE ESTUDIO',
+        'RENDIMIENTO': 'CERTIFICADO DE RENDIMIENTO ACADÉMICO',
+        'MATRICULA': 'CERTIFICADO DE MATRÍCULA',
+    }
+
+    return {
+        'institution': institution,
+        'student': student,
+        'enrollment': enrollment,
+        'section': section,
+        'academic_year': academic_year,
+        'certificate_type': certificate_type,
+        'certificate_type_label': certificate_type_labels.get(certificate_type, 'CONSTANCIA'),
+        'annual_average': annual_average,
+        'cert_token': cert_token,
+        'verification_url': verification_url,
+        'qr_base64': qr_base64,
+        'issued_at': timezone.now(),
+        'issued_date_str': timezone.now().strftime('%d de %B de %Y'),
+    }
+
 
 def build_honor_roll_data(section, period):
     """

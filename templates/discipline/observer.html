@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Observador del Estudiante — {{ student.user.get_full_name }} | ACADEMIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+
+    <!-- Encabezado del Estudiante -->
+    <div class="card ac-card border-0 shadow-sm rounded-4 p-4 mb-4" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); color: #ffffff;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold fs-3 text-white shadow-sm"
+                     style="width: 68px; height: 68px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); border: 3px solid rgba(255,255,255,0.2);">
+                    {{ student.user.first_name|first|default:student.user.username|first|upper }}
+                </div>
+                <div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="badge bg-warning text-dark font-monospace px-2 py-1" style="font-size: 0.72rem;">
+                            {{ student.student_code }}
+                        </span>
+                        <span class="badge bg-white bg-opacity-20 text-white px-2 py-1" style="font-size: 0.72rem;">
+                            <i class="bi bi-person-badge me-1"></i>Observador Escolar Oficial
+                        </span>
+                    </div>
+                    <h3 class="fw-bold mb-0 text-white">{{ student.user.get_full_name|default:student.user.username }}</h3>
+                    <div class="text-white-50 small mt-1">
+                        Acudiente: <strong>{{ student.parent.get_full_name|default:"Sin acudiente asignado" }}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones Superiores -->
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{% url 'students:expediente' student.id %}" class="btn btn-outline-light btn-sm px-3 shadow-sm d-flex align-items-center gap-1">
+                    <i class="bi bi-folder2-open"></i>
+                    <span>Expediente Digital</span>
+                </a>
+                {% if can_create %}
+                <button type="button" class="btn btn-warning btn-sm fw-bold px-3 shadow-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#newAnotacionModal">
+                    <i class="bi bi-plus-circle-fill"></i>
+                    <span>Registrar Situación</span>
+                </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicadores de Convivencia Escolar -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold text-dark">{{ summary.total }}</div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Total Registros</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold text-warning">{{ summary.tipo_1 }}</div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Tipo I (Leves)</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold text-orange" style="color:#ea580c;">{{ summary.tipo_2 }}</div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Tipo II (Graves)</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold text-danger">{{ summary.tipo_3 }}</div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Tipo III (Gravísimas)</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold text-success">{{ summary.positivas }}</div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Méritos / Felicitación</small>
+            </div>
+        </div>
+        <div class="col-6 col-md-2">
+            <div class="card ac-card p-3 text-center border-0 shadow-xs h-100 bg-white">
+                <div class="fs-4 fw-bold {% if summary.pendientes_firma > 0 %}text-danger{% else %}text-muted{% endif %}">
+                    {{ summary.pendientes_firma }}
+                </div>
+                <small class="text-muted" style="font-size:0.7rem; text-transform:uppercase;">Por Firmar Acudiente</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Línea de Tiempo del Observador -->
+    <div class="card ac-card border-0 shadow-sm rounded-4 p-4 bg-white">
+        <h5 class="fw-bold text-dark mb-4 d-flex align-items-center gap-2">
+            <i class="bi bi-journal-text text-primary"></i>
+            <span>Historial y Bitácora de Convivencia (Ley 1620)</span>
+        </h5>
+
+        {% if summary.records %}
+        <div class="d-flex flex-column gap-3">
+            {% for item in summary.records %}
+            <div class="p-3 rounded-3 border transition-all" style="background: #fafafa; border-left: 5px solid {% if item.fault_type == 'POSITIVA' %}#10b981{% elif item.fault_type == 'TIPO_I' %}#f59e0b{% elif item.fault_type == 'TIPO_II' %}#ea580c{% else %}#ef4444{% endif %} !important;">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                    <div>
+                        <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                            <span class="badge {{ item.badge_class }} px-2 py-1" style="font-size: 0.72rem;">
+                                {{ item.get_fault_type_display }}
+                            </span>
+                            <span class="badge bg-light text-muted border font-monospace" style="font-size: 0.7rem;">
+                                <i class="bi bi-calendar-event me-1"></i>{{ item.date|date:"d/m/Y" }} {% if item.time %}• {{ item.time|time:"H:i" }}{% endif %}
+                            </span>
+                            <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">
+                                <i class="bi bi-geo-alt me-1"></i>{{ item.location }}
+                            </span>
+                            {% if item.period %}
+                            <span class="badge bg-purple-subtle text-purple border" style="font-size: 0.7rem;">
+                                {{ item.period.name }}
+                            </span>
+                            {% endif %}
+                        </div>
+                        <h6 class="fw-bold text-dark mb-0 fs-6">{{ item.title }}</h6>
+                        <small class="text-muted">
+                            Registrado por: <strong>{{ item.author.get_full_name|default:item.author.username }}</strong>
+                        </small>
+                    </div>
+
+                    <!-- Estado del Proceso -->
+                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                        <span class="badge {% if item.status == 'CERRADA' %}bg-success{% elif item.status == 'SEGUIMIENTO' %}bg-info text-dark{% else %}bg-secondary{% endif %}">
+                            {{ item.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Descripción de los Hechos -->
+                <div class="p-3 bg-white rounded-3 border mb-3 text-secondary small" style="line-height: 1.5;">
+                    {{ item.description|linebreaksbr }}
+                </div>
+
+                <!-- Descargos y Compromisos en 2 Columnas -->
+                <div class="row g-2 mb-3">
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 rounded-2 bg-light border h-100 small">
+                            <div class="fw-bold text-primary mb-1 d-flex align-items-center gap-1">
+                                <i class="bi bi-chat-quote-fill"></i>Versión / Descargos del Alumno:
+                            </div>
+                            <div class="text-muted">
+                                {{ item.student_disclaimer|default:"Pendiente por registrar o no aplica."|linebreaksbr }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-2 px-3 rounded-2 bg-light border h-100 small">
+                            <div class="fw-bold text-success mb-1 d-flex align-items-center gap-1">
+                                <i class="bi bi-heart-pulse-fill"></i>Compromiso y Acción Restaurativa:
+                            </div>
+                            <div class="text-muted">
+                                {{ item.pedagogical_commitment|default:"Pendiente de fijar compromisos."|linebreaksbr }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer de Firma y Conformidad del Acudiente -->
+                <div class="p-2 px-3 rounded-2 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                     style="background: {% if item.is_signed_by_parent %}#f0fdf4; border: 1px solid #bbf7d0;{% else %}#fffbeb; border: 1px solid #fef08a;{% endif %}">
+                    <div class="small">
+                        {% if item.is_signed_by_parent %}
+                        <span class="text-success fw-bold d-flex align-items-center gap-1">
+                            <i class="bi bi-check-circle-fill"></i>Firmado por Acudiente: <strong>{{ item.parent_signature_name }}</strong> el {{ item.parent_acknowledged_at|date:"d/m/Y H:i" }}
+                        </span>
+                        {% if item.parent_comments %}
+                        <small class="text-muted d-block mt-1"><em>"{{ item.parent_comments }}"</em></small>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-warning-emphasis fw-semibold d-flex align-items-center gap-1">
+                            <i class="bi bi-clock-history"></i>Pendiente de firma y enterado del Acudiente
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        {% if not item.is_signed_by_parent and can_sign %}
+                        <button type="button" class="btn btn-success btn-xs py-1 px-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#signModal-{{ item.id }}">
+                            <i class="bi bi-pen-fill me-1"></i>Firmar Enterado
+                        </button>
+                        {% endif %}
+
+                        {% if item.status != 'CERRADA' and can_create %}
+                        <button type="button" class="btn btn-outline-secondary btn-xs py-1 px-2 fw-bold" data-bs-toggle="modal" data-bs-target="#closeModal-{{ item.id }}">
+                            <i class="bi bi-check2-all me-1"></i>Cerrar Caso
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Modal de Firma Digital del Acudiente -->
+                <div class="modal fade" id="signModal-{{ item.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <form method="POST" action="{% url 'discipline:sign_anotacion' item.id %}">
+                                {% csrf_token %}
+                                <div class="modal-header bg-success text-white py-2 px-3">
+                                    <h6 class="modal-title fw-bold"><i class="bi bi-pen-fill me-1"></i>Firma de Notificación y Enterado</h6>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-3 small">
+                                    <p class="text-muted mb-2">
+                                        Al firmar, dejas constancia formal de haber sido notificado de la situación <strong>"{{ item.title }}"</strong> registrada el {{ item.date|date:"d/m/Y" }}.
+                                    </p>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold text-secondary mb-1">Observación o Compromiso del Acudiente (Opcional)</label>
+                                        <textarea name="parent_comments" class="form-control form-control-sm" rows="3" placeholder="Escribe aquí tus comentarios o compromisos desde casa..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer py-2 px-3 bg-light">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-success btn-sm fw-bold">Registrar Firma</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal de Cierre de Situación -->
+                <div class="modal fade" id="closeModal-{{ item.id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow">
+                            <form method="POST" action="{% url 'discipline:close_anotacion' item.id %}">
+                                {% csrf_token %}
+                                <div class="modal-header bg-primary text-white py-2 px-3">
+                                    <h6 class="modal-title fw-bold"><i class="bi bi-shield-check me-1"></i>Cierre de Situación Convivencial</h6>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body p-3 small">
+                                    <p class="text-muted mb-2">
+                                        Indica las razones y el cumplimiento de las acciones restaurativas para cerrar el seguimiento de este caso.
+                                    </p>
+                                    <div class="mb-2">
+                                        <label class="form-label small fw-bold text-secondary mb-1">Notas de Cierre y Verificación *</label>
+                                        <textarea name="closing_notes" class="form-control form-control-sm" rows="3" placeholder="El estudiante cumplió con la jornada pedagógica..." required></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer py-2 px-3 bg-light">
+                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="submit" class="btn btn-primary btn-sm fw-bold">Confirmar Cierre</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="p-5 text-center text-muted">
+            <i class="bi bi-shield-check fs-1 text-success d-block mb-2"></i>
+            <h6 class="fw-bold text-dark">Sin registros disciplinarios en el año escolar</h6>
+            <p class="small mb-0">El estudiante no cuenta con llamados de atención ni faltas registradas en su bitácora.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+
+<!-- Modal para Registrar Nueva Situación -->
+{% if can_create %}
+<div class="modal fade" id="newAnotacionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <form method="POST" action="{% url 'discipline:create_anotacion' student.id %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white py-3 px-4">
+                    <h5 class="modal-title fw-bold mb-0">
+                        <i class="bi bi-journal-plus me-2"></i>Nueva Anotación en Observador — {{ student.user.get_full_name }}
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 small">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">Tipo de Situación *</label>
+                            <select name="fault_type" class="form-select form-select-sm" required>
+                                {% for val, label in fault_types %}
+                                <option value="{{ val }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-secondary mb-1">Periodo Lectivo</label>
+                            <select name="period_id" class="form-select form-select-sm">
+                                <option value="">General / Todo el año</option>
+                                {% for p in periods %}
+                                <option value="{{ p.id }}">{{ p.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-8">
+                            <label class="form-label small fw-bold text-secondary mb-1">Título de la Situación *</label>
+                            <input type="text" name="title" class="form-control form-control-sm" placeholder="Ej: Retardo injustificado recurrente a clases..." required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label small fw-bold text-secondary mb-1">Lugar de los Hechos</label>
+                            <input type="text" name="location" class="form-control form-control-sm" value="Aula de Clase" placeholder="Ej: Aula, Cancha, Laboratorio...">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary mb-1">Descripción de los Hechos *</label>
+                        <textarea name="description" class="form-control form-control-sm" rows="3" placeholder="Relato claro, objetivo y cronológico de los acontecimientos..." required></textarea>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-primary mb-1">Descargos / Versión del Alumno</label>
+                            <textarea name="student_disclaimer" class="form-control form-control-sm" rows="2" placeholder="Lo que el estudiante manifiesta sobre lo sucedido..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-success mb-1">Compromiso / Acción Restaurativa</label>
+                            <textarea name="pedagogical_commitment" class="form-control form-control-sm" rows="2" placeholder="Acciones concretas de mejora acordadas..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-check form-switch mt-2">
+                        <input class="form-check-input" type="checkbox" name="parent_notified" id="parentNotifiedSwitch" checked>
+                        <label class="form-check-label small fw-bold" for="parentNotifiedSwitch">Notificar inmediatamente al Acudiente para firma digital</label>
+                    </div>
+                </div>
+                <div class="modal-footer py-2 px-4 bg-light border-top">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-3 shadow-sm">
+                        <i class="bi bi-save me-1"></i>Guardar en Observador
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
