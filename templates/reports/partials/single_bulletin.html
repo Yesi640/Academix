@@ -7,7 +7,7 @@
             </div>
             <div class="flex-grow-1">
                 <h4 class="fw-bold mb-0 text-uppercase tracking-wide" style="color: #0f172a; letter-spacing: 1px;">
-                    COLEGIO INSTITUTO ACADEMIX
+                    {{ b.institution.institution_name|default:'COLEGIO INSTITUTO ACADEMIX'|upper }}
                 </h4>
                 <div class="text-muted small fw-semibold">
                     Reconocimiento Oficial de Estudios — Resolución Ministerial No. 4589 de 2018<br>
@@ -45,7 +45,7 @@
                 <strong>Periodo Lectivo:</strong> {{ b.period.name }} ({{ b.period.percentage }}%)
             </div>
             <div class="col-6 col-md-4">
-                <strong>Director de Grupo:</strong> {{ b.group_director.user.get_full_name|default:"Prof. Titular" }}
+                <strong>Director de Grupo:</strong> {{ b.group_director_name|default:"Prof. Titular" }}
             </div>
             <div class="col-6 col-md-4 text-md-end">
                 <strong>Paz y Salvo Tesorería:</strong>
@@ -177,15 +177,15 @@
                     <i class="bi bi-patch-check-fill me-1"></i>FIRMA DIGITAL AUTORIZADA
                 </span>
                 <div style="font-family: 'Brush Script MT', 'Dancing Script', 'Segoe Script', cursive; font-size: 1.8rem; color: #1e3a8a; line-height: 1.0; font-weight: bold; transform: rotate(-2deg);">
-                    María Rectora
+                    {{ b.rector_name|default:"Rector(a) Institucional" }}
                 </div>
             </div>
             {% else %}
             <div style="height: 48px;"></div>
             {% endif %}
             <div class="signature-line"></div>
-            <strong class="d-block text-dark small">DRA. MARÍA RECTORA</strong>
-            <small class="text-muted" style="font-size: 0.72rem;">Rectora Institucional</small>
+            <strong class="d-block text-dark small">{{ b.rector_name|default:"RECTOR(A) INSTITUCIONAL"|upper }}</strong>
+            <small class="text-muted" style="font-size: 0.72rem;">{{ b.institution.term_director|default:"Rector(a)" }} Institucional</small>
             {% if b.rector_signature_authorized %}
             <small class="text-success d-block" style="font-size: 0.65rem;">
                 <i class="bi bi-shield-check me-1"></i>Certificado Oficial Academix
@@ -197,7 +197,7 @@
         <div class="col-6">
             <div style="height: 48px;"></div>
             <div class="signature-line"></div>
-            <strong class="d-block text-dark small">{{ b.group_director.user.get_full_name|default:"DIRECTOR(A) DE GRUPO"|upper }}</strong>
+            <strong class="d-block text-dark small">{{ b.group_director_name|default:"DIRECTOR(A) DE GRUPO"|upper }}</strong>
             <small class="text-muted" style="font-size: 0.72rem;">Director(a) de Grupo</small>
         </div>
     </div>
