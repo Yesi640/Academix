@@ -1,742 +1,530 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Boletín Oficial de Calificaciones — {{ b.student.user.get_full_name }}</title>
+    <title>Boletín Oficial - {{ b.student.user.get_full_name }} ({{ b.period.name }})</title>
     <style>
         /* ══════════════════════════════════════════════════════════════════════
-           CONFIGURACIÓN WEASYPRINT & PAGED MEDIA (ESTÁNDAR A4 IMPRENTA)
+           CONFIGURACIÓN DE PÁGINA: ESTRICTAMENTE 1 SOLA HOJA
            ══════════════════════════════════════════════════════════════════════ */
         @page {
-            size: A4 portrait;
-            margin: 0.7cm 0.8cm 0.9cm 0.8cm;
-            @top-right {
-                content: "{{ b.institution.institution_name }} • {{ b.academic_year.year }}";
+            size: letter portrait;
+            margin: 7mm 9mm 6mm 9mm;
+            @bottom-center {
+                content: "Página 1 de 1 • Documento Oficial de Calificaciones • ACADEMIX";
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                font-size: 7pt;
-                color: #64748b;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            @bottom-left {
-                content: "Validación Criptográfica: {{ b.verification_token }} • Expedido: {{ b.issued_at|date:'Y-m-d H:i' }}";
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                font-size: 6.5pt;
-                color: #64748b;
-            }
-            @bottom-right {
-                content: "Página " counter(page) " de " counter(pages);
-                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-                font-size: 7pt;
-                font-weight: bold;
-                color: #334155;
+                font-size: 6pt;
+                color: #94a3b8;
             }
         }
 
-        /* ══════════════════════════════════════════════════════════════════════
-           VARIABLES INSTITUCIONALES Y RESET TIPOGRÁFICO
-           ══════════════════════════════════════════════════════════════════════ */
-        :root {
-            --primary: {{ b.institution.primary_color|default:"#1e3a8a" }};
-            --primary-light: {{ b.institution.secondary_color|default:"#dbeafe" }};
-            --dark: #0f172a;
-            --gray-700: #334155;
-            --gray-500: #64748b;
-            --gray-200: #e2e8f0;
-            --gray-100: #f8fafc;
-            --success: #15803d;
-            --danger: #b91c1c;
-            --warning: #b45309;
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .boletin-page {
+                page-break-inside: avoid !important;
+                page-break-after: avoid !important;
+                height: 100%;
+            }
         }
 
         * {
             box-sizing: border-box;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
+            -webkit-font-smoothing: antialiased;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: var(--gray-700);
-            font-size: 7pt;
-            line-height: 1.35;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1e293b;
+            font-size: 7.5pt;
+            line-height: 1.25;
+            background: #ffffff;
             margin: 0;
             padding: 0;
-            background: #ffffff;
         }
 
-        /* ══════════════════════════════════════════════════════════════════════
-           ENCABEZADO INSTITUCIONAL
-           ══════════════════════════════════════════════════════════════════════ */
+        .boletin-page {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        /* ─── BOTÓN DE IMPRESIÓN (SOLO NAVEGADOR) ─── */
+        .no-print-bar {
+            position: fixed;
+            top: 10px;
+            right: 15px;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 8px 14px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-print {
+            background: #4f46e5;
+            color: #ffffff;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 8pt;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-print:hover {
+            background: #4338ca;
+        }
+
+        /* ─── 1. ENCABEZADO INSTITUCIONAL COMPACTO ─── */
         .inst-header {
             display: table;
             width: 100%;
-            border-bottom: 2.5px solid var(--primary);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 4px;
+            margin-bottom: 5px;
         }
-
-        .header-logo-cell {
+        .header-col-left {
             display: table-cell;
-            width: 75px;
+            width: 50px;
             vertical-align: middle;
         }
-
-        .inst-logo {
-            max-width: 68px;
-            max-height: 68px;
+        .header-logo {
+            width: 44px;
+            height: 44px;
             object-fit: contain;
-            display: block;
+            border-radius: 6px;
         }
-
-        .logo-placeholder {
-            width: 48px;
-            height: 48px;
-            background: var(--primary);
-            border-radius: 8px;
+        .header-logo-placeholder {
+            width: 44px;
+            height: 44px;
+            background: #1e3a8a;
             color: #ffffff;
-            font-weight: 800;
             font-size: 16pt;
+            font-weight: 900;
+            line-height: 44px;
             text-align: center;
-            line-height: 64px;
+            border-radius: 6px;
         }
-
-        .header-info-cell {
+        .header-col-center {
             display: table-cell;
             vertical-align: middle;
-            text-align: center;
-            padding: 0 10px;
+            padding-left: 8px;
         }
-
-        .inst-name {
-            font-size: 13pt;
-            font-weight: 800;
-            color: var(--primary);
-            margin: 0;
+        .inst-title {
+            font-size: 11pt;
+            font-weight: 900;
+            color: #1e3a8a;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-
-        .inst-subtitle {
-            font-size: 7.5pt;
-            color: var(--gray-500);
-            margin: 2px 0 4px 0;
-            font-style: italic;
-        }
-
-        .inst-legal-meta {
-            font-size: 6.8pt;
-            color: var(--gray-700);
-            font-weight: 600;
             margin: 0;
+            line-height: 1.1;
         }
-
-        .header-badge-cell {
+        .inst-sub {
+            font-size: 6.8pt;
+            color: #64748b;
+            margin: 1px 0 0 0;
+        }
+        .header-col-right {
             display: table-cell;
-            width: 120px;
-            vertical-align: middle;
+            width: 170px;
             text-align: right;
-        }
-
-        .report-title-badge {
-            background-color: var(--primary);
-            color: #ffffff;
-            font-size: 7pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 5px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        .period-highlight {
-            font-size: 8.5pt;
-            font-weight: 800;
-            display: block;
-            margin-top: 2px;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════════
-           TARJETA METADATOS DEL ESTUDIANTE
-           ══════════════════════════════════════════════════════════════════════ */
-        .student-card {
-            width: 100%;
-            background: var(--gray-100);
-            border: 1px solid var(--gray-200);
-            border-left: 4px solid var(--primary);
-            border-radius: 4px;
-            margin-bottom: 10px;
-            padding: 6px 10px;
-        }
-
-        .card-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .card-table td {
-            padding: 2px 6px;
-            font-size: 7.8pt;
             vertical-align: middle;
         }
-
-        .meta-label {
-            font-weight: 700;
-            color: var(--dark);
-            text-transform: uppercase;
-            font-size: 6.8pt;
-        }
-
-        .meta-value {
-            color: #0f172a;
-            font-weight: 500;
-        }
-
-        .meta-value-strong {
-            color: var(--primary);
-            font-weight: 800;
-            font-size: 8.5pt;
-        }
-
-        .metric-pill {
+        .period-pill {
             display: inline-block;
-            background: #ffffff;
-            border: 1px solid var(--gray-200);
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .metric-pill.success {
-            background: #f0fdf4;
-            border-color: #86efac;
-            color: #166534;
-        }
-
-        .metric-pill.danger {
-            background: #fef2f2;
-            border-color: #fca5a5;
-            color: #991b1b;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════════
-           TABLA OFICIAL DE CALIFICACIONES
-           ══════════════════════════════════════════════════════════════════════ */
-        .grades-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-            page-break-inside: auto;
-        }
-
-        .grades-table thead {
-            display: table-header-group;
-        }
-
-        .grades-table tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
-
-        .grades-table th {
-            background: var(--dark);
-            color: #ffffff;
-            font-size: 7pt;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            padding: 5px 6px;
-            border: 1px solid #1e293b;
-            text-align: left;
-        }
-
-        .grades-table th.center {
-            text-align: center;
-        }
-
-        .grades-table th.right {
-            text-align: right;
-        }
-
-        .area-header-row td {
-            background: #eef2ff;
-            color: var(--primary);
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1d4ed8;
             font-weight: 800;
-            font-size: 7.8pt;
-            text-transform: uppercase;
-            padding: 4px 6px;
-            border-top: 1.5px solid #cbd5e1;
-            border-bottom: 1px solid #cbd5e1;
-        }
-
-        .subject-row td {
-            padding: 4px 6px;
-            border-bottom: 1px solid var(--gray-200);
             font-size: 7.5pt;
-            vertical-align: top;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
         }
-
-        .subject-row:nth-child(even) {
-            background-color: #fafafa;
-        }
-
-        .sub-name {
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .sub-teacher {
-            font-size: 6.8pt;
-            color: var(--gray-500);
-            display: block;
+        .year-sub {
+            font-size: 6.5pt;
+            color: #64748b;
             margin-top: 1px;
         }
 
-        .score-cell {
-            text-align: center;
-            font-size: 8.5pt;
+        /* ─── 2. FICHA DEL ESTUDIANTE (2 FILAS) ─── */
+        .student-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 5px;
+            padding: 4px 8px;
+            margin-bottom: 5px;
+        }
+        .info-grid {
+            display: table;
+            width: 100%;
+        }
+        .info-row {
+            display: table-row;
+        }
+        .info-cell {
+            display: table-cell;
+            padding: 1.5px 4px;
+            vertical-align: middle;
+        }
+        .lbl {
+            font-size: 6.3pt;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+        .val {
+            font-size: 7.2pt;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .val-strong {
+            font-size: 8pt;
             font-weight: 800;
+            color: #1e3a8a;
         }
-
-        .score-cell.approved {
-            color: var(--success);
-        }
-
-        .score-cell.failed {
-            color: var(--danger);
-        }
-
-        .badge-perf {
-            display: inline-block;
-            padding: 1.5px 5px;
+        .badge-pos {
+            background: #dbeafe;
+            color: #1e40af;
+            font-weight: 800;
+            font-size: 7pt;
+            padding: 1px 5px;
             border-radius: 3px;
+        }
+
+        /* ─── 3. TABLA DE CALIFICACIONES COMPACTA ─── */
+        .grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+            font-size: 7pt;
+        }
+        .grades-table th {
+            background: #1e293b;
+            color: #ffffff;
             font-size: 6.8pt;
             font-weight: 700;
             text-transform: uppercase;
+            padding: 3px 5px;
+            text-align: left;
+            border: 1px solid #1e293b;
         }
-
-        .perf-SUPERIOR, .perf-Superior {
-            background: #dcfce7;
-            color: #15803d;
-            border: 1px solid #86efac;
-        }
-
-        .perf-ALTO, .perf-Alto {
-            background: #dbeafe;
-            color: #1d4ed8;
-            border: 1px solid #93c5fd;
-        }
-
-        .perf-BASICO, .perf-Básico {
-            background: #fef3c7;
-            color: #b45309;
-            border: 1px solid #fcd34d;
-        }
-
-        .perf-BAJO, .perf-Bajo {
-            background: #fee2e2;
-            color: #b91c1c;
-            border: 1px solid #fca5a5;
-        }
-
-        .feedback-box {
-            font-size: 6.8pt;
-            color: #475569;
-            font-style: italic;
-            margin-top: 2px;
-            padding-left: 6px;
-            border-left: 2px solid #cbd5e1;
-        }
-
-        /* ══════════════════════════════════════════════════════════════════════
-           CUADRO DE CONVIVENCIA, ESCALA Y RESUMEN
-           ══════════════════════════════════════════════════════════════════════ */
-        .summary-container {
-            display: table;
-            width: 100%;
-            margin-bottom: 12px;
-            page-break-inside: avoid;
-        }
-
-        .summary-col {
-            display: table-cell;
-            vertical-align: top;
-            width: 50%;
-        }
-
-        .summary-col:first-child {
-            padding-right: 6px;
-        }
-
-        .summary-col:last-child {
-            padding-left: 6px;
-        }
-
-        .panel-box {
-            border: 1px solid var(--gray-200);
-            border-radius: 4px;
-            padding: 6px 8px;
-            background: #ffffff;
-            height: 100%;
-        }
-
-        .panel-title {
-            font-size: 7.2pt;
-            font-weight: 800;
-            text-transform: uppercase;
-            color: var(--primary);
-            border-bottom: 1px solid var(--gray-200);
-            padding-bottom: 3px;
-            margin-bottom: 4px;
-        }
-
-        .scale-grid {
-            display: table;
-            width: 100%;
-            font-size: 6.8pt;
-        }
-
-        .scale-item {
-            display: table-cell;
+        .grades-table th.center {
             text-align: center;
-            padding: 2px;
+        }
+        .area-header-row td {
+            background: #e2e8f0;
+            color: #1e293b;
+            font-size: 6.8pt;
+            font-weight: 800;
+            padding: 2.5px 5px;
+            border: 1px solid #cbd5e1;
+            text-transform: uppercase;
+        }
+        .sub-row td {
+            padding: 2px 5px;
+            border: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+        .sub-row:nth-child(even) {
+            background: #fafafa;
+        }
+        .sub-name {
+            font-weight: 700;
+            color: #0f172a;
+            display: inline-block;
+        }
+        .sub-teacher {
+            font-size: 6pt;
+            color: #64748b;
+            margin-left: 4px;
+        }
+        .score-val {
+            font-weight: 800;
+            font-size: 7.5pt;
+            text-align: center;
+        }
+        .score-val.pass {
+            color: #166534;
+        }
+        .score-val.fail {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+        .badge-perf {
+            font-size: 6pt;
+            font-weight: 700;
+            padding: 1px 4px;
+            border-radius: 3px;
+            display: inline-block;
+            text-align: center;
+        }
+        .perf-SUPERIOR { background: #dcfce7; color: #166534; }
+        .perf-ALTO { background: #e0f2fe; color: #0369a1; }
+        .perf-BASICO { background: #fef9c3; color: #854d0e; }
+        .perf-BAJO { background: #fee2e2; color: #991b1b; }
+
+        /* ─── 4. RESUMEN EN 1 FILA COMPACTA ─── */
+        .summary-bar {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            padding: 3px 8px;
+            margin-bottom: 5px;
+            font-size: 6.8pt;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .summary-bar span {
+            margin-right: 12px;
         }
 
-        .scale-item strong {
-            display: block;
+        .scale-inline {
+            font-size: 6pt;
+            color: #64748b;
+            text-align: center;
+            margin-bottom: 6px;
         }
 
-        /* ══════════════════════════════════════════════════════════════════════
-           SECCIÓN DE FIRMAS Y VALIDACIÓN CRIPTOGRÁFICA
-           ══════════════════════════════════════════════════════════════════════ */
-        .footer-validation-section {
-            page-break-inside: avoid;
-            margin-top: 15px;
-            border-top: 1.5px solid var(--gray-200);
-            padding-top: 12px;
-        }
-
+        /* ─── 5. FIRMAS OFICIALES ─── */
         .signatures-table {
             width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-top: 10px;
+            margin-bottom: 4px;
         }
-
         .signatures-table td {
             width: 50%;
             text-align: center;
             vertical-align: bottom;
             padding: 0 20px;
         }
-
         .sig-line {
-            border-top: 1px solid #475569;
-            margin-bottom: 4px;
+            width: 80%;
+            margin: 0 auto 3px auto;
+            border-bottom: 1.2px solid #475569;
         }
-
         .sig-name {
-            font-size: 7pt;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .sig-role {
-            font-size: 7pt;
-            color: var(--gray-500);
+            font-size: 7.5pt;
+            font-weight: 800;
+            color: #0f172a;
             text-transform: uppercase;
         }
+        .sig-role {
+            font-size: 6.5pt;
+            color: #64748b;
+            font-weight: 600;
+        }
 
-        .crypto-verification-box {
+        /* ─── 6. FOOTER DISCRETO Y QR ─── */
+        .footer-meta {
             display: table;
             width: 100%;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 8px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 3px;
+            margin-top: 4px;
+            font-size: 5.8pt;
+            color: #94a3b8;
         }
-
-        .qr-cell {
+        .footer-qr-cell {
             display: table-cell;
-            width: 80px;
+            width: 32px;
             vertical-align: middle;
-            text-align: center;
         }
-
-        .qr-img {
-            width: 72px;
-            height: 72px;
-            display: block;
-            margin: 0 auto;
+        .qr-mini {
+            width: 28px;
+            height: 28px;
         }
-
-        .crypto-details-cell {
+        .footer-text-cell {
             display: table-cell;
             vertical-align: middle;
-            padding-left: 10px;
-            font-size: 6.8pt;
-            color: var(--gray-700);
+            padding-left: 6px;
         }
-
-        .hash-code {
-            font-family: "Courier New", Courier, monospace;
-            background: #e2e8f0;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-            color: #0f172a;
-            letter-spacing: 1px;
-            font-size: 7.2pt;
-        }
-
-        .legal-notice {
-            margin-top: 3px;
-            color: #64748b;
-            line-height: 1.25;
+        .token-code {
+            font-family: monospace;
+            color: #475569;
         }
     </style>
 </head>
 <body>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         1. ENCABEZADO INSTITUCIONAL
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div class="inst-header">
-        <div class="header-logo-cell">
-            {% if b.institution.logo %}
-                <img src="{{ b.institution.logo.url }}" alt="Logo" class="inst-logo">
-            {% else %}
-                <div class="logo-placeholder">A</div>
-            {% endif %}
-        </div>
-        <div class="header-info-cell">
-            <h1 class="inst-name">{{ b.institution.institution_name }}</h1>
-            <p class="inst-subtitle">{{ b.institution.slogan }}</p>
-            <p class="inst-legal-meta">
-                {% if b.institution.dane_code %}CÓDIGO DANE: {{ b.institution.dane_code }} • {% endif %}
-                {% if b.institution.consecutive_resolution %}RESOLUCIÓN: {{ b.institution.consecutive_resolution }} • {% endif %}
-                RÉGIMEN: {{ b.institution.get_sector_mode_display|upper }}
-            </p>
-        </div>
-        <div class="header-badge-cell">
-            <div class="report-title-badge">
-                Boletín Oficial
-                <span class="period-highlight">{{ b.period.name|upper }}</span>
-                Año {{ b.academic_year.year }}
+    <!-- Barra flotante solo para pantalla / navegador -->
+    <div class="no-print no-print-bar">
+        <span style="color: #cbd5e1; font-size: 8pt;">📄 Boletín Compacto (1 Hoja)</span>
+        <button onclick="window.print()" class="btn-print">🖨️ Imprimir / Guardar PDF</button>
+    </div>
+
+    <div class="boletin-page">
+
+        <!-- 1. ENCABEZADO INSTITUCIONAL -->
+        <div class="inst-header">
+            <div class="header-col-left">
+                {% if b.institution.logo %}
+                    <img src="{{ b.institution.logo.url }}" alt="Logo" class="header-logo">
+                {% else %}
+                    <div class="header-logo-placeholder">A</div>
+                {% endif %}
+            </div>
+            <div class="header-col-center">
+                <h1 class="inst-title">{{ b.institution.institution_name }}</h1>
+                <p class="inst-sub">
+                    {% if b.institution.dane_code %}DANE: {{ b.institution.dane_code }} • {% endif %}
+                    {% if b.institution.consecutive_resolution %}Resolución: {{ b.institution.consecutive_resolution }} • {% endif %}
+                    Sector: {{ b.institution.get_sector_mode_display|default:"Oficial" }}
+                </p>
+                <div style="font-size: 7pt; font-weight: 700; color: #2563eb; margin-top: 1px;">
+                    INFORME PERIÓDICO DE EVALUACIÓN Y RENDIMIENTO ACADÉMICO
+                </div>
+            </div>
+            <div class="header-col-right">
+                <div class="period-pill">{{ b.period.name|upper }}</div>
+                <div class="year-sub">Año Lectivo: <strong>{{ b.academic_year.year }}</strong></div>
             </div>
         </div>
-    </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         2. TARJETA METADATOS DEL ESTUDIANTE
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div class="student-card">
-        <table class="card-table">
-            <tr>
-                <td width="50%">
-                    <span class="meta-label">Estudiante:</span>
-                    <span class="meta-value-strong">{{ b.student.user.last_name }} {{ b.student.user.first_name }}</span>
-                </td>
-                <td width="25%">
-                    <span class="meta-label">Documento:</span>
-                    <span class="meta-value">{{ b.student.user.document_number|default:"Sin registro" }}</span>
-                </td>
-                <td width="25%">
-                    <span class="meta-label">Código:</span>
-                    <span class="meta-value">{{ b.student.student_code }}</span>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="meta-label">Curso / Grupo:</span>
-                    <span class="meta-value"><strong>{{ b.section.name }}</strong> ({{ b.section.grade_level.name }})</span>
-                </td>
-                <td>
-                    <span class="meta-label">Director de Grupo:</span>
-                    <span class="meta-value">{{ b.group_director.user.get_full_name|default:"Por asignar" }}</span>
-                </td>
-                <td>
-                    <span class="meta-label">Puesto en Curso:</span>
-                    <span class="metric-pill">
-                        <strong>{{ b.student_rank }}°</strong> de {{ b.total_students_section }}
-                    </span>
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <span class="meta-label">Promedio Periodo:</span>
-                    <span class="metric-pill {% if b.is_overall_approved %}success{% else %}danger{% endif %}">
-                        {{ b.period_average }} — {{ b.overall_performance }}
-                    </span>
-                </td>
-                <td>
-                    <span class="meta-label">Asignaturas:</span>
-                    <span class="meta-value">{{ b.total_subjects_count }} Totales / {{ b.total_failed_count }} Reprobadas</span>
-                </td>
-                <td>
-                    <span class="meta-label">Inasistencias Periodo:</span>
-                    <span class="meta-value">{{ b.total_absences_period }} Horas/Faltas</span>
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════════════════
-         3. TABLA DETALLADA DE CALIFICACIONES POR ÁREA Y ASIGNATURA
-         ══════════════════════════════════════════════════════════════════════ -->
-    <table class="grades-table">
-        <thead>
-            <tr>
-                <th width="48%">Áreas de Conocimiento y Asignaturas</th>
-                <th width="10%" class="center">Faltas (J/I)</th>
-                <th width="12%" class="center">Definitiva</th>
-                <th width="18%" class="center">Nivel Desempeño</th>
-                <th width="12%" class="center">Estado</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for area_item in b.bulletin_areas %}
-                <!-- Fila de Cabecera de Área -->
-                <tr class="area-header-row">
-                    <td colspan="2">
-                        📁 {{ area_item.area.name|upper }}
-                    </td>
-                    <td class="center" style="font-weight: 800;">
-                        {{ area_item.area_average }}
-                    </td>
-                    <td colspan="2" class="center" style="font-size: 7pt; color: #475569;">
-                        Promedio del Área
-                    </td>
-                </tr>
-
-                <!-- Filas de Asignaturas del Área -->
-                {% for sub_item in area_item.subjects %}
-                    <tr class="subject-row">
-                        <td>
-                            <span class="sub-name">{{ sub_item.subject.name }}</span>
-                            <span class="sub-teacher">Docente: {{ sub_item.teacher.user.get_full_name|default:"Docente Titular" }}</span>
-                            {% if sub_item.feedback %}
-                                <div class="feedback-box">
-                                    "{{ sub_item.feedback }}"
-                                </div>
-                            {% endif %}
-                        </td>
-                        <td class="center" style="color: #64748b;">
-                            {{ sub_item.justified_abs }} / {{ sub_item.unjustified_abs }}
-                        </td>
-                        <td class="score-cell {% if sub_item.is_approved %}approved{% else %}failed{% endif %}">
-                            {{ sub_item.final_score }}
-                        </td>
-                        <td class="center">
-                            <span class="badge-perf perf-{{ sub_item.performance_level }}">
-                                {{ sub_item.performance_level }}
-                            </span>
-                        </td>
-                        <td class="center">
-                            {% if sub_item.is_approved %}
-                                <span style="color: var(--success); font-weight: 700; font-size: 7.2pt;">APROBADA</span>
-                            {% else %}
-                                <span style="color: var(--danger); font-weight: 700; font-size: 7.2pt;">REPROBADA</span>
-                            {% endif %}
-                        </td>
-                    </tr>
-                {% endfor %}
-            {% empty %}
-                <tr>
-                    <td colspan="5" class="center" style="padding: 20px; color: #94a3b8;">
-                        No existen calificaciones consolidadas para el periodo evaluado.
-                    </td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- ══════════════════════════════════════════════════════════════════════
-         4. RESUMEN Y ESCALA DE VALORACIÓN INSTITUCIONAL
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div class="summary-container">
-        <div class="summary-col">
-            <div class="panel-box">
-                <div class="panel-title">⚖️ Escala de Valoración Nacional (Decreto 1290)</div>
-                <div class="scale-grid">
-                    <div class="scale-item">
-                        <span class="badge-perf perf-BAJO">BAJO</span>
-                        <strong>1.00 - 2.99</strong>
+        <!-- 2. FICHA DEL ESTUDIANTE -->
+        <div class="student-box">
+            <div class="info-grid">
+                <div class="info-row">
+                    <div class="info-cell" style="width: 45%;">
+                        <span class="lbl">Estudiante: </span>
+                        <span class="val-strong">{{ b.student.user.last_name|upper }} {{ b.student.user.first_name|upper }}</span>
                     </div>
-                    <div class="scale-item">
-                        <span class="badge-perf perf-BASICO">BÁSICO</span>
-                        <strong>3.00 - 3.99</strong>
+                    <div class="info-cell" style="width: 25%;">
+                        <span class="lbl">Documento: </span>
+                        <span class="val">{{ b.student.user.document_number|default:"Sin registro" }}</span>
                     </div>
-                    <div class="scale-item">
-                        <span class="badge-perf perf-ALTO">ALTO</span>
-                        <strong>4.00 - 4.59</strong>
+                    <div class="info-cell" style="width: 30%;">
+                        <span class="lbl">Código / ID: </span>
+                        <span class="val">{{ b.student.student_code }}</span>
                     </div>
-                    <div class="scale-item">
-                        <span class="badge-perf perf-SUPERIOR">SUPERIOR</span>
-                        <strong>4.60 - 5.00</strong>
+                </div>
+                <div class="info-row">
+                    <div class="info-cell">
+                        <span class="lbl">Curso / Grado: </span>
+                        <span class="val"><strong>{{ b.section.name }}</strong> ({{ b.section.grade_level.name }})</span>
+                    </div>
+                    <div class="info-cell">
+                        <span class="lbl">Puesto: </span>
+                        <span class="badge-pos">{{ b.student_rank }}° de {{ b.total_students_section }}</span>
+                    </div>
+                    <div class="info-cell">
+                        <span class="lbl">Director(a): </span>
+                        <span class="val">{{ b.group_director_name }}</span>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="summary-col">
-            <div class="panel-box">
-                <div class="panel-title">📊 Balance Estadístico del Periodo</div>
-                <table style="width: 100%; font-size: 6.8pt;">
-                    <tr>
-                        <td>Asignaturas Evaluadas: <strong>{{ b.total_subjects_count }}</strong></td>
-                        <td>Aprobadas: <strong style="color: var(--success);">{{ b.total_subjects_count|add:"-1"|default:b.total_subjects_count }}</strong></td>
-                    </tr>
-                    <tr>
-                        <td>Asignaturas Reprobadas: <strong style="color: var(--danger);">{{ b.total_failed_count }}</strong></td>
-                        <td>Total Inasistencias: <strong>{{ b.total_absences_period }}</strong></td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-    </div>
 
-    <!-- ══════════════════════════════════════════════════════════════════════
-         5. FIRMAS OFICIALES Y CÓDIGO QR CRIPTOGRÁFICO
-         ══════════════════════════════════════════════════════════════════════ -->
-    <div class="footer-validation-section">
+        <!-- 3. TABLA DE CALIFICACIONES COMPACTA -->
+        <table class="grades-table">
+            <thead>
+                <tr>
+                    <th style="width: 50%;">Áreas del Conocimiento y Asignaturas</th>
+                    <th style="width: 12%;" class="center">Faltas (J/I)</th>
+                    <th style="width: 14%;" class="center">Definitiva</th>
+                    <th style="width: 24%;" class="center">Desempeño</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for area_item in b.bulletin_areas %}
+                    <!-- Fila de Área -->
+                    <tr class="area-header-row">
+                        <td>📚 {{ area_item.area.name|upper }}</td>
+                        <td class="center" style="font-size: 6.2pt; color: #64748b;">Área</td>
+                        <td class="center" style="font-weight: 800; color: #1e3a8a;">{{ area_item.area_average }}</td>
+                        <td class="center" style="font-size: 6.2pt; color: #64748b;">Promedio del Área</td>
+                    </tr>
+
+                    <!-- Asignaturas del Área -->
+                    {% for sub_item in area_item.subjects %}
+                        <tr class="sub-row">
+                            <td>
+                                <span class="sub-name">{{ sub_item.subject.name }}</span>
+                                <span class="sub-teacher">({{ sub_item.teacher.user.get_full_name|default:"Docente Titular" }})</span>
+                            </td>
+                            <td class="center" style="color: #64748b;">
+                                {{ sub_item.justified_abs }}/{{ sub_item.unjustified_abs }}
+                            </td>
+                            <td class="center score-val {% if sub_item.is_approved %}pass{% else %}fail{% endif %}">
+                                {{ sub_item.final_score }}
+                            </td>
+                            <td class="center">
+                                <span class="badge-perf perf-{{ sub_item.performance_level }}">
+                                    {{ sub_item.performance_level }}
+                                </span>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% empty %}
+                    <tr>
+                        <td colspan="4" style="text-align: center; padding: 12px; color: #94a3b8;">
+                            No existen asignaturas consolidadas para este periodo.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- 4. BALANCE Y RESUMEN EN 1 FILA -->
+        <div class="summary-bar">
+            <span><strong>Promedio General:</strong> <span style="font-size: 8pt; font-weight: 800; color: #1e3a8a;">{{ b.period_average }}</span> ({{ b.overall_performance }})</span>
+            <span><strong>Total Materias:</strong> {{ b.total_subjects_count }}</span>
+            <span><strong>Aprobadas:</strong> <strong style="color: #166534;">{{ b.total_subjects_count|add:"-1"|default:b.total_subjects_count }}</strong></span>
+            <span><strong>Reprobadas:</strong> <strong style="color: #b91c1c;">{{ b.total_failed_count }}</strong></span>
+            <span><strong>Faltas Totales:</strong> {{ b.total_absences_period }}</span>
+            <span><strong>Estado:</strong> {% if b.is_overall_approved %}<strong style="color: #166534;">APROBADO</strong>{% else %}<strong style="color: #b91c1c;">EN RECUPERACIÓN</strong>{% endif %}</span>
+        </div>
+
+        <div class="scale-inline">
+            Escala Nacional (Dec. 1290): Bajo (1.00 - 2.99) • Básico (3.00 - 3.99) • Alto (4.00 - 4.59) • Superior (4.60 - 5.00)
+        </div>
+
+        <!-- 5. FIRMAS OFICIALES -->
         <table class="signatures-table">
             <tr>
                 <td>
                     <div class="sig-line"></div>
-                    <div class="sig-name">{{ b.rector_user.get_full_name|default:"Rector(a) Institucional" }}</div>
-                    <div class="sig-role">Rectoría / Dirección General</div>
+                    <div class="sig-name">{{ b.rector_name }}</div>
+                    <div class="sig-role">{{ b.institution.term_director|default:"Rector(a)" }} Institucional</div>
                 </td>
                 <td>
                     <div class="sig-line"></div>
-                    <div class="sig-name">{{ b.group_director.user.get_full_name|default:"Director(a) de Grupo" }}</div>
+                    <div class="sig-name">{{ b.group_director_name }}</div>
                     <div class="sig-role">Director(a) de Grupo</div>
                 </td>
             </tr>
         </table>
 
-        <div class="crypto-verification-box">
-            <div class="qr-cell">
+        <!-- 6. PIE DE VERIFICACIÓN -->
+        <div class="footer-meta">
+            <div class="footer-qr-cell">
                 {% if b.qr_base64 %}
-                    <img src="{{ b.qr_base64 }}" alt="QR Verificación" class="qr-img">
+                    <img src="{{ b.qr_base64 }}" alt="QR" class="qr-mini">
                 {% else %}
-                    <div style="font-size: 6pt; color: #94a3b8; text-align: center;">[QR Verificación]</div>
+                    <div style="font-size: 5pt; color: #cbd5e1;">[QR]</div>
                 {% endif %}
             </div>
-            <div class="crypto-details-cell">
-                <div><strong>VERIFICACIÓN DE AUTENTICIDAD E INMUTABILIDAD:</strong></div>
-                <div style="margin: 2px 0;">
-                    Firma Electrónica: <span class="hash-code">{{ b.verification_token }}</span>
-                </div>
-                <div class="legal-notice">
-                    Este documento oficial ha sido generado por el Sistema Académico <strong>ACADEMIX</strong>.
-                    Para comprobar su validez, escanee el código QR o consulte la URL:
-                    <span style="color: var(--primary); text-decoration: underline;">{{ b.verification_url }}</span>.
-                    Cualquier alteración, enmienda o tachadura anula la validez legal de este informe.
-                </div>
+            <div class="footer-text-cell">
+                <div>Documento Oficial generado por <strong>ACADEMIX</strong> el {{ b.issued_at|date:"d/m/Y H:i" }}.</div>
+                <div>Hash de Verificación: <span class="token-code">{{ b.verification_token }}</span></div>
             </div>
         </div>
+
     </div>
 
 </body>

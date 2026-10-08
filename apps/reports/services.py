@@ -226,9 +226,26 @@ def build_student_bulletin_data(student, section, period, request=None):
     ).order_by('-closed_at').first()
     rector_signature_authorized = closing_log.rector_signature_authorized if closing_log else True
 
-    # Obtener el rector activo del sistema
+    # Obtener el rector activo del sistema dinámicamente
     from apps.accounts.models import CustomUser
     rector_user = CustomUser.objects.filter(role=CustomUser.Role.RECTOR, is_active=True).order_by('-date_joined').first()
+    if not rector_user:
+        rector_user = CustomUser.objects.filter(role=CustomUser.Role.ADMIN, is_active=True).order_by('-date_joined').first()
+
+    rector_name = rector_user.get_full_name() if rector_user else ""
+    if not rector_name and rector_user:
+        rector_name = rector_user.username.title()
+    if not rector_name:
+        rector_name = "Rector(a) Institucional"
+
+    # Director de grupo asignado al curso
+    group_director_name = ""
+    if getattr(section, 'homeroom_teacher', None):
+        group_director_name = section.homeroom_teacher.get_full_name() or section.homeroom_teacher.username
+    elif group_director and getattr(group_director, 'user', None):
+        group_director_name = group_director.user.get_full_name() or group_director.user.username
+    if not group_director_name:
+        group_director_name = "Director(a) de Grupo"
 
     return {
         'institution': institution,
@@ -238,6 +255,7 @@ def build_student_bulletin_data(student, section, period, request=None):
         'period': period,
         'academic_year': academic_year,
         'group_director': group_director,
+        'group_director_name': group_director_name,
         'bulletin_areas': bulletin_areas,
         'period_average': period_average,
         'overall_performance': overall_performance,
@@ -248,6 +266,7 @@ def build_student_bulletin_data(student, section, period, request=None):
         'total_failed_count': total_failed_count,
         'total_absences_period': total_absences_period,
         'rector_user': rector_user,
+        'rector_name': rector_name,
         'rector_signature_authorized': rector_signature_authorized,
         'verification_token': verification_token,
         'verification_url': verification_url,
