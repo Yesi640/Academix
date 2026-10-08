@@ -173,6 +173,12 @@ def create_teacher_view(request):
                     request=request
                 )
 
+                # Correo automatico de bienvenida con credenciales
+                try:
+                    from apps.accounts.email_service import send_registration_email
+                    send_registration_email(user=user, password=password, role_label="Docente")
+                except Exception:
+                    pass
                 messages.success(request, f'¡Docente {user.get_full_name()} registrado exitosamente! Usuario: {username} (Contraseña inicial: {password})')
         except Exception as e:
             messages.error(request, f'Error al registrar docente: {str(e)}')

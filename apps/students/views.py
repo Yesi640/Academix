@@ -182,6 +182,15 @@ def create_student_view(request):
                     request=request
                 )
 
+                # Correo automatico de bienvenida con credenciales
+                try:
+                    from apps.accounts.email_service import send_registration_email
+                    from apps.students.models import StudentProfile as _SP
+                    _sp = _SP.objects.filter(user=user).first()
+                    send_registration_email(user=user, password=password,
+                        student_code=_sp.student_code if _sp else None, role_label="Estudiante")
+                except Exception:
+                    pass
                 messages.success(request, f'¡Estudiante {user.get_full_name()} registrado exitosamente! Usuario: {username} (Contraseña inicial: {password})')
         except Exception as e:
             messages.error(request, f'Error al registrar nuevo estudiante: {str(e)}')

@@ -226,6 +226,10 @@ def build_student_bulletin_data(student, section, period, request=None):
     ).order_by('-closed_at').first()
     rector_signature_authorized = closing_log.rector_signature_authorized if closing_log else True
 
+    # Obtener el rector activo del sistema
+    from apps.accounts.models import CustomUser
+    rector_user = CustomUser.objects.filter(role=CustomUser.Role.RECTOR, is_active=True).order_by('-date_joined').first()
+
     return {
         'institution': institution,
         'student': student,
@@ -243,6 +247,7 @@ def build_student_bulletin_data(student, section, period, request=None):
         'total_subjects_count': total_subjects_count,
         'total_failed_count': total_failed_count,
         'total_absences_period': total_absences_period,
+        'rector_user': rector_user,
         'rector_signature_authorized': rector_signature_authorized,
         'verification_token': verification_token,
         'verification_url': verification_url,
