@@ -192,6 +192,9 @@ def homework_course_matrix_view(request, section_id):
         academic_period=active_period
     ).select_related('subject', 'teacher__user').order_by('due_date')
 
+    if request.user.is_teacher and hasattr(request.user, 'teacher_profile'):
+        homeworks = homeworks.filter(teacher=request.user.teacher_profile)
+
     if subject_id:
         homeworks = homeworks.filter(subject_id=subject_id)
 
@@ -268,8 +271,8 @@ def bulk_grade_course_view(request, section_id):
     Un único botón al final de la lista procesa y actualiza todas las calificaciones
     bloqueándolas de forma permanente (inmutabilidad estricta).
     """
-    if request.user.is_parent or request.user.is_student or request.user.is_secretary:
-        raise PermissionDenied("No tiene permisos para calificar tareas.")
+    if not request.user.is_teacher:
+        raise PermissionDenied("Solo el docente puede editar las notas de los alumnos.")
 
     section = get_object_or_404(CourseSection, id=section_id)
 
@@ -304,7 +307,7 @@ def bulk_grade_course_view(request, section_id):
         if grades_data:
             updated_count, skipped_locked = bulk_grade_homework_list(section, grades_data, user=request.user)
             if updated_count > 0:
-                messages.success(request, f"¡Actualización completada! Se registraron y bloquearon las notas de {updated_count} entrega(s).")
+                messages.success(request, f"¡Actualización completada! Se guardaron las notas de {updated_count} entrega(s). Puedes editarlas cuando quieras.")
             if skipped_locked > 0:
                 messages.info(request, f"{skipped_locked} calificación(es) ya estaban actualizadas previamente y no pueden ser modificadas.")
         else:
@@ -319,8 +322,8 @@ def manual_grade_cell_view(request):
     Endpoint para calificar manualmente a un estudiante en una tarea.
     Permite guardado instantáneo desde la matriz mediante formulario o HTMX.
     """
-    if request.user.is_parent or request.user.is_student:
-        return HttpResponse('<div class="text-danger small">No autorizado.</div>', status=403)
+    if not request.user.is_teacher:
+        return HttpResponse('<div class="text-danger small">Solo el docente puede editar las notas.</div>', status=403)
 
     if request.method == 'POST':
         homework_id = request.POST.get('homework_id')
@@ -471,3 +474,6 @@ def grade_submission_view(request, submission_id):
             messages.error(request, f'Error al calificar tarea: {str(e)}')
 
     return redirect('homework:index')
+
+
+

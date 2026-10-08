@@ -1,96 +1,58 @@
-<div class="grade-cell-box p-2 rounded bg-white shadow-xs position-relative d-flex flex-column justify-content-between h-100" style="border: 1px solid #ede9fe; min-height: 125px;">
-    {% if item.is_locked %}
-        <!-- Calificación Bloqueada Permanentemente (Inmutable) -->
-        <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 22px;">
-            <span class="badge bg-secondary-subtle text-secondary border border-secondary" style="font-size: 0.65rem;">
-                <i class="bi bi-lock-fill me-1 text-danger"></i>Bloqueada
-            </span>
-            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
+<div class="grade-cell-box p-1 rounded bg-white shadow-xs position-relative d-flex flex-column justify-content-between h-100" style="border: 1px solid #ede9fe; min-height: 85px;">
+    <!-- Estado de Entrega Alineado -->
+    <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 18px;">
+        {% if item.status == 'GRADED' %}
+            <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.60rem; padding: 0.2rem 0.3rem;">
                 <i class="bi bi-check-circle-fill me-1"></i>Calificado
             </span>
-        </div>
+        {% elif item.status == 'SUBMITTED' or item.status == 'LATE' %}
+            <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size: 0.60rem; padding: 0.2rem 0.3rem;">
+                <i class="bi bi-file-earmark-check me-1"></i>Entregado
+            </span>
+        {% else %}
+            <span class="badge bg-light text-muted border" style="font-size: 0.60rem; padding: 0.2rem 0.3rem;">
+                <i class="bi bi-dash-circle me-1"></i>Sin entrega
+            </span>
+        {% endif %}
 
-        <div class="d-flex align-items-center mb-2 px-1" style="min-height: 26px; max-height: 26px;">
-            {% if item.has_attachment %}
-                <a href="{{ item.attachment_url }}" target="_blank" class="d-inline-flex align-items-center gap-1 text-purple text-decoration-none fw-semibold text-truncate" style="font-size: 0.72rem;" title="Descargar Archivo Entregado">
-                    <i class="bi bi-file-earmark-arrow-down-fill text-danger"></i> Ver Archivo
-                </a>
-            {% elif item.submission_text %}
-                <span class="text-muted text-truncate" style="font-size: 0.7rem;" title="{{ item.submission_text }}">
-                    <i class="bi bi-chat-left-text me-1 text-purple"></i>{{ item.submission_text }}
-                </span>
-            {% else %}
-                <span class="text-muted" style="font-size: 0.68rem; font-style: italic; color: #9ca3af;">
-                    Sin archivo
-                </span>
-            {% endif %}
-        </div>
+        {% if item.score is not None %}
+            <span class="badge bg-success font-monospace" style="font-size: 0.60rem; padding: 0.2rem 0.3rem;">Nota: {{ item.score }}</span>
+        {% endif %}
+    </div>
 
-        <div class="p-1 rounded bg-light border border-secondary-subtle text-center mt-auto">
-            <div class="font-monospace fw-bold text-success" style="font-size: 1.15rem; line-height: 1.2;">{{ item.score }}</div>
-            {% if item.feedback %}
-                <div class="text-muted text-truncate px-1" title="{{ item.feedback }}" style="font-size: 0.68rem;">{{ item.feedback }}</div>
-            {% endif %}
-            <div class="text-danger small fw-semibold" style="font-size: 0.63rem;">
-                <i class="bi bi-shield-lock-fill me-1"></i>Nota inmutable
-            </div>
-        </div>
-    {% else %}
-        <!-- Estado de Entrega Alineado -->
-        <div class="d-flex justify-content-between align-items-center mb-1" style="min-height: 22px;">
-            {% if item.status == 'GRADED' %}
-                <span class="badge bg-success-subtle text-success border border-success-subtle" style="font-size: 0.65rem;">
-                    <i class="bi bi-check-circle-fill me-1"></i>Calificado
-                </span>
-            {% elif item.status == 'SUBMITTED' or item.status == 'LATE' %}
-                <span class="badge bg-purple-subtle text-purple border border-purple-subtle" style="font-size: 0.65rem;">
-                    <i class="bi bi-file-earmark-check me-1"></i>Entregado
-                </span>
-            {% else %}
-                <span class="badge bg-light text-muted border" style="font-size: 0.65rem;">
-                    <i class="bi bi-dash-circle me-1"></i>Sin entrega
-                </span>
-            {% endif %}
+    <!-- Fila de Soporte / Adjunto -->
+    <div class="d-flex align-items-center mb-1 px-1" style="min-height: 20px; max-height: 20px;">
+        {% if item.has_attachment %}
+            <a href="{{ item.attachment_url }}" target="_blank" class="d-inline-flex align-items-center gap-1 text-purple text-decoration-none fw-semibold text-truncate" style="font-size: 0.65rem;" title="Descargar Archivo Entregado">
+                <i class="bi bi-file-earmark-arrow-down-fill text-danger"></i>
+                <span class="text-truncate">Ver Archivo</span>
+            </a>
+        {% elif item.submission_text %}
+            <span class="text-muted text-truncate" style="font-size: 0.65rem;" title="{{ item.submission_text }}">
+                <i class="bi bi-chat-left-text me-1 text-purple"></i>{{ item.submission_text }}
+            </span>
+        {% else %}
+            <span class="text-muted" style="font-size: 0.60rem; font-style: italic; color: #9ca3af;">
+                Sin archivo
+            </span>
+        {% endif %}
+    </div>
 
-            {% if item.score is not None and not item.is_locked %}
-                <span class="badge bg-success font-monospace" style="font-size: 0.65rem;">Nota: {{ item.score }}</span>
-            {% endif %}
+    <!-- Inputs de Calificacin Colectiva Alineados en Lnea Recta -->
+    <div class="mt-auto">
+        <div class="input-group input-group-sm mb-1">
+            <span class="input-group-text bg-light text-muted fw-bold py-0 px-1" style="font-size: 0.60rem; height: 22px;">Nota</span>
+            <input type="number" step="0.01" min="0.00" max="10.00" 
+                   name="score_{{ student.id }}_{{ item.homework.id }}" 
+                   class="form-control form-control-sm text-center font-monospace fw-bold bg-white {% if item.score %}border-purple text-purple{% endif %}" 
+                   placeholder="0.00" value="{{ item.score|default:'' }}" 
+                   style="font-size: 0.75rem; height: 22px; padding: 0 4px;">
         </div>
-
-        <!-- Fila de Soporte / Adjunto con altura uniforme para alineación perfecta -->
-        <div class="d-flex align-items-center mb-2 px-1" style="min-height: 26px; max-height: 26px;">
-            {% if item.has_attachment %}
-                <a href="{{ item.attachment_url }}" target="_blank" class="d-inline-flex align-items-center gap-1 text-purple text-decoration-none fw-semibold text-truncate" style="font-size: 0.72rem;" title="Descargar Archivo Entregado">
-                    <i class="bi bi-file-earmark-arrow-down-fill text-danger"></i>
-                    <span class="text-truncate">Ver Archivo</span>
-                </a>
-            {% elif item.submission_text %}
-                <span class="text-muted text-truncate" style="font-size: 0.7rem;" title="{{ item.submission_text }}">
-                    <i class="bi bi-chat-left-text me-1 text-purple"></i>{{ item.submission_text }}
-                </span>
-            {% else %}
-                <span class="text-muted" style="font-size: 0.68rem; font-style: italic; color: #9ca3af;">
-                    Sin archivo
-                </span>
-            {% endif %}
+        <div>
+            <input type="text" name="feedback_{{ student.id }}_{{ item.homework.id }}" 
+                   class="form-control form-control-sm text-muted bg-white" 
+                   placeholder="Observacin..." value="{{ item.feedback|default:'' }}" 
+                   style="font-size: 0.65rem; height: 20px; padding: 0 4px;">
         </div>
-
-        <!-- Inputs de Calificación Colectiva Alineados en Línea Recta -->
-        <div class="mt-auto">
-            <div class="input-group input-group-sm mb-1">
-                <span class="input-group-text bg-light text-muted fw-bold py-0 px-2" style="font-size: 0.68rem; height: 26px;">Nota</span>
-                <input type="number" step="0.01" min="0.00" max="10.00" 
-                       name="score_{{ student.id }}_{{ item.homework.id }}" 
-                       class="form-control form-control-sm text-center font-monospace fw-bold bg-white {% if item.score %}border-purple text-purple{% endif %}" 
-                       placeholder="0.00" value="{{ item.score|default:'' }}" 
-                       style="font-size: 0.82rem; height: 26px; padding: 0 4px;">
-            </div>
-            <div>
-                <input type="text" name="feedback_{{ student.id }}_{{ item.homework.id }}" 
-                       class="form-control form-control-sm text-muted bg-white" 
-                       placeholder="Observación..." value="{{ item.feedback|default:'' }}" 
-                       style="font-size: 0.7rem; height: 24px; padding: 0 6px;">
-            </div>
-        </div>
-    {% endif %}
+    </div>
 </div>
