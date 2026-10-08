@@ -72,5 +72,12 @@ def schedule_institutional_activity(title, description, event_date, event_time=N
             is_dismissible=True
         )
 
+    # Enviar notificaciones por correo institucional a la audiencia objetivo
+    try:
+        from apps.accounts.email_service import send_institutional_activity_email
+        send_institutional_activity_email(activity)
+    except Exception as _mail_err:
+        pass
+
     return activity
 

@@ -189,6 +189,14 @@ def update_student_attendance(session, student, new_status, justification=None, 
             is_dismissible=True
         )
 
+    # Enviar notificacion por correo si se registro una inasistencia o tardanza
+    if new_status in [AttendanceRecord.Status.UNJUSTIFIED, AttendanceRecord.Status.JUSTIFIED, AttendanceRecord.Status.LATE] and old_status != new_status:
+        try:
+            from apps.accounts.email_service import send_absence_notification_email
+            send_absence_notification_email(student, session.subject, session.date, record.get_status_display(), justification)
+        except Exception:
+            pass
+
     return record, stats
 
 @transaction.atomic

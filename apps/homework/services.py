@@ -32,6 +32,13 @@ def create_homework(teacher, course_section, subject, academic_period, title, de
 
     return hw
 
+    # Notificación automática por correo a los estudiantes del curso
+    try:
+        from apps.accounts.email_service import send_homework_notification_email
+        send_homework_notification_email(hw)
+    except Exception as _mail_err:
+        pass
+
 @transaction.atomic
 def submit_homework(homework, student, submission_text=None, attachment=None, user=None):
     """

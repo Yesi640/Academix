@@ -55,6 +55,13 @@ def create_anotacion(
         },
         user=author_user
     )
+    # Notificar situacion en observador por correo institucional
+    try:
+        from apps.accounts.email_service import send_discipline_annotation_email
+        send_discipline_annotation_email(record)
+    except Exception:
+        pass
+
     return record
 
 

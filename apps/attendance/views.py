@@ -443,6 +443,14 @@ def save_session_view(request, session_id):
                     rec.save()
                     updated_count += 1
 
+                    # Notificar inasistencia por correo
+                    if new_status in [AttendanceRecord.Status.UNJUSTIFIED, AttendanceRecord.Status.JUSTIFIED, AttendanceRecord.Status.LATE]:
+                        try:
+                            from apps.accounts.email_service import send_absence_notification_email
+                            send_absence_notification_email(rec.student, session.subject, session.date, rec.get_status_display(), rec.justification)
+                        except Exception:
+                            pass
+
             session.recorded_by = request.user
             session.save(update_fields=['recorded_by', 'updated_at'])
 
