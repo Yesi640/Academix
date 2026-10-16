@@ -58,13 +58,43 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.NOTICE('    [INFO] Usuario rector ya existe.'))
 
-        # 3. Parametrización Institucional
-        self.stdout.write(self.style.NOTICE('==> [2/4] Verificando parametrización institucional...'))
+        # 3. Parametrización Institucional y Escuelas Multi-Tenant
+        self.stdout.write(self.style.NOTICE('==> [2/4] Verificando parametrización institucional y escuelas...'))
         inst_setting = InstitutionSetting.get_settings()
         if not inst_setting.institution_name or inst_setting.institution_name == 'Institución Educativa':
             inst_setting.institution_name = 'ACADEMIX'
             inst_setting.save()
         ensure_standard_colegio_grades(scope=inst_setting.school_scope)
+
+        from apps.accounts.models import School
+        if not School.objects.filter(is_active=True).exists():
+            s1 = School.objects.create(
+                name='Institución Educativa ACADEMIX Central',
+                code='ACAD-01',
+                city='Sede Principal',
+                dane_code='111001000001',
+                contact_email='contacto@academix.edu.co',
+                contact_phone='+57 300 123 4567',
+                primary_color='#7c3aed',
+                secondary_color='#c4b5fd',
+                is_active=True
+            )
+            s2 = School.objects.create(
+                name='Liceo Moderno del Norte',
+                code='LIC-NORTE-02',
+                city='Sede Norte',
+                dane_code='111001000002',
+                contact_email='norte@liceo.edu.co',
+                contact_phone='+57 311 987 6543',
+                primary_color='#0284c7',
+                secondary_color='#bae6fd',
+                is_active=True
+            )
+            CustomUser.objects.filter(school__isnull=True).update(school=s1)
+            self.stdout.write(self.style.SUCCESS(f'    [OK] Escuelas multi-tenant inicializadas: {s1.name} y {s2.name}'))
+        else:
+            self.stdout.write(self.style.NOTICE(f'    [INFO] Escuelas registradas: {School.objects.count()}'))
+
         self.stdout.write(self.style.SUCCESS('    [OK] Grados escolares de Transición a 11° verificados.'))
 
         # 4. Año Lectivo

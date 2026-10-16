@@ -825,26 +825,26 @@
                             </p>
                         </div>
 
-                        {% if multi_school_mode %}
-                        <!-- ── Selector Multi-Escuela ── -->
+                        <!-- ── Selector de Colegio / Institución ── -->
                         <div class="mb-3 p-3 rounded-3 border" style="background:color-mix(in srgb, var(--inst-secondary) 10%, white 90%); border-color:color-mix(in srgb, var(--inst-secondary) 35%, white 65%) !important;">
-                            <label class="form-label fw-bold small mb-2" style="color:var(--inst-primary);">
-                                <i class="bi bi-building-fill me-1"></i>Selecciona tu Institución
+                            <label class="form-label fw-bold small mb-2 d-flex align-items-center justify-content-between" style="color:var(--inst-primary);">
+                                <span><i class="bi bi-building-fill me-1"></i>Colegio / Institución de Acceso</span>
+                                <span class="badge" style="background:var(--inst-primary); color:white; font-size:0.6rem;">Selecciona tu Sede</span>
                             </label>
                             <div class="d-flex flex-column gap-2" id="school-selector-list">
                                 {% for school in active_schools %}
                                 <label class="school-option d-flex align-items-center gap-3 p-2 rounded-3 border cursor-pointer"
                                        style="cursor:pointer; transition:all .2s;
-                                              {% if selected_school and selected_school.pk == school.pk %}
+                                              {% if selected_school and selected_school.pk == school.pk or forloop.first and not selected_school %}
                                               background:color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
                                               border-color:var(--inst-primary) !important; box-shadow:0 0 0 2px color-mix(in srgb, var(--inst-primary) 35%, transparent 65%);
                                               {% else %}
                                               background:white; border-color:#e5e7eb;
                                               {% endif %}">
                                     <input type="radio" name="welcome_school_id" value="{{ school.pk }}" class="school-radio d-none"
-                                           {% if selected_school and selected_school.pk == school.pk %}checked{% endif %}>
+                                           {% if selected_school and selected_school.pk == school.pk or forloop.first and not selected_school %}checked{% endif %}>
                                     <div class="rounded-2 flex-shrink-0 d-flex align-items-center justify-content-center"
-                                         style="width:36px;height:36px;background:{{ school.primary_color }};box-shadow:0 2px 6px rgba(0,0,0,.12);">
+                                         style="width:36px;height:36px;background:{{ school.primary_color|default:'#7c3aed' }};box-shadow:0 2px 6px rgba(0,0,0,.12);">
                                         {% if school.logo %}
                                             <img src="{{ school.logo.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:.375rem;" alt="">
                                         {% else %}
@@ -855,17 +855,24 @@
                                         <div class="fw-bold text-dark" style="font-size:.82rem; line-height:1.2;">{{ school.name }}</div>
                                         {% if school.city %}<small class="text-muted" style="font-size:.7rem;"><i class="bi bi-geo-alt me-1"></i>{{ school.city }}</small>{% endif %}
                                     </div>
-                                    <div class="school-check-icon" style="color:var(--inst-primary); {% if not selected_school or selected_school.pk != school.pk %}display:none;{% endif %}">
+                                    <div class="school-check-icon" style="color:var(--inst-primary); {% if not selected_school or selected_school.pk != school.pk %}{% if not forloop.first %}display:none;{% endif %}{% endif %}">
                                         <i class="bi bi-check-circle-fill fs-5"></i>
                                     </div>
                                 </label>
+                                {% empty %}
+                                <div class="p-2 bg-white rounded-3 border d-flex align-items-center gap-2">
+                                    <span class="fs-4">🏫</span>
+                                    <div>
+                                        <strong class="d-block text-dark small">{{ current_institution.institution_name|default:"ACADEMIX Central" }}</strong>
+                                        <small class="text-muted" style="font-size:0.7rem;">Sede Principal Oficial</small>
+                                    </div>
+                                </div>
                                 {% endfor %}
                             </div>
                             <p class="text-muted mt-2 mb-0" style="font-size:.68rem;">
-                                <i class="bi bi-info-circle me-1"></i>Selecciona la escuela a la que perteneces para continuar.
+                                <i class="bi bi-info-circle me-1"></i>Elige el colegio en el que estás registrado para iniciar sesión.
                             </p>
                         </div>
-                        {% endif %}
 
                         <div class="text-center mb-3">
                             <span class="badge px-3 py-2 border"
@@ -1545,9 +1552,18 @@
     // Asegurar opción Padre de Familia para Colegio
     // ── Gestión interactiva de selección de Escuela ──
     const schoolOptions = document.querySelectorAll('.school-option');
-    const hiddenSchoolInput = document.getElementById('hidden_school_id');
+    const loginSchoolSelect = document.getElementById('login-school-select');
     const credSchoolName = document.getElementById('cred-school-name');
     const btnChangeSchool = document.getElementById('btn-change-school');
+
+    function selectSchoolById(schoolId, schoolNameText) {
+        if (loginSchoolSelect) {
+            loginSchoolSelect.value = schoolId;
+        }
+        if (credSchoolName && schoolNameText) {
+            credSchoolName.textContent = schoolNameText;
+        }
+    }
 
     if (schoolOptions.length > 0) {
         schoolOptions.forEach(function(opt) {
@@ -1561,9 +1577,10 @@
                 });
 
                 const radio = opt.querySelector('input[type="radio"]');
+                let sId = '';
                 if (radio) {
                     radio.checked = true;
-                    if (hiddenSchoolInput) hiddenSchoolInput.value = radio.value;
+                    sId = radio.value;
                 }
 
                 opt.style.background = 'color-mix(in srgb, var(--inst-secondary) 25%, white 75%)';
@@ -1573,16 +1590,29 @@
                 if (checkIcon) checkIcon.style.display = 'block';
 
                 const nameEl = opt.querySelector('.fw-bold');
-                if (nameEl && credSchoolName) {
-                    credSchoolName.textContent = nameEl.textContent.trim();
-                }
+                const sName = nameEl ? nameEl.textContent.trim() : '';
+                selectSchoolById(sId, sName);
             });
         });
 
-        // Asegurar que haya una seleccionada por defecto si no hay ninguna
+        if (loginSchoolSelect) {
+            loginSchoolSelect.addEventListener('change', function() {
+                const selectedVal = this.value;
+                const matchedOption = document.querySelector(`.school-option input[value="${selectedVal}"]`);
+                if (matchedOption) {
+                    matchedOption.closest('.school-option').click();
+                } else if (this.options[this.selectedIndex] && credSchoolName) {
+                    credSchoolName.textContent = this.options[this.selectedIndex].text.replace('🏫', '').trim();
+                }
+            });
+        }
+
+        // Selección inicial
         const selectedRadio = document.querySelector('input[name="welcome_school_id"]:checked');
         if (selectedRadio) {
-            if (hiddenSchoolInput) hiddenSchoolInput.value = selectedRadio.value;
+            const card = selectedRadio.closest('.school-option');
+            const nameEl = card ? card.querySelector('.fw-bold') : null;
+            selectSchoolById(selectedRadio.value, nameEl ? nameEl.textContent.trim() : '');
         } else if (schoolOptions[0]) {
             schoolOptions[0].click();
         }

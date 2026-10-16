@@ -681,8 +681,8 @@ def users_management_view(request):
 @login_required
 def schools_list_view(request):
     """Lista todas las escuelas registradas en la plataforma."""
-    if not (request.user.is_admin_role or request.user.is_superuser):
-        messages.error(request, 'Acceso restringido: Solo el Administrador de la plataforma puede gestionar escuelas.')
+    if not (request.user.is_admin_role or request.user.is_rector or request.user.is_superuser):
+        messages.error(request, 'Acceso restringido: Solo el Administrador de la plataforma o Rector pueden gestionar escuelas.')
         return redirect('accounts:dashboard')
 
     schools = School.objects.all().annotate(
@@ -697,7 +697,7 @@ def schools_list_view(request):
 @login_required
 def school_create_edit_view(request, school_id=None):
     """Crear o editar una escuela institucional."""
-    if not (request.user.is_admin_role or request.user.is_superuser):
+    if not (request.user.is_admin_role or request.user.is_rector or request.user.is_superuser):
         messages.error(request, 'Acceso restringido.')
         return redirect('accounts:dashboard')
 
@@ -759,7 +759,7 @@ def school_create_edit_view(request, school_id=None):
 @require_POST
 def school_toggle_active_view(request, school_id):
     """Activar/desactivar una escuela en la plataforma."""
-    if not (request.user.is_admin_role or request.user.is_superuser):
+    if not (request.user.is_admin_role or request.user.is_rector or request.user.is_superuser):
         return JsonResponse({'ok': False, 'error': 'Sin permiso.'}, status=403)
 
     school = get_object_or_404(School, pk=school_id)

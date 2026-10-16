@@ -97,63 +97,28 @@
             </div>
             {% endif %}
 
-            <!-- 0. Modelo Institucional Escolar y Selección de Escuela -->
+            <!-- 0. Modelo Institucional Escolar y Selección de Escuela Obligatoria -->
             <input type="hidden" name="institution_type" id="reg-inst-colegio" value="COLEGIO">
 
-            {% if multi_school_mode %}
             <div class="mb-3 p-3 bg-light rounded border border-primary-subtle shadow-sm">
-                <label for="reg-school-select" class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                    <i class="bi bi-building-fill text-primary"></i> <span class="text-danger">*</span> Institución Educativa / Sede:
+                <label for="reg-school-select" class="form-label small fw-bold text-dark d-flex align-items-center justify-content-between mb-2">
+                    <span><i class="bi bi-building-fill text-primary"></i> <span class="text-danger">*</span> Institución / Escuela a Registrarse:</span>
+                    <span class="badge bg-primary text-white" style="font-size:0.62rem;">Obligatorio</span>
                 </label>
-                <select name="school_id" id="reg-school-select" class="form-select form-select-sm fw-semibold" required>
-                    <option value="" disabled {% if not selected_school %}selected{% endif %}>— Seleccione su Institución Educativa —</option>
+                <select name="school_id" id="reg-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" required>
+                    <option value="" disabled {% if not selected_school and active_schools|length > 1 %}selected{% endif %}>— Seleccione el Colegio o Sede —</option>
                     {% for school in active_schools %}
-                    <option value="{{ school.pk }}" {% if selected_school and selected_school.pk == school.pk %}selected{% endif %}>
-                        {{ school.name }} {% if school.city %}({{ school.city }}){% endif %}
+                    <option value="{{ school.pk }}" {% if selected_school and selected_school.pk == school.pk or active_schools|length == 1 %}selected{% endif %}>
+                        🏫 {{ school.name }}{% if school.city %} ({{ school.city }}){% endif %}
                     </option>
+                    {% empty %}
+                    <option value="1" selected>🏫 {{ current_institution.institution_name|default:"Institución Educativa Central" }}</option>
                     {% endfor %}
                 </select>
                 <div class="form-text small mt-1" style="font-size: 0.72rem;">
-                    Seleccione la escuela o sede oficial en la cual está matriculado o labora.
+                    Tu cuenta y tu <strong>ID ÚNICO</strong> quedarán vinculados formalmente a esta institución educativa.
                 </div>
             </div>
-            {% elif active_schools %}
-            {% with school=active_schools.0 %}
-            <input type="hidden" name="school_id" value="{{ school.pk }}">
-            <div class="mb-3 p-2 px-3 bg-light rounded border shadow-sm d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-2">
-                    <div class="rounded-2 d-flex align-items-center justify-content-center text-white"
-                         style="width:34px;height:34px;background:{{ school.primary_color|default:'#7c3aed' }};">
-                        {% if school.logo %}
-                            <img src="{{ school.logo.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:.25rem;" alt="">
-                        {% else %}
-                            <i class="bi bi-mortarboard-fill" style="font-size:.9rem;"></i>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <strong class="d-block text-dark small">{{ school.name }}</strong>
-                        <small class="text-muted" style="font-size:0.72rem;">Registro Institucional · {{ school.city|default:"Colegio" }}</small>
-                    </div>
-                </div>
-                <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:0.7rem;">
-                    Sede Oficial
-                </span>
-            </div>
-            {% endwith %}
-            {% else %}
-            <div class="mb-3 p-2 px-3 bg-light rounded border shadow-sm d-flex align-items-center justify-content-between">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-4">🏫</span>
-                    <div>
-                        <strong class="d-block text-dark small">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
-                        <small class="text-muted" style="font-size:0.72rem;">Registro Institucional · Colegio</small>
-                    </div>
-                </div>
-                <span class="badge" style="background:#dcfce7; color:#15803d; border:1px solid #86efac; font-size:0.7rem;">
-                    Básica y Media
-                </span>
-            </div>
-            {% endif %}
 
             <!-- 1. Selección de Rol Obligatoria Adaptable -->
             <div class="mb-3 p-3 bg-light rounded border border-primary-subtle shadow-sm">

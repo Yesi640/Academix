@@ -1,8 +1,25 @@
 <form method="POST" action="{% url 'accounts:login' %}" class="needs-validation">
     {% csrf_token %}
     <input type="hidden" name="institution_type" id="institution_type_hidden" value="{{ current_institution.institution_type }}">
-    <!-- Campo oculto para multi-escuela: se llena via JS desde la selección de bienvenida -->
-    <input type="hidden" name="school_id" id="hidden_school_id" value="{{ selected_school.pk|default:'' }}">
+    <!-- 0. Selector Visible de Colegio / Escuela -->
+    <div class="mb-3 p-2 px-3 rounded-3 border" style="background:color-mix(in srgb, var(--inst-secondary, #c4b5fd) 12%, white 88%); border-color:color-mix(in srgb, var(--inst-secondary, #c4b5fd) 40%, white 60%) !important;">
+        <label for="login-school-select" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center justify-content-between" style="font-size:0.78rem;">
+            <span><i class="bi bi-building-fill" style="color:var(--inst-primary, #7c3aed);"></i> Colegio / Escuela:</span>
+            <span class="badge border" style="background:white; color:var(--inst-primary, #7c3aed); font-size:0.62rem;">Institución Oficial</span>
+        </label>
+        <select name="school_id" id="login-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" style="font-size:0.83rem;">
+            {% for s in active_schools %}
+            <option value="{{ s.pk }}" {% if selected_school and selected_school.pk == s.pk %}selected{% endif %}>
+                🏫 {{ s.name }}{% if s.city %} — {{ s.city }}{% endif %}
+            </option>
+            {% empty %}
+            <option value="" selected>🏫 {{ current_institution.institution_name|default:"Colegio ACADEMIX Central" }}</option>
+            {% endfor %}
+        </select>
+        <div class="form-text text-muted mt-1" style="font-size:0.68rem;">
+            Selecciona el plantel educativo al que perteneces para validar tu acceso.
+        </div>
+    </div>
 
     {% if form.non_field_errors %}
     <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 rounded-3 border-0 shadow-sm" role="alert">

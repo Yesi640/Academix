@@ -52,22 +52,11 @@
     <div class="row g-4">
         {% for hw in homeworks %}
 
-        {# Determinar estado y clases #}
-        {% if hw.my_submission and hw.my_submission.status == 'GRADED' %}
-            {% with bar_class="bar-graded" badge_class="lms-badge-graded" badge_icon="bi-award-fill" badge_text="Calificado" %}
-        {% elif hw.my_submission %}
-            {% with bar_class="bar-submitted" badge_class="lms-badge-submitted" badge_icon="bi-check-circle-fill" badge_text="Entregado" %}
-        {% elif hw.is_expired %}
-            {% with bar_class="bar-overdue" badge_class="lms-badge-overdue" badge_icon="bi-x-circle-fill" badge_text="Vencida" %}
-        {% else %}
-            {% with bar_class="bar-active" badge_class="lms-badge-active" badge_icon="bi-circle-fill" badge_text="Activa" %}
-        {% endif %}
-
         <div class="col-md-6 col-lg-4 lms-animate-in">
             <div class="lms-task-card h-100">
 
                 <!-- Barra de color estado -->
-                <div class="lms-task-top-bar {{ bar_class }}"></div>
+                <div class="lms-task-top-bar {% if hw.my_submission and hw.my_submission.status == 'GRADED' %}bar-graded{% elif hw.my_submission %}bar-submitted{% elif hw.is_expired %}bar-overdue{% else %}bar-active{% endif %}"></div>
 
                 <div class="p-4 d-flex flex-column flex-grow-1">
                     <!-- Header: Materia + Estado -->
@@ -83,9 +72,15 @@
                                 </span>
                             </div>
                         </div>
-                        <span class="lms-badge {{ badge_class }}">
-                            <i class="bi {{ badge_icon }}"></i>{{ badge_text }}
-                        </span>
+                        {% if hw.my_submission and hw.my_submission.status == 'GRADED' %}
+                            <span class="lms-badge lms-badge-graded"><i class="bi bi-award-fill me-1"></i>Calificado</span>
+                        {% elif hw.my_submission %}
+                            <span class="lms-badge lms-badge-submitted"><i class="bi bi-check-circle-fill me-1"></i>Entregado</span>
+                        {% elif hw.is_expired %}
+                            <span class="lms-badge lms-badge-overdue"><i class="bi bi-x-circle-fill me-1"></i>Vencida</span>
+                        {% else %}
+                            <span class="lms-badge lms-badge-active"><i class="bi bi-circle-fill me-1"></i>Activa</span>
+                        {% endif %}
                     </div>
 
                     <!-- Título y descripción -->
@@ -195,7 +190,6 @@
             </div>
         </div>
 
-        {% endwith %}
         {% empty %}
         <div class="col-12">
             <div class="lms-empty-state">
