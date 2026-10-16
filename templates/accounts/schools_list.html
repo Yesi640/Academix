@@ -4,6 +4,18 @@
 {% block title %}Gestión de Escuelas | ACADEMIX{% endblock %}
 
 {% block content %}
+<style>
+  .btn-school-active {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #86efac;
+  }
+  .btn-school-inactive {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fca5a5;
+  }
+</style>
 <div class="container-fluid py-4">
 
   <!-- Encabezado -->
@@ -68,7 +80,8 @@
                 <div class="d-flex align-items-center gap-3">
                   <!-- Logo / Avatar -->
                   <div class="rounded-3 overflow-hidden flex-shrink-0 d-flex align-items-center justify-content-center"
-                       style="width:44px;height:44px;background:{{ school.primary_color }};box-shadow:0 3px 10px rgba(0,0,0,.15);">
+                       data-bg="{{ school.primary_color }}"
+                       style="width:44px;height:44px;box-shadow:0 3px 10px rgba(0,0,0,.15);">
                     {% if school.logo %}
                       <img src="{{ school.logo.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
                     {% else %}
@@ -97,21 +110,21 @@
               <td class="text-center">
                 <div class="d-flex align-items-center justify-content-center gap-1">
                   <span class="rounded-circle border border-2 border-white shadow-sm"
-                        style="width:22px;height:22px;background:{{ school.primary_color }};display:inline-block;"
+                        data-bg="{{ school.primary_color }}"
+                        style="width:22px;height:22px;display:inline-block;"
                         title="Color primario: {{ school.primary_color }}"></span>
                   <span class="rounded-circle border border-2 border-white shadow-sm"
-                        style="width:22px;height:22px;background:{{ school.secondary_color }};display:inline-block;"
+                        data-bg="{{ school.secondary_color }}"
+                        style="width:22px;height:22px;display:inline-block;"
                         title="Color secundario: {{ school.secondary_color }}"></span>
                 </div>
               </td>
               <td class="text-center">
                 <button type="button"
-                        class="btn btn-sm rounded-pill px-3 fw-bold school-toggle-btn"
+                        class="btn btn-sm rounded-pill px-3 fw-bold school-toggle-btn {% if school.is_active %}btn-school-active{% else %}btn-school-inactive{% endif %}"
                         data-school-id="{{ school.pk }}"
                         data-active="{{ school.is_active|yesno:'true,false' }}"
-                        style="font-size:.75rem;
-                          {% if school.is_active %}background:#dcfce7;color:#15803d;border:1px solid #86efac;
-                          {% else %}background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;{% endif %}">
+                        style="font-size:.75rem;">
                   {% if school.is_active %}
                     <i class="bi bi-check-circle-fill me-1"></i>Activa
                   {% else %}
@@ -145,6 +158,11 @@
 </div>
 
 <script>
+// Aplicar colores de fondo desde data-bg
+document.querySelectorAll('[data-bg]').forEach(el => {
+  if (el.dataset.bg) el.style.backgroundColor = el.dataset.bg;
+});
+
 // Toggle activo/inactivo con confirmación
 document.querySelectorAll('.school-toggle-btn').forEach(btn => {
   btn.addEventListener('click', function () {
