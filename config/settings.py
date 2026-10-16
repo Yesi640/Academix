@@ -168,6 +168,8 @@ database_url = os.getenv('DATABASE_URL')
 use_sqlite = os.getenv('USE_SQLITE_FALLBACK', 'False').lower() in ('true', '1', 'yes')
 db_engine = os.getenv('DB_ENGINE', 'mysql')
 
+is_cloud = bool(os.getenv('RENDER') or os.getenv('RENDER_EXTERNAL_HOSTNAME') or os.getenv('RAILWAY_PUBLIC_DOMAIN'))
+
 if database_url:
     DATABASES = {
         'default': dj_database_url.config(
@@ -177,7 +179,7 @@ if database_url:
         )
     }
     DATABASES['default']['ATOMIC_REQUESTS'] = True
-elif use_sqlite or db_engine == 'sqlite':
+elif is_cloud or use_sqlite or db_engine == 'sqlite':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -207,7 +209,7 @@ else:
     }
 
 # Concurrencia SQLite para Red Local / Fallback (Modo WAL - Write-Ahead Logging)
-if (not database_url) and (use_sqlite or db_engine == 'sqlite'):
+if (not database_url) and (is_cloud or use_sqlite or db_engine == 'sqlite'):
     from django.db.backends.signals import connection_created
     from django.dispatch import receiver
 
