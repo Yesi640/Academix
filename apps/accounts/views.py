@@ -12,83 +12,84 @@ from apps.audit.services import log_audit
 def login_view(request):
     """
     Vista de inicio de sesión con soporte para peticiones estándar y HTMX.
-    Permite seleccionar el modelo institucional (Colegio, Universidad, SENA, Academia)
-    antes de ingresar. El entorno se adapta automáticamente al modelo elegido.
-    Registra intentos en auditoría inmutable.
     """
-    from apps.courses.models import InstitutionSetting
+    try:
+        from apps.courses.models import InstitutionSetting, AcademicYear
 
-    if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        if request.user.is_authenticated:
+            return redirect('accounts:dashboard')
 
-    form = LoginForm(request, data=request.POST or None)
-    institution_types = InstitutionSetting.InstitutionType.choices
-    current_institution = InstitutionSetting.get_settings()
+        form = LoginForm(request, data=request.POST or None)
+        institution_types = InstitutionSetting.InstitutionType.choices
+        current_institution = InstitutionSetting.get_settings()
 
-    if request.method == 'POST':
-        if form.is_valid():
-            user = form.get_user()
-            login(request, user)
+        if request.method == 'POST':
+            if form.is_valid():
+                user = form.get_user()
+                login(request, user)
 
-            # Registrar login en auditoría
-            log_audit(
-                user=user,
-                action='LOGIN',
-                table_name='CustomUser',
-                record_id=user.id,
-                reason=f'Inicio de sesión exitoso. Modelo institucional: {current_institution.get_institution_type_display()}',
-                request=request
-            )
+                # Registrar login en auditoría
+                log_audit(
+                    user=user,
+                    action='LOGIN',
+                    table_name='CustomUser',
+                    record_id=user.id,
+                    reason=f'Inicio de sesión exitoso. Modelo institucional: {current_institution.get_institution_type_display()}',
+                    request=request
+                )
 
-            messages.success(request, f'¡Bienvenido a ACADEMIX, {user.get_full_name() or user.username}!')
+                messages.success(request, f'¡Bienvenido a ACADEMIX, {user.get_full_name() or user.username}!')
 
-            if user.must_change_password:
-                messages.warning(request, 'Por motivos de seguridad institucional en tu primer acceso, debes cambiar tu contraseña temporal.')
+                if user.must_change_password:
+                    messages.warning(request, 'Por motivos de seguridad institucional en tu primer acceso, debes cambiar tu contraseña temporal.')
+                    if request.headers.get('HX-Request'):
+                        response = HttpResponse(status=200)
+                        response['HX-Redirect'] = '/accounts/change-password/'
+                        return response
+                    return redirect('accounts:change_password')
+
+                # Si la petición viene de HTMX, enviamos cabecera de redirección
                 if request.headers.get('HX-Request'):
                     response = HttpResponse(status=200)
-                    response['HX-Redirect'] = '/accounts/change-password/'
+                    response['HX-Redirect'] = '/dashboard/'
                     return response
-                return redirect('accounts:change_password')
 
-            # Si la petición viene de HTMX, enviamos cabecera de redirección
-            if request.headers.get('HX-Request'):
-                response = HttpResponse(status=200)
-                response['HX-Redirect'] = '/dashboard/'
-                return response
+                return redirect('accounts:dashboard')
+            else:
+                # Registrar intento fallido
+                attempted_user = request.POST.get('username') or request.POST.get('student_id') or 'Desconocido'
+                err_msg = form.non_field_errors()[0] if form.non_field_errors() else 'Credenciales o datos inválidos. Verifique el rol, usuario e ID ÚNICO.'
+                log_audit(
+                    user=None,
+                    action='FAILED_LOGIN',
+                    table_name='CustomUser',
+                    record_id=None,
+                    new_values={'attempted_username': attempted_user, 'role': request.POST.get('role')},
+                    reason=f'Intento fallido de autenticación: {err_msg}',
+                    request=request
+                )
+                messages.error(request, err_msg)
 
-            return redirect('accounts:dashboard')
-        else:
-            # Registrar intento fallido
-            attempted_user = request.POST.get('username') or request.POST.get('student_id') or 'Desconocido'
-            err_msg = form.non_field_errors()[0] if form.non_field_errors() else 'Credenciales o datos inválidos. Verifique el rol, usuario e ID ÚNICO.'
-            log_audit(
-                user=None,
-                action='FAILED_LOGIN',
-                table_name='CustomUser',
-                record_id=None,
-                new_values={'attempted_username': attempted_user, 'role': request.POST.get('role')},
-                reason=f'Intento fallido de autenticación: {err_msg}',
-                request=request
-            )
-            messages.error(request, err_msg)
+                if request.headers.get('HX-Request'):
+                    return render(request, 'accounts/partials/login_form.html', {
+                        'form': form,
+                        'institution_types': institution_types,
+                        'current_institution': current_institution,
+                    })
 
-            if request.headers.get('HX-Request'):
-                return render(request, 'accounts/partials/login_form.html', {
-                    'form': form,
-                    'institution_types': institution_types,
-                    'current_institution': current_institution,
-                })
+        current_academic_year = AcademicYear.objects.filter(is_current=True).first()
 
-    from apps.courses.models import InstitutionSetting, AcademicYear
+        return render(request, 'accounts/login.html', {
+            'form': form,
+            'institution_types': institution_types,
+            'current_institution': current_institution,
+            'current_academic_year': current_academic_year,
+        })
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        return HttpResponse(f"<html><body><h1>Diagnostico Error 500 en Login</h1><pre>{tb}</pre></body></html>", status=500, content_type="text/html")
 
-    current_academic_year = AcademicYear.objects.filter(is_current=True).first()
-
-    return render(request, 'accounts/login.html', {
-        'form': form,
-        'institution_types': institution_types,
-        'current_institution': current_institution,
-        'current_academic_year': current_academic_year,
-    })
 
 
 
