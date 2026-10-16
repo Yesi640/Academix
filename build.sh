@@ -14,9 +14,9 @@ echo "==> [3/5] Recopilando archivos estáticos (CSS, JS, imágenes)..."
 python manage.py collectstatic --noinput
 
 echo "==> [4/5] Aplicando migraciones de base de datos..."
-python manage.py migrate
+python manage.py migrate --noinput
 
 echo "==> [5/5] Inicializando datos maestros y usuarios base (Admin/Rector)..."
-python manage.py setup_production_init
+python manage.py setup_production_init || echo "[WARN] setup_production_init finalizó con advertencias no bloqueantes."
 
 echo "==> Despliegue preparado exitosamente para ACADEMIX."

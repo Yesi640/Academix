@@ -165,8 +165,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 import dj_database_url
 
 database_url = os.getenv('DATABASE_URL')
-use_sqlite = os.getenv('USE_SQLITE_FALLBACK', 'False').lower() in ('true', '1', 'yes')
-db_engine = os.getenv('DB_ENGINE', 'mysql')
+# Fallback seguro por defecto a SQLite para que cualquier entorno Cloud (Render/Railway) funcione sin configuración extra
+use_sqlite = os.getenv('USE_SQLITE_FALLBACK', 'True').lower() in ('true', '1', 'yes')
+db_engine = os.getenv('DB_ENGINE', 'sqlite' if not database_url else 'postgresql')
 
 is_cloud = bool(os.getenv('RENDER') or os.getenv('RENDER_EXTERNAL_HOSTNAME') or os.getenv('RAILWAY_PUBLIC_DOMAIN'))
 
