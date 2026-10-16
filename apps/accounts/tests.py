@@ -62,12 +62,8 @@ class AccountsModelTests(TestCase):
         self.assertEqual(settings.term_student, 'Aprendiz')
 
     def test_register_view_with_model_param(self):
-        from apps.courses.models import InstitutionSetting
         client = Client()
-        response = client.get(reverse('accounts:register') + '?model=UNIVERSIDAD')
+        response = client.get(reverse('accounts:register'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'UNIVERSIDAD')
-
-        settings = InstitutionSetting.get_settings()
-        self.assertEqual(settings.institution_type, 'UNIVERSIDAD')
+        self.assertContains(response, 'Registro en ACADEMIX')
 

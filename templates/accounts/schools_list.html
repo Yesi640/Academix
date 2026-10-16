@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Gestión de Escuelas | ACADEMIX{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <!-- Encabezado -->
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <div>
+      <h1 class="h3 fw-bold mb-1" style="color:var(--ac-primary);">
+        <i class="bi bi-building-fill me-2"></i>Gestión de Escuelas
+      </h1>
+      <p class="text-muted small mb-0">
+        Panel multi-institución — Administra todas las escuelas que usan la plataforma ACADEMIX.
+      </p>
+    </div>
+    <a href="{% url 'accounts:school_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+      <i class="bi bi-plus-circle-fill me-1"></i> Nueva Escuela
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'info' }} alert-dismissible fade show rounded-3 shadow-sm" role="alert">
+        <i class="bi bi-info-circle-fill me-2"></i>{{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  {% if not schools %}
+    <div class="card border-0 shadow-sm rounded-4 text-center py-5">
+      <div class="fs-1 mb-3" style="color:var(--ac-primary-pastel,#c4b5fd);">
+        <i class="bi bi-building"></i>
+      </div>
+      <h5 class="fw-bold text-dark">Aún no hay escuelas registradas</h5>
+      <p class="text-muted small">Crea la primera institución para habilitar el selector multi-escuela en el login y registro.</p>
+      <div>
+        <a href="{% url 'accounts:school_create' %}" class="btn btn-primary rounded-pill px-4 fw-bold">
+          <i class="bi bi-plus-circle me-1"></i> Registrar Primera Escuela
+        </a>
+      </div>
+    </div>
+  {% else %}
+    <!-- Tabla de Escuelas -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background:linear-gradient(135deg,var(--ac-primary),var(--ac-sidebar-gradient,#5b21b6)); color:white;">
+            <tr>
+              <th class="ps-4 py-3" style="width:48px;">#</th>
+              <th class="py-3">Institución</th>
+              <th class="py-3 d-none d-md-table-cell">Código</th>
+              <th class="py-3 d-none d-lg-table-cell">Ciudad</th>
+              <th class="py-3 d-none d-lg-table-cell">Usuarios</th>
+              <th class="py-3 text-center">Colores</th>
+              <th class="py-3 text-center">Estado</th>
+              <th class="py-3 text-end pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for school in schools %}
+            <tr id="school-row-{{ school.pk }}" class="{% if not school.is_active %}opacity-50{% endif %}">
+              <td class="ps-4 fw-bold text-muted small">{{ forloop.counter }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-3">
+                  <!-- Logo / Avatar -->
+                  <div class="rounded-3 overflow-hidden flex-shrink-0 d-flex align-items-center justify-content-center"
+                       style="width:44px;height:44px;background:{{ school.primary_color }};box-shadow:0 3px 10px rgba(0,0,0,.15);">
+                    {% if school.logo %}
+                      <img src="{{ school.logo.url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}
+                      <i class="bi bi-mortarboard-fill text-white fs-5"></i>
+                    {% endif %}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark" style="font-size:.92rem;">{{ school.name }}</div>
+                    {% if school.contact_email %}
+                      <small class="text-muted">{{ school.contact_email }}</small>
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td class="d-none d-md-table-cell">
+                <span class="badge rounded-pill bg-light text-dark border fw-bold font-monospace">{{ school.code }}</span>
+              </td>
+              <td class="d-none d-lg-table-cell text-muted small">
+                {% if school.city %}<i class="bi bi-geo-alt me-1"></i>{{ school.city }}{% else %}—{% endif %}
+              </td>
+              <td class="d-none d-lg-table-cell text-center">
+                <span class="badge rounded-pill" style="background:var(--ac-primary-pastel,#ede9fe);color:var(--ac-primary);">
+                  <i class="bi bi-people me-1"></i>{{ school.user_count }}
+                </span>
+              </td>
+              <td class="text-center">
+                <div class="d-flex align-items-center justify-content-center gap-1">
+                  <span class="rounded-circle border border-2 border-white shadow-sm"
+                        style="width:22px;height:22px;background:{{ school.primary_color }};display:inline-block;"
+                        title="Color primario: {{ school.primary_color }}"></span>
+                  <span class="rounded-circle border border-2 border-white shadow-sm"
+                        style="width:22px;height:22px;background:{{ school.secondary_color }};display:inline-block;"
+                        title="Color secundario: {{ school.secondary_color }}"></span>
+                </div>
+              </td>
+              <td class="text-center">
+                <button type="button"
+                        class="btn btn-sm rounded-pill px-3 fw-bold school-toggle-btn"
+                        data-school-id="{{ school.pk }}"
+                        data-active="{{ school.is_active|yesno:'true,false' }}"
+                        style="font-size:.75rem;
+                          {% if school.is_active %}background:#dcfce7;color:#15803d;border:1px solid #86efac;
+                          {% else %}background:#fee2e2;color:#dc2626;border:1px solid #fca5a5;{% endif %}">
+                  {% if school.is_active %}
+                    <i class="bi bi-check-circle-fill me-1"></i>Activa
+                  {% else %}
+                    <i class="bi bi-x-circle-fill me-1"></i>Inactiva
+                  {% endif %}
+                </button>
+              </td>
+              <td class="text-end pe-4">
+                <div class="d-flex align-items-center justify-content-end gap-2">
+                  <a href="{% url 'accounts:school_edit' school.pk %}"
+                     class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                     title="Editar escuela">
+                    <i class="bi bi-pencil-fill"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="text-muted small mt-3">
+      <i class="bi bi-info-circle me-1"></i>
+      Solo las escuelas <strong>Activas</strong> aparecen en el selector de Login y Registro.
+      Haz clic en el botón de estado para activar/desactivar instantáneamente.
+    </p>
+  {% endif %}
+
+</div>
+
+<script>
+// Toggle activo/inactivo con confirmación
+document.querySelectorAll('.school-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', function () {
+    const schoolId = this.dataset.schoolId;
+    const isActive = this.dataset.active === 'true';
+    const action = isActive ? 'desactivar' : 'activar';
+
+    if (!confirm(`¿Seguro que deseas ${action} esta escuela?`)) return;
+
+    const csrfToken = document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '';
+
+    fetch(`/accounts/schools/${schoolId}/toggle/`, {
+      method: 'POST',
+      headers: { 'X-CSRFToken': csrfToken, 'Content-Type': 'application/json' },
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.ok) {
+        // Recargar para reflejar cambios
+        location.reload();
+      }
+    })
+    .catch(() => alert('Error al cambiar estado. Intente nuevamente.'));
+  });
+});
+</script>
+{% endblock %}

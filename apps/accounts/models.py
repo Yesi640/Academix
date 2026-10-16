@@ -1,6 +1,88 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
+
+class School(models.Model):
+    """
+    Institución Educativa registrada en la plataforma ACADEMIX.
+    Permite a un solo software servir a múltiples colegios/escuelas (SaaS Multi-Escuela).
+    Cada usuario pertenece a una escuela; el Administrador de la plataforma gestiona todas.
+    """
+    name = models.CharField(
+        max_length=200,
+        verbose_name='Nombre de la Institución',
+        help_text='Nombre oficial del colegio tal como aparece en la resolución.'
+    )
+    code = models.CharField(
+        max_length=30,
+        unique=True,
+        verbose_name='Código Interno / Slug',
+        help_text='Código corto único para identificar la escuela (ej: COL-BUGA-01).'
+    )
+    city = models.CharField(
+        max_length=100,
+        blank=True,
+        default='',
+        verbose_name='Ciudad / Municipio'
+    )
+    dane_code = models.CharField(
+        max_length=25,
+        blank=True,
+        default='',
+        verbose_name='Código DANE'
+    )
+    logo = models.ImageField(
+        upload_to='schools/logos/',
+        blank=True,
+        null=True,
+        verbose_name='Logo de la Escuela'
+    )
+    primary_color = models.CharField(
+        max_length=7,
+        default='#7c3aed',
+        verbose_name='Color Primario (hex)'
+    )
+    secondary_color = models.CharField(
+        max_length=7,
+        default='#c4b5fd',
+        verbose_name='Color Secundario (hex)'
+    )
+    contact_email = models.EmailField(
+        blank=True,
+        default='',
+        verbose_name='Correo Institucional'
+    )
+    contact_phone = models.CharField(
+        max_length=30,
+        blank=True,
+        default='',
+        verbose_name='Teléfono Institucional'
+    )
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name='Activa / Habilitada',
+        help_text='Solo las escuelas activas aparecen en el login y registro.'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Escuela / Institución'
+        verbose_name_plural = 'Escuelas / Instituciones'
+        ordering = ['name']
+
+    def __str__(self):
+        city_part = f' — {self.city}' if self.city else ''
+        return f'{self.name}{city_part}'
+
+    @property
+    def primary_color_rgb(self):
+        c = self.primary_color.lstrip('#')
+        if len(c) == 6:
+            r, g, b = int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16)
+            return f'{r}, {g}, {b}'
+        return '124, 58, 237'
+
+
 class CustomUser(AbstractUser):
     """
     Modelo de Usuario Extendido para el Sistema ACADEMIX.
@@ -64,6 +146,15 @@ class CustomUser(AbstractUser):
     must_change_password = models.BooleanField(
         default=False,
         verbose_name='Debe Cambiar Contraseña'
+    )
+    school = models.ForeignKey(
+        'School',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='users',
+        verbose_name='Escuela / Institución',
+        help_text='Institución educativa a la que pertenece este usuario. Nulo = Super-Administrador de la plataforma.'
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Registro')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Última Actualización')

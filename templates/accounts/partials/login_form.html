@@ -1,6 +1,8 @@
 <form method="POST" action="{% url 'accounts:login' %}" class="needs-validation">
     {% csrf_token %}
     <input type="hidden" name="institution_type" id="institution_type_hidden" value="{{ current_institution.institution_type }}">
+    <!-- Campo oculto para multi-escuela: se llena via JS desde la selección de bienvenida -->
+    <input type="hidden" name="school_id" id="hidden_school_id" value="{{ selected_school.pk|default:'' }}">
 
     {% if form.non_field_errors %}
     <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 rounded-3 border-0 shadow-sm" role="alert">

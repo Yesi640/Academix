@@ -825,6 +825,48 @@
                             </p>
                         </div>
 
+                        {% if multi_school_mode %}
+                        <!-- ── Selector Multi-Escuela ── -->
+                        <div class="mb-3 p-3 rounded-3 border" style="background:color-mix(in srgb, var(--inst-secondary) 10%, white 90%); border-color:color-mix(in srgb, var(--inst-secondary) 35%, white 65%) !important;">
+                            <label class="form-label fw-bold small mb-2" style="color:var(--inst-primary);">
+                                <i class="bi bi-building-fill me-1"></i>Selecciona tu Institución
+                            </label>
+                            <div class="d-flex flex-column gap-2" id="school-selector-list">
+                                {% for school in active_schools %}
+                                <label class="school-option d-flex align-items-center gap-3 p-2 rounded-3 border cursor-pointer"
+                                       style="cursor:pointer; transition:all .2s;
+                                              {% if selected_school and selected_school.pk == school.pk %}
+                                              background:color-mix(in srgb, var(--inst-secondary) 25%, white 75%);
+                                              border-color:var(--inst-primary) !important; box-shadow:0 0 0 2px color-mix(in srgb, var(--inst-primary) 35%, transparent 65%);
+                                              {% else %}
+                                              background:white; border-color:#e5e7eb;
+                                              {% endif %}">
+                                    <input type="radio" name="welcome_school_id" value="{{ school.pk }}" class="school-radio d-none"
+                                           {% if selected_school and selected_school.pk == school.pk %}checked{% endif %}>
+                                    <div class="rounded-2 flex-shrink-0 d-flex align-items-center justify-content-center"
+                                         style="width:36px;height:36px;background:{{ school.primary_color }};box-shadow:0 2px 6px rgba(0,0,0,.12);">
+                                        {% if school.logo %}
+                                            <img src="{{ school.logo.url }}" style="width:100%;height:100%;object-fit:cover;border-radius:.375rem;" alt="">
+                                        {% else %}
+                                            <i class="bi bi-mortarboard-fill text-white" style="font-size:.9rem;"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold text-dark" style="font-size:.82rem; line-height:1.2;">{{ school.name }}</div>
+                                        {% if school.city %}<small class="text-muted" style="font-size:.7rem;"><i class="bi bi-geo-alt me-1"></i>{{ school.city }}</small>{% endif %}
+                                    </div>
+                                    <div class="school-check-icon" style="color:var(--inst-primary); {% if not selected_school or selected_school.pk != school.pk %}display:none;{% endif %}">
+                                        <i class="bi bi-check-circle-fill fs-5"></i>
+                                    </div>
+                                </label>
+                                {% endfor %}
+                            </div>
+                            <p class="text-muted mt-2 mb-0" style="font-size:.68rem;">
+                                <i class="bi bi-info-circle me-1"></i>Selecciona la escuela a la que perteneces para continuar.
+                            </p>
+                        </div>
+                        {% endif %}
+
                         <div class="text-center mb-3">
                             <span class="badge px-3 py-2 border"
                                   style="background:color-mix(in srgb, var(--inst-secondary) 18%, white 82%); color:var(--inst-primary); border-color:var(--inst-secondary) !important; font-size:0.75rem;">
@@ -843,6 +885,7 @@
                         </div>
                     </div>
                 </div>
+
 
                 <!-- ESTADO 2: FORMULARIO DE CREDENCIALES -->
                 <div id="view-credentials">
@@ -868,15 +911,23 @@
                         <div class="d-flex align-items-center justify-content-between mb-3 p-2 px-3 rounded-3"
                              style="background:color-mix(in srgb, var(--inst-secondary) 15%, white 85%); border:1px solid color-mix(in srgb, var(--inst-secondary) 30%, white 70%);">
                             <div class="d-flex align-items-center gap-2">
-                                <span class="fs-4">🏫</span>
+                                <span class="fs-4" id="cred-school-icon">🏫</span>
                                 <div>
-                                    <strong class="d-block text-dark" style="font-size:0.84rem; line-height:1.2;">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
-                                    <small class="text-muted" style="font-size:0.72rem;">Portal Institucional Escolar</small>
+                                    <strong class="d-block text-dark" id="cred-school-name" style="font-size:0.84rem; line-height:1.2;">
+                                        {% if selected_school %}{{ selected_school.name }}{% else %}{{ current_institution.institution_name|default:"ACADEMIX" }}{% endif %}
+                                    </strong>
+                                    <small class="text-muted" id="cred-school-sub" style="font-size:0.72rem;">Portal Institucional Escolar</small>
                                 </div>
                             </div>
+                            {% if multi_school_mode %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-change-school" style="font-size:0.7rem;" title="Elegir otra institución">
+                                <i class="bi bi-arrow-left-right me-1"></i>Cambiar
+                            </button>
+                            {% else %}
                             <span class="badge border px-2 py-1" style="background:#dcfce7; color:#15803d; border-color:#86efac !important; font-size:0.68rem;">
                                 <i class="bi bi-shield-check me-1"></i>Básica y Media
                             </span>
+                            {% endif %}
                         </div>
 
                         <!-- Formulario de credenciales -->
@@ -1492,15 +1543,56 @@
     if (hidden) hidden.value = 'COLEGIO';
 
     // Asegurar opción Padre de Familia para Colegio
-    const roleSelect = document.getElementById('login-role-select');
-    if (roleSelect) {
-        let parentOpt = roleSelect.querySelector('option[value="PARENT"]');
-        if (!parentOpt) {
-            parentOpt = document.createElement('option');
-            parentOpt.value = 'PARENT';
-            parentOpt.textContent = 'Padre de Familia';
-            roleSelect.appendChild(parentOpt);
+    // ── Gestión interactiva de selección de Escuela ──
+    const schoolOptions = document.querySelectorAll('.school-option');
+    const hiddenSchoolInput = document.getElementById('hidden_school_id');
+    const credSchoolName = document.getElementById('cred-school-name');
+    const btnChangeSchool = document.getElementById('btn-change-school');
+
+    if (schoolOptions.length > 0) {
+        schoolOptions.forEach(function(opt) {
+            opt.addEventListener('click', function() {
+                schoolOptions.forEach(function(o) {
+                    o.style.background = 'white';
+                    o.style.borderColor = '#e5e7eb';
+                    o.style.boxShadow = 'none';
+                    const chk = o.querySelector('.school-check-icon');
+                    if (chk) chk.style.display = 'none';
+                });
+
+                const radio = opt.querySelector('input[type="radio"]');
+                if (radio) {
+                    radio.checked = true;
+                    if (hiddenSchoolInput) hiddenSchoolInput.value = radio.value;
+                }
+
+                opt.style.background = 'color-mix(in srgb, var(--inst-secondary) 25%, white 75%)';
+                opt.style.borderColor = 'var(--inst-primary)';
+                opt.style.boxShadow = '0 0 0 2px color-mix(in srgb, var(--inst-primary) 35%, transparent 65%)';
+                const checkIcon = opt.querySelector('.school-check-icon');
+                if (checkIcon) checkIcon.style.display = 'block';
+
+                const nameEl = opt.querySelector('.fw-bold');
+                if (nameEl && credSchoolName) {
+                    credSchoolName.textContent = nameEl.textContent.trim();
+                }
+            });
+        });
+
+        // Asegurar que haya una seleccionada por defecto si no hay ninguna
+        const selectedRadio = document.querySelector('input[name="welcome_school_id"]:checked');
+        if (selectedRadio) {
+            if (hiddenSchoolInput) hiddenSchoolInput.value = selectedRadio.value;
+        } else if (schoolOptions[0]) {
+            schoolOptions[0].click();
         }
+    }
+
+    if (btnChangeSchool) {
+        btnChangeSchool.addEventListener('click', function(e) {
+            e.preventDefault();
+            showWelcomeView();
+        });
     }
 
 })();

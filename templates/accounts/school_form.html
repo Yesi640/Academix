@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% if is_new %}Nueva Escuela{% else %}Editar: {{ school.name }}{% endif %} | ACADEMIX{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- Header -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <a href="{% url 'accounts:schools_list' %}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
+      <i class="bi bi-arrow-left me-1"></i>Volver
+    </a>
+    <div>
+      <h1 class="h4 fw-bold mb-0" style="color:var(--ac-primary);">
+        <i class="bi bi-building-fill me-2"></i>
+        {% if is_new %}Registrar Nueva Escuela{% else %}Editar Escuela{% endif %}
+      </h1>
+      <p class="text-muted small mb-0">
+        {% if is_new %}Agrega una institución educativa a la plataforma multi-escuela.{% else %}Actualiza la información de <strong>{{ school.name }}</strong>.{% endif %}
+      </p>
+    </div>
+  </div>
+
+  {% if messages %}
+    {% for msg in messages %}
+      <div class="alert alert-{{ msg.tags|default:'warning' }} alert-dismissible fade show rounded-3" role="alert">
+        {{ msg }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+    {% csrf_token %}
+    <div class="row g-4">
+
+      <!-- ── Columna Izquierda: Datos Principales ── -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header border-0 rounded-top-4 py-3 px-4"
+               style="background:linear-gradient(135deg,var(--ac-primary),var(--ac-sidebar-gradient,#5b21b6));">
+            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-info-circle-fill me-2"></i>Información Institucional</h6>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-12">
+                <label class="form-label fw-bold small">Nombre Oficial de la Institución <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" required
+                       placeholder="Ej: I.E. Técnica Comercial San Martín"
+                       value="{{ school.name|default:'' }}">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label fw-bold small">Código Único Interno <span class="text-danger">*</span></label>
+                <input type="text" name="code" class="form-control font-monospace text-uppercase" required
+                       placeholder="Ej: IETC-SM-01"
+                       value="{{ school.code|default:'' }}"
+                       style="letter-spacing:.05em;">
+                <div class="form-text">Código corto irrepetible para identificar la escuela.</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold small">Ciudad / Municipio</label>
+                <input type="text" name="city" class="form-control"
+                       placeholder="Ej: Bucaramanga"
+                       value="{{ school.city|default:'' }}">
+              </div>
+              <div class="col-md-3">
+                <label class="form-label fw-bold small">Código DANE</label>
+                <input type="text" name="dane_code" class="form-control font-monospace"
+                       placeholder="Ej: 054001000001"
+                       value="{{ school.dane_code|default:'' }}">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Correo Institucional</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                  <input type="email" name="contact_email" class="form-control"
+                         placeholder="secretaria@colegio.edu.co"
+                         value="{{ school.contact_email|default:'' }}">
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold small">Teléfono Institucional</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-light"><i class="bi bi-telephone"></i></span>
+                  <input type="tel" name="contact_phone" class="form-control"
+                         placeholder="(7) 6543210 / 300 123 4567"
+                         value="{{ school.contact_phone|default:'' }}">
+                </div>
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-bold small">Logo de la Escuela</label>
+                <input type="file" name="logo" class="form-control" accept="image/*" id="logo-input">
+                {% if school and school.logo %}
+                  <div class="mt-2 d-flex align-items-center gap-2">
+                    <img src="{{ school.logo.url }}" alt="Logo actual" class="rounded-3"
+                         style="height:52px;object-fit:contain;border:2px solid #e5e7eb;">
+                    <small class="text-muted">Logo actual — sube uno nuevo para reemplazarlo.</small>
+                  </div>
+                {% endif %}
+                <div class="form-text">PNG o SVG recomendado. Aparece en el selector del Login y Registro.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Columna Derecha: Branding y Estado ── -->
+      <div class="col-lg-4">
+
+        <!-- Colores -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header border-0 rounded-top-4 py-3 px-4"
+               style="background:linear-gradient(135deg,var(--ac-primary),var(--ac-sidebar-gradient,#5b21b6));">
+            <h6 class="mb-0 text-white fw-bold"><i class="bi bi-palette-fill me-2"></i>Paleta de Colores</h6>
+          </div>
+          <div class="card-body p-4">
+
+            <!-- Presets de color -->
+            <p class="text-muted small mb-2 fw-semibold">Colores rápidos:</p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#1e3a8a;" data-primary="#1e3a8a" data-secondary="#bfdbfe" title="Azul Marino"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#15803d;" data-primary="#15803d" data-secondary="#bbf7d0" title="Verde"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#7c3aed;" data-primary="#7c3aed" data-secondary="#c4b5fd" title="Morado"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#dc2626;" data-primary="#dc2626" data-secondary="#fca5a5" title="Rojo"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#b45309;" data-primary="#b45309" data-secondary="#fde68a" title="Dorado"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#0e7490;" data-primary="#0e7490" data-secondary="#a5f3fc" title="Azul Verdoso"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#7e22ce;" data-primary="#7e22ce" data-secondary="#e9d5ff" title="Púrpura"></button>
+              <button type="button" class="preset-color-btn rounded-3 border-0 shadow-sm" style="width:32px;height:32px;background:#9f1239;" data-primary="#9f1239" data-secondary="#fecdd3" title="Granate"></button>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label small fw-bold">Color Primario</label>
+                <div class="d-flex gap-2 align-items-center">
+                  <input type="color" id="primary_color_picker" value="{{ school.primary_color|default:'#7c3aed' }}"
+                         style="width:42px;height:42px;padding:2px;cursor:pointer;border:2px solid #e5e7eb;border-radius:.5rem;">
+                  <input type="text" name="primary_color" id="primary_color_text"
+                         class="form-control font-monospace" style="width:100px;"
+                         value="{{ school.primary_color|default:'#7c3aed' }}" maxlength="7">
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label small fw-bold">Color Secundario</label>
+                <div class="d-flex gap-2 align-items-center">
+                  <input type="color" id="secondary_color_picker" value="{{ school.secondary_color|default:'#c4b5fd' }}"
+                         style="width:42px;height:42px;padding:2px;cursor:pointer;border:2px solid #e5e7eb;border-radius:.5rem;">
+                  <input type="text" name="secondary_color" id="secondary_color_text"
+                         class="form-control font-monospace" style="width:100px;"
+                         value="{{ school.secondary_color|default:'#c4b5fd' }}" maxlength="7">
+                </div>
+              </div>
+            </div>
+
+            <!-- Preview en tiempo real -->
+            <div class="mt-3 p-3 rounded-3 text-white text-center fw-bold" id="color-preview"
+                 style="background:{{ school.primary_color|default:'#7c3aed' }};font-size:.85rem;transition:background .3s;">
+              <i class="bi bi-eye me-1"></i>Vista previa del color
+            </div>
+          </div>
+        </div>
+
+        <!-- Estado -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-body p-4">
+            <label class="form-label fw-bold small">Estado de la Escuela</label>
+            <div class="form-check form-switch mt-1">
+              <input class="form-check-input" type="checkbox" role="switch" name="is_active"
+                     id="is_active_toggle"
+                     {% if school == None or school.is_active %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="is_active_toggle" id="active-label">
+                {% if school == None or school.is_active %}✅ Escuela Activa{% else %}⛔ Escuela Inactiva{% endif %}
+              </label>
+            </div>
+            <small class="text-muted d-block mt-1">
+              Solo las escuelas activas aparecen en el selector del Login y Registro.
+            </small>
+          </div>
+        </div>
+
+        <!-- Botón guardar -->
+        <div class="d-grid gap-2">
+          <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow">
+            <i class="bi bi-save-fill me-2"></i>
+            {% if is_new %}Crear Escuela{% else %}Guardar Cambios{% endif %}
+          </button>
+          <a href="{% url 'accounts:schools_list' %}" class="btn btn-outline-secondary rounded-pill">
+            <i class="bi bi-x-lg me-1"></i>Cancelar
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+// Sincronización de pickers de color
+const primaryPicker = document.getElementById('primary_color_picker');
+const primaryText = document.getElementById('primary_color_text');
+const secondaryPicker = document.getElementById('secondary_color_picker');
+const secondaryText = document.getElementById('secondary_color_text');
+const preview = document.getElementById('color-preview');
+
+function syncPrimary(val) {
+  primaryPicker.value = val; primaryText.value = val;
+  preview.style.background = val;
+}
+function syncSecondary(val) {
+  secondaryPicker.value = val; secondaryText.value = val;
+}
+
+primaryPicker.addEventListener('input', e => syncPrimary(e.target.value));
+primaryText.addEventListener('input', e => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) syncPrimary(e.target.value); });
+secondaryPicker.addEventListener('input', e => syncSecondary(e.target.value));
+secondaryText.addEventListener('input', e => { if (/^#[0-9a-fA-F]{6}$/.test(e.target.value)) syncSecondary(e.target.value); });
+
+// Preset buttons
+document.querySelectorAll('.preset-color-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    syncPrimary(btn.dataset.primary);
+    syncSecondary(btn.dataset.secondary);
+  });
+});
+
+// Toggle label
+document.getElementById('is_active_toggle').addEventListener('change', function() {
+  document.getElementById('active-label').textContent = this.checked ? '✅ Escuela Activa' : '⛔ Escuela Inactiva';
+});
+</script>
+{% endblock %}

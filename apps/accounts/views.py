@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -6,17 +6,25 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_POST
 import json
 from .forms import LoginForm, UserProfileForm
-from .models import CustomUser, SystemThemeSettings
+from .models import CustomUser, SystemThemeSettings, School
 from apps.audit.services import log_audit
 
 def login_view(request):
     """
-    Vista de inicio de sesión con soporte para peticiones estándar y HTMX.
+    Vista de inicio de sesión con soporte multi-escuela.
+    Si hay varias escuelas registradas, el usuario elige su institución antes de ingresar.
     """
     from apps.courses.models import InstitutionSetting, AcademicYear
 
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
+
+    # ── Escuelas activas registradas en la plataforma ──
+    active_schools = School.objects.filter(is_active=True).order_by('name')
+    selected_school_id = request.POST.get('school_id') or request.GET.get('school_id')
+    selected_school = None
+    if selected_school_id:
+        selected_school = active_schools.filter(pk=selected_school_id).first()
 
     form = LoginForm(request, data=request.POST or None)
     institution_types = InstitutionSetting.InstitutionType.choices
@@ -25,15 +33,21 @@ def login_view(request):
     if request.method == 'POST':
         if form.is_valid():
             user = form.get_user()
+
+            # Asignar escuela seleccionada al usuario si se eligió una
+            if selected_school and user.school_id != selected_school.pk:
+                user.school = selected_school
+                user.save(update_fields=['school'])
+
             login(request, user)
 
-            # Registrar login en auditoría
+            school_name = (user.school.name if user.school else current_institution.institution_name)
             log_audit(
                 user=user,
                 action='LOGIN',
                 table_name='CustomUser',
                 record_id=user.id,
-                reason=f'Inicio de sesión exitoso. Modelo institucional: {current_institution.get_institution_type_display()}',
+                reason=f'Inicio de sesión exitoso — Escuela: {school_name}',
                 request=request
             )
 
@@ -47,7 +61,6 @@ def login_view(request):
                     return response
                 return redirect('accounts:change_password')
 
-            # Si la petición viene de HTMX, enviamos cabecera de redirección
             if request.headers.get('HX-Request'):
                 response = HttpResponse(status=200)
                 response['HX-Redirect'] = '/dashboard/'
@@ -55,7 +68,6 @@ def login_view(request):
 
             return redirect('accounts:dashboard')
         else:
-            # Registrar intento fallido
             attempted_user = request.POST.get('username') or request.POST.get('student_id') or 'Desconocido'
             err_msg = form.non_field_errors()[0] if form.non_field_errors() else 'Credenciales o datos inválidos. Verifique el rol, usuario e ID ÚNICO.'
             log_audit(
@@ -74,6 +86,8 @@ def login_view(request):
                     'form': form,
                     'institution_types': institution_types,
                     'current_institution': current_institution,
+                    'active_schools': active_schools,
+                    'selected_school': selected_school,
                 })
 
     current_academic_year = AcademicYear.objects.filter(is_current=True).first()
@@ -83,6 +97,9 @@ def login_view(request):
         'institution_types': institution_types,
         'current_institution': current_institution,
         'current_academic_year': current_academic_year,
+        'active_schools': active_schools,
+        'selected_school': selected_school,
+        'multi_school_mode': active_schools.count() > 1,
     })
 
 
@@ -90,10 +107,8 @@ def login_view(request):
 
 def register_view(request):
     """
-    Registro institucional con selección obligatoria de rol y gestión de ID ÚNICO.
-    - Alumno: Asigna automáticamente un ID ÚNICO irrepetible.
-    - Padre de Familia: Obligatorio ingresar el ID ÚNICO del alumno a representar.
-    - Profesor y Secretaría: Registro y configuración de su respectivo perfil.
+    Registro institucional con selección obligatoria de rol, escuela e ID ÚNICO.
+    En modo multi-escuela el usuario elige su institución antes de registrarse.
     """
     if request.user.is_authenticated:
         return redirect('accounts:dashboard')
@@ -107,10 +122,11 @@ def register_view(request):
     current_institution = InstitutionSetting.get_settings()
     institution_types = InstitutionSetting.InstitutionType.choices
 
-    model_param = request.GET.get('model')
-    if model_param and model_param in dict(InstitutionSetting.InstitutionType.choices):
-        current_institution.apply_preset(model_param)
-        current_institution.refresh_from_db()
+    # ── Escuelas activas disponibles ──
+    active_schools = School.objects.filter(is_active=True).order_by('name')
+    selected_school_id = request.POST.get('school_id') or request.GET.get('school_id')
+    selected_school = active_schools.filter(pk=selected_school_id).first() if selected_school_id else None
+    multi_school_mode = active_schools.count() > 1
 
     form = RegistrationForm(request.POST or None)
 
@@ -125,7 +141,7 @@ def register_view(request):
             doc_num = form.cleaned_data['document_number']
             password = form.cleaned_data['password']
 
-            # Crear CustomUser
+            # Crear CustomUser con escuela asignada
             user = CustomUser.objects.create_user(
                 username=username,
                 email=email,
@@ -134,22 +150,19 @@ def register_view(request):
                 first_name=first_name,
                 last_name=last_name,
                 document_type=doc_type,
-                document_number=doc_num
+                document_number=doc_num,
+                school=selected_school,
             )
 
             extra_msg = ""
             if role == CustomUser.Role.STUDENT:
-                # Generar ID ÚNICO al momento del registro
                 unique_suffix = random.randint(1000, 9999)
                 generated_id = f"ALU-2026-{unique_suffix}"
                 while StudentProfile.objects.filter(student_code=generated_id).exists():
                     unique_suffix = random.randint(1000, 9999)
                     generated_id = f"ALU-2026-{unique_suffix}"
 
-                StudentProfile.objects.create(
-                    user=user,
-                    student_code=generated_id
-                )
+                StudentProfile.objects.create(user=user, student_code=generated_id)
                 extra_msg = f" Su ID ÚNICO de Alumno es: <strong>{generated_id}</strong>. Debe usarlo para iniciar sesión."
 
             elif role == CustomUser.Role.PARENT:
@@ -162,23 +175,22 @@ def register_view(request):
             elif role == CustomUser.Role.TEACHER:
                 TeacherProfile.objects.create(user=user, specialty='Docencia General')
 
+            school_name = selected_school.name if selected_school else 'Plataforma General'
             log_audit(
                 user=user,
                 action='REGISTER',
                 table_name='CustomUser',
                 record_id=user.id,
-                new_values={'role': role, 'username': username},
-                reason=f'Registro de usuario con rol {role}',
+                new_values={'role': role, 'username': username, 'school': school_name},
+                reason=f'Registro de usuario con rol {role} — Escuela: {school_name}',
                 request=request
             )
 
             login(request, user)
 
-            # ── Enviar email con ID único si el alumno tiene correo real ──
             if role == CustomUser.Role.STUDENT and extra_msg:
                 try:
                     from django.core.mail import send_mail
-                    from django.template.loader import render_to_string
                     if email and '@academix.edu.co' not in email:
                         generated_code = StudentProfile.objects.get(user=user).student_code
                         send_mail(
@@ -207,6 +219,9 @@ def register_view(request):
         'form': form,
         'institution_types': institution_types,
         'current_institution': current_institution,
+        'active_schools': active_schools,
+        'selected_school': selected_school,
+        'multi_school_mode': multi_school_mode,
     })
 
 
@@ -658,3 +673,115 @@ def users_management_view(request):
     }
     return render(request, 'accounts/users_list.html', context)
 
+
+# ══════════════════════════════════════════════════════════════════
+#  GESTIÓN DE ESCUELAS  (Solo Administrador de la Plataforma)
+# ══════════════════════════════════════════════════════════════════
+
+@login_required
+def schools_list_view(request):
+    """Lista todas las escuelas registradas en la plataforma."""
+    if not (request.user.is_admin_role or request.user.is_superuser):
+        messages.error(request, 'Acceso restringido: Solo el Administrador de la plataforma puede gestionar escuelas.')
+        return redirect('accounts:dashboard')
+
+    schools = School.objects.all().annotate(
+        user_count=__import__('django').db.models.Count('users', distinct=True)
+    ).order_by('name')
+
+    return render(request, 'accounts/schools_list.html', {
+        'schools': schools,
+    })
+
+
+@login_required
+def school_create_edit_view(request, school_id=None):
+    """Crear o editar una escuela institucional."""
+    if not (request.user.is_admin_role or request.user.is_superuser):
+        messages.error(request, 'Acceso restringido.')
+        return redirect('accounts:dashboard')
+
+    school = get_object_or_404(School, pk=school_id) if school_id else None
+    is_new = school is None
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        code = request.POST.get('code', '').strip().upper()
+        city = request.POST.get('city', '').strip()
+        dane_code = request.POST.get('dane_code', '').strip()
+        contact_email = request.POST.get('contact_email', '').strip()
+        contact_phone = request.POST.get('contact_phone', '').strip()
+        primary_color = request.POST.get('primary_color', '#7c3aed').strip()
+        secondary_color = request.POST.get('secondary_color', '#c4b5fd').strip()
+        is_active = request.POST.get('is_active') == 'on'
+
+        if not name or not code:
+            messages.error(request, 'El nombre y el código de la escuela son obligatorios.')
+        elif School.objects.filter(code=code).exclude(pk=school_id).exists():
+            messages.error(request, f'Ya existe otra escuela con el código "{code}".')
+        else:
+            if school is None:
+                school = School()
+            school.name = name
+            school.code = code
+            school.city = city
+            school.dane_code = dane_code
+            school.contact_email = contact_email
+            school.contact_phone = contact_phone
+            school.primary_color = primary_color
+            school.secondary_color = secondary_color
+            school.is_active = is_active
+
+            if 'logo' in request.FILES:
+                school.logo = request.FILES['logo']
+
+            school.save()
+
+            log_audit(
+                user=request.user,
+                action='CREATE' if is_new else 'UPDATE',
+                table_name='School',
+                record_id=school.pk,
+                new_values={'name': school.name, 'code': school.code},
+                reason=f'{"Creación" if is_new else "Actualización"} de escuela: {school.name}',
+                request=request
+            )
+            messages.success(request, f'Escuela {"creada" if is_new else "actualizada"} exitosamente: {school.name}')
+            return redirect('accounts:schools_list')
+
+    return render(request, 'accounts/school_form.html', {
+        'school': school,
+        'is_new': is_new,
+    })
+
+
+@login_required
+@require_POST
+def school_toggle_active_view(request, school_id):
+    """Activar/desactivar una escuela en la plataforma."""
+    if not (request.user.is_admin_role or request.user.is_superuser):
+        return JsonResponse({'ok': False, 'error': 'Sin permiso.'}, status=403)
+
+    school = get_object_or_404(School, pk=school_id)
+    school.is_active = not school.is_active
+    school.save(update_fields=['is_active'])
+
+    log_audit(
+        user=request.user,
+        action='UPDATE',
+        table_name='School',
+        record_id=school.pk,
+        new_values={'is_active': school.is_active},
+        reason=f'Escuela {"activada" if school.is_active else "desactivada"}: {school.name}',
+        request=request
+    )
+    return JsonResponse({'ok': True, 'is_active': school.is_active, 'name': school.name})
+
+
+@login_required
+def school_api_list(request):
+    """API pública: retorna lista de escuelas activas (para selector en login/registro)."""
+    schools = School.objects.filter(is_active=True).values(
+        'id', 'name', 'city', 'primary_color', 'secondary_color', 'contact_email', 'contact_phone'
+    ).order_by('name')
+    return JsonResponse({'schools': list(schools)})

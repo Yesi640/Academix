@@ -15,4 +15,10 @@ urlpatterns = [
     # Tema Global del Sistema (control exclusivo del Rector)
     path('theme/global/save/', views.rector_save_global_theme, name='rector_save_global_theme'),
     path('theme/global/', views.get_global_theme_api, name='get_global_theme'),
+    # ── Gestión de Escuelas (Administrador de la Plataforma) ──
+    path('schools/', views.schools_list_view, name='schools_list'),
+    path('schools/new/', views.school_create_edit_view, name='school_create'),
+    path('schools/<int:school_id>/edit/', views.school_create_edit_view, name='school_edit'),
+    path('schools/<int:school_id>/toggle/', views.school_toggle_active_view, name='school_toggle'),
+    path('api/schools/', views.school_api_list, name='schools_api'),
 ]
