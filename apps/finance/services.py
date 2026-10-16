@@ -102,7 +102,7 @@ def register_fee_payment(
     obligation.save(update_fields=['paid_amount', 'status', 'updated_at'])
 
     log_audit(
-        action=AuditLog.Action.CREATE,
+        action=AuditLog.Action.INSERT,
         table_name='finance_feepayment',
         record_id=str(payment.id),
         new_values={

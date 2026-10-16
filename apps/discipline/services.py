@@ -44,7 +44,7 @@ def create_anotacion(
     )
 
     log_audit(
-        action=AuditLog.Action.CREATE,
+        action=AuditLog.Action.INSERT,
         table_name='discipline_anotaciondisciplinaria',
         record_id=str(record.id),
         new_values={

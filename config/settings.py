@@ -20,12 +20,40 @@ DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 # Hosts permitidos (acepta '*' para red local y lee desde .env)
 _raw_allowed_hosts = os.getenv('ALLOWED_HOSTS', '*').split(',')
 ALLOWED_HOSTS = [host.strip() for host in _raw_allowed_hosts if host.strip()]
+
+# Detección automática de hosts en plataformas Cloud (Render, Railway)
+RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+
+RAILWAY_PUBLIC_DOMAIN = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if RAILWAY_PUBLIC_DOMAIN and RAILWAY_PUBLIC_DOMAIN not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RAILWAY_PUBLIC_DOMAIN)
+
 if not ALLOWED_HOSTS or '*' in ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['*']
 
-# ORÍGENES DE CONFIANZA CSRF (Imprescindible para formularios y login en red local en Django 4 y 5)
+# ORÍGENES DE CONFIANZA CSRF (Imprescindible para formularios y login en web/red local)
 _raw_csrf = os.getenv('CSRF_TRUSTED_ORIGINS', '')
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in _raw_csrf.split(',') if origin.strip()]
+
+# Registro automático de orígenes HTTPS para plataformas Cloud
+if RENDER_EXTERNAL_HOSTNAME:
+    origin = f"https://{RENDER_EXTERNAL_HOSTNAME}"
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+if RAILWAY_PUBLIC_DOMAIN:
+    origin = f"https://{RAILWAY_PUBLIC_DOMAIN}"
+    if origin not in CSRF_TRUSTED_ORIGINS:
+        CSRF_TRUSTED_ORIGINS.append(origin)
+
+for host in ALLOWED_HOSTS:
+    if host != '*':
+        for scheme in ['https://', 'http://']:
+            origin = f"{scheme}{host}"
+            if origin not in CSRF_TRUSTED_ORIGINS:
+                CSRF_TRUSTED_ORIGINS.append(origin)
 
 # Detección automática de IPs locales del servidor para evitar bloqueos CSRF (403) en la red
 import socket
@@ -41,6 +69,20 @@ for _host in ['localhost', '127.0.0.1'] + _local_ips:
             _origin = f"{_scheme}{_host}{_port}"
             if _origin not in CSRF_TRUSTED_ORIGINS:
                 CSRF_TRUSTED_ORIGINS.append(_origin)
+
+# CABECERAS Y PARÁMETROS DE SEGURIDAD PARA PRODUCCIÓN WEB (Activos cuando DEBUG=False)
+if not DEBUG:
+    SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'True').lower() in ('true', '1', 'yes')
+    SESSION_COOKIE_SECURE = os.getenv('SESSION_COOKIE_SECURE', 'True').lower() in ('true', '1', 'yes')
+    CSRF_COOKIE_SECURE = os.getenv('CSRF_COOKIE_SECURE', 'True').lower() in ('true', '1', 'yes')
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+    SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '31536000'))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    # Soporte para Reverse Proxy (Render, Railway, Nginx, AWS ALB)
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # APLICACIONES INSTALADAS
@@ -85,6 +127,7 @@ AUTH_USER_MODEL = 'accounts.CustomUser'
 # MIDDLEWARE
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -118,11 +161,23 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # BASE DE DATOS
-# Configuración MySQL (InnoDB, UTF8MB4, Transacciones Atómicas) con soporte para fallback
+# Soporte para DATABASE_URL (PostgreSQL / MySQL en la nube) y fallback local (MySQL / SQLite)
+import dj_database_url
+
+database_url = os.getenv('DATABASE_URL')
 use_sqlite = os.getenv('USE_SQLITE_FALLBACK', 'False').lower() in ('true', '1', 'yes')
 db_engine = os.getenv('DB_ENGINE', 'mysql')
 
-if use_sqlite or db_engine == 'sqlite':
+if database_url:
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=database_url,
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+    DATABASES['default']['ATOMIC_REQUESTS'] = True
+elif use_sqlite or db_engine == 'sqlite':
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -151,8 +206,8 @@ else:
         }
     }
 
-# Concurrencia SQLite para Red Local (Modo WAL - Write-Ahead Logging)
-if use_sqlite or db_engine == 'sqlite':
+# Concurrencia SQLite para Red Local / Fallback (Modo WAL - Write-Ahead Logging)
+if (not database_url) and (use_sqlite or db_engine == 'sqlite'):
     from django.db.backends.signals import connection_created
     from django.dispatch import receiver
 
@@ -205,3 +260,14 @@ EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'ACADEMIX <notificaciones@academix.edu.co>')
+
+# Configuración WhiteNoise para producción web (compresión y caché de estáticos)
+WHITENOISE_USE_FINDERS = True
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedStaticFilesStorage",
+    },
+}

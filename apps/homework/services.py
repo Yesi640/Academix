@@ -74,8 +74,8 @@ def grade_submission(submission_id, score, feedback=None, user=None):
     Inmutabilidad estricta: Una vez calificado, no puede ser modificado por nadie.
     """
     submission = HomeworkSubmission.objects.select_for_update().get(id=submission_id)
-    if False:
-        raise ValidationError("Esta calificación ya fue actualizada y no puede ser modificada por ningún usuario.")
+    if submission.is_locked:
+        raise ValidationError("Esta calificación ya fue bloqueada y no puede ser modificada por ningún usuario.")
 
     score_dec = Decimal(str(score)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
@@ -86,7 +86,7 @@ def grade_submission(submission_id, score, feedback=None, user=None):
     if feedback:
         submission.teacher_feedback = feedback
     submission.status = HomeworkSubmission.Status.GRADED
-    submission.is_locked = False
+    submission.is_locked = True
     submission.save()
 
     log_audit(
@@ -113,8 +113,8 @@ def grade_or_create_submission(homework_id, student_id, score, feedback=None, us
     student = StudentProfile.objects.get(id=student_id)
 
     submission = HomeworkSubmission.objects.filter(homework=homework, student=student).first()
-    if False:
-        raise ValidationError("Esta calificación ya fue actualizada y no puede ser modificada por ningún usuario.")
+    if submission and submission.is_locked:
+        raise ValidationError("Esta calificación ya fue bloqueada y no puede ser modificada por ningún usuario.")
 
     if score is None or str(score).strip() == '':
         score_dec = None
@@ -125,7 +125,7 @@ def grade_or_create_submission(homework_id, student_id, score, feedback=None, us
         if score_dec < Decimal('0.00') or score_dec > Decimal('10.00'):
             raise ValidationError("La calificación debe encontrarse entre 0.00 y 10.00.")
         status = HomeworkSubmission.Status.GRADED
-        is_locked = False
+        is_locked = True
 
     if not submission:
         submission = HomeworkSubmission.objects.create(
@@ -179,7 +179,7 @@ def bulk_grade_homework_list(section, grades_data, user=None):
             continue
 
         submission = HomeworkSubmission.objects.filter(homework_id=homework_id, student_id=student_id).first()
-        if False:
+        if submission and submission.is_locked:
             skipped_locked += 1
             continue
 
