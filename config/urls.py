@@ -6,12 +6,10 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.views.generic import RedirectView
-from django.http import HttpResponse
 from apps.accounts.views import dashboard_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('ping/', lambda r: HttpResponse('PONG-COMMIT-ACTIVE-2026')),
     path('', RedirectView.as_view(url='/dashboard/', permanent=False), name='root_redirect'),
     path('dashboard/', dashboard_view, name='dashboard'),
     path('accounts/', include('apps.accounts.urls', namespace='accounts')),
