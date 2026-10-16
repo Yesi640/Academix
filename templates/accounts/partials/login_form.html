@@ -9,7 +9,13 @@
         </label>
         <select name="school_id" id="login-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" style="font-size:0.83rem;">
             {% for s in active_schools %}
-            <option value="{{ s.pk }}" {% if selected_school and selected_school.pk == s.pk %}selected{% endif %}>
+            <option value="{{ s.pk }}"
+                    data-primary-color="{{ s.primary_color|default:'#7c3aed' }}"
+                    data-secondary-color="{{ s.secondary_color|default:'#c4b5fd' }}"
+                    data-school-name="{{ s.name }}"
+                    data-school-logo="{% if s.logo %}{{ s.logo.url }}{% endif %}"
+                    data-school-city="{{ s.city|default:'' }}"
+                    {% if selected_school and selected_school.pk == s.pk %}selected{% endif %}>
                 🏫 {{ s.name }}{% if s.city %} — {{ s.city }}{% endif %}
             </option>
             {% empty %}

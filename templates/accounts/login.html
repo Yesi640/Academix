@@ -731,16 +731,16 @@
 ════════════════════════════════════════════════════════ -->
 <nav class="lp-navbar">
     <a href="#" class="lp-brand" id="navbar-brand-link">
-        <div class="lp-brand-logo">
+        <div class="lp-brand-logo" id="main-brand-logo-container">
             {% if current_institution.logo %}
-                <img src="{{ current_institution.logo.url }}" alt="Logo">
+                <img src="{{ current_institution.logo.url }}" alt="Logo" id="main-brand-logo-img">
             {% else %}
-                <i class="bi bi-mortarboard-fill" style="color:white;"></i>
+                <i class="bi bi-mortarboard-fill" style="color:white;" id="main-brand-logo-icon"></i>
             {% endif %}
         </div>
         <div class="lp-brand-text">
-            <strong>{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
-            <span>{{ current_institution.get_institution_type_display|default:"Institución Educativa" }}</span>
+            <strong id="brand-school-title">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+            <span id="brand-school-subtitle">{{ current_institution.get_institution_type_display|default:"Institución Educativa" }}</span>
         </div>
     </a>
 
@@ -767,7 +767,7 @@
         <div class="lp-hero-text">
             <div class="lp-hero-label">
                 <i class="bi bi-stars"></i>
-                Comunidad Educativa · {{ current_institution.institution_name|default:"ACADEMIX" }}
+                Comunidad Educativa · <span id="hero-school-name">{{ current_institution.institution_name|default:"ACADEMIX" }}</span>
             </div>
 
             <h1>
@@ -845,6 +845,11 @@
                                 {% for school in active_schools %}
                                 <label class="school-option d-flex align-items-center gap-3 p-2 rounded-3 border cursor-pointer {% if selected_school and selected_school.pk == school.pk or forloop.first and not selected_school %}active-school-option{% endif %}"
                                        data-school-id="{{ school.pk }}"
+                                       data-primary-color="{{ school.primary_color|default:'#7c3aed' }}"
+                                       data-secondary-color="{{ school.secondary_color|default:'#c4b5fd' }}"
+                                       data-school-name="{{ school.name }}"
+                                       data-school-logo="{% if school.logo %}{{ school.logo.url }}{% endif %}"
+                                       data-school-city="{{ school.city|default:'' }}"
                                        style="cursor:pointer; transition:all .2s;">
                                     <input type="radio" name="welcome_school_id" value="{{ school.pk }}" class="school-radio d-none"
                                            {% if selected_school and selected_school.pk == school.pk or forloop.first and not selected_school %}checked{% endif %}>
@@ -1557,7 +1562,7 @@
 
     // Asegurar opción Padre de Familia para Colegio
     // ── Gestión interactiva de selección de Escuela ──
-    // Aplicar colores de fondo desde data-bg
+    // Aplicar colores de fondo iniciales desde data-bg
     document.querySelectorAll('[data-bg]').forEach(function(el) {
         if (el.dataset.bg) el.style.backgroundColor = el.dataset.bg;
     });
@@ -1567,13 +1572,91 @@
     const credSchoolName = document.getElementById('cred-school-name');
     const btnChangeSchool = document.getElementById('btn-change-school');
 
-    function selectSchoolById(schoolId, schoolNameText) {
-        if (loginSchoolSelect) {
+    // Conversión de Color Hex a RGB para variables CSS
+    function hexToRgb(hex) {
+        if (!hex) return '124, 58, 237';
+        hex = hex.replace('#', '').trim();
+        if (hex.length === 3) hex = hex.split('').map(function(c) { return c + c; }).join('');
+        if (hex.length !== 6) return '124, 58, 237';
+        const num = parseInt(hex, 16);
+        return ((num >> 16) & 255) + ', ' + ((num >> 8) & 255) + ', ' + (num & 255);
+    }
+
+    // ── CAMBIO AUTOMÁTICO EN TIEMPO REAL DE TODO EL TEMA Y COLORES ──
+    function applySchoolTheme(primary, secondary, name, logoUrl, schoolId) {
+        if (!primary) primary = '#7c3aed';
+        if (!secondary) secondary = '#c4b5fd';
+
+        const root = document.documentElement;
+        const pRgb = hexToRgb(primary);
+        const sRgb = hexToRgb(secondary);
+
+        // 1. Actualizar Variables CSS Globales del Tema
+        root.style.setProperty('--inst-primary', primary);
+        root.style.setProperty('--inst-primary-rgb', pRgb);
+        root.style.setProperty('--inst-secondary', secondary);
+        root.style.setProperty('--inst-secondary-rgb', sRgb);
+        root.style.setProperty('--inst-dark', `color-mix(in srgb, ${primary} 80%, #000 20%)`);
+        root.style.setProperty('--bs-primary', primary);
+        root.style.setProperty('--ac-primary', primary);
+        root.style.setProperty('--ac-primary-pastel', secondary);
+
+        // 2. Actualizar nombres visibles del colegio
+        if (name) {
+            if (credSchoolName) credSchoolName.textContent = name;
+            const brandTitle = document.getElementById('brand-school-title');
+            if (brandTitle) brandTitle.textContent = name;
+            const heroName = document.getElementById('hero-school-name');
+            if (heroName) heroName.textContent = name;
+        }
+
+        // 3. Actualizar Logotipo dinámicamente
+        const brandLogoBox = document.getElementById('main-brand-logo-container');
+        if (brandLogoBox) {
+            if (logoUrl) {
+                brandLogoBox.innerHTML = `<img src="${logoUrl}" alt="${name || 'Logo'}" style="width:100%;height:100%;object-fit:cover;border-radius:.375rem;">`;
+            } else {
+                brandLogoBox.innerHTML = `<i class="bi bi-mortarboard-fill" style="color:white;font-size:1.3rem;"></i>`;
+            }
+        }
+
+        const credIcon = document.getElementById('cred-school-icon');
+        if (credIcon) {
+            if (logoUrl) {
+                credIcon.innerHTML = `<img src="${logoUrl}" alt="" style="width:26px;height:26px;object-fit:cover;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.15);">`;
+            } else {
+                credIcon.innerHTML = `🏫`;
+            }
+        }
+
+        // 4. Actualizar enlaces de registro para propagar la escuela seleccionada
+        const regLink = document.getElementById('login-register-link');
+        if (regLink && schoolId) {
+            try {
+                const url = new URL(regLink.href, window.location.origin);
+                url.searchParams.set('school_id', schoolId);
+                regLink.href = url.pathname + url.search;
+            } catch (e) {}
+        }
+
+        // 5. Sincronizar URL sin recargar y guardar preferencia
+        if (schoolId) {
+            try {
+                if (window.history && window.history.replaceState) {
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.set('school_id', schoolId);
+                    window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+                }
+                localStorage.setItem('academix_preferred_school_id', schoolId);
+            } catch (e) {}
+        }
+    }
+
+    function selectSchoolById(schoolId, schoolNameText, primaryColor, secondaryColor, logoUrl) {
+        if (loginSchoolSelect && loginSchoolSelect.value !== schoolId) {
             loginSchoolSelect.value = schoolId;
         }
-        if (credSchoolName && schoolNameText) {
-            credSchoolName.textContent = schoolNameText;
-        }
+        applySchoolTheme(primaryColor, secondaryColor, schoolNameText, logoUrl, schoolId);
     }
 
     if (schoolOptions.length > 0) {
@@ -1589,10 +1672,10 @@
                 });
 
                 const radio = opt.querySelector('input[type="radio"]');
-                let sId = '';
+                let sId = opt.dataset.schoolId || '';
                 if (radio) {
                     radio.checked = true;
-                    sId = radio.value;
+                    if (!sId) sId = radio.value;
                 }
 
                 opt.classList.add('active-school-option');
@@ -1602,32 +1685,50 @@
                 const checkIcon = opt.querySelector('.school-check-icon');
                 if (checkIcon) checkIcon.classList.remove('d-none');
 
-                const nameEl = opt.querySelector('.fw-bold');
-                const sName = nameEl ? nameEl.textContent.trim() : '';
-                selectSchoolById(sId, sName);
+                const pColor = opt.dataset.primaryColor || '#7c3aed';
+                const sColor = opt.dataset.secondaryColor || '#c4b5fd';
+                const sName = opt.dataset.schoolName || (opt.querySelector('.fw-bold') ? opt.querySelector('.fw-bold').textContent.trim() : '');
+                const sLogo = opt.dataset.schoolLogo || '';
+
+                selectSchoolById(sId, sName, pColor, sColor, sLogo);
             });
         });
 
         if (loginSchoolSelect) {
             loginSchoolSelect.addEventListener('change', function() {
                 const selectedVal = this.value;
-                const matchedOption = document.querySelector(`.school-option input[value="${selectedVal}"]`);
+                const matchedOption = document.querySelector(`.school-option[data-school-id="${selectedVal}"]`);
                 if (matchedOption) {
-                    matchedOption.closest('.school-option').click();
-                } else if (this.options[this.selectedIndex] && credSchoolName) {
-                    credSchoolName.textContent = this.options[this.selectedIndex].text.replace('🏫', '').trim();
+                    matchedOption.click();
+                } else {
+                    const selOpt = this.options[this.selectedIndex];
+                    if (selOpt) {
+                        const pColor = selOpt.dataset.primaryColor || '#7c3aed';
+                        const sColor = selOpt.dataset.secondaryColor || '#c4b5fd';
+                        const sName = selOpt.dataset.schoolName || selOpt.text.replace('🏫', '').trim();
+                        const sLogo = selOpt.dataset.schoolLogo || '';
+                        applySchoolTheme(pColor, sColor, sName, sLogo, selectedVal);
+                    }
                 }
             });
         }
 
-        // Selección inicial
-        const selectedRadio = document.querySelector('input[name="welcome_school_id"]:checked');
-        if (selectedRadio) {
-            const card = selectedRadio.closest('.school-option');
-            const nameEl = card ? card.querySelector('.fw-bold') : null;
-            selectSchoolById(selectedRadio.value, nameEl ? nameEl.textContent.trim() : '');
-        } else if (schoolOptions[0]) {
-            schoolOptions[0].click();
+        // Selección inicial automática: preferencia guardada o primera activa
+        let initialCard = null;
+        const savedSchoolId = (new URLSearchParams(window.location.search)).get('school_id') || localStorage.getItem('academix_preferred_school_id');
+        if (savedSchoolId) {
+            initialCard = document.querySelector(`.school-option[data-school-id="${savedSchoolId}"]`);
+        }
+        if (!initialCard) {
+            const checkedRadio = document.querySelector('input[name="welcome_school_id"]:checked');
+            if (checkedRadio) initialCard = checkedRadio.closest('.school-option');
+        }
+        if (!initialCard && schoolOptions[0]) {
+            initialCard = schoolOptions[0];
+        }
+
+        if (initialCard) {
+            initialCard.click();
         }
     }
 

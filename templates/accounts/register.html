@@ -108,13 +108,27 @@
                 <select name="school_id" id="reg-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" required>
                     <option value="" disabled {% if not selected_school and active_schools|length > 1 %}selected{% endif %}>— Seleccione el Colegio o Sede —</option>
                     {% for school in active_schools %}
-                    <option value="{{ school.pk }}" {% if selected_school and selected_school.pk == school.pk or active_schools|length == 1 %}selected{% endif %}>
+                    <option value="{{ school.pk }}"
+                            data-primary-color="{{ school.primary_color|default:'#7c3aed' }}"
+                            data-secondary-color="{{ school.secondary_color|default:'#c4b5fd' }}"
+                            data-school-name="{{ school.name }}"
+                            data-school-logo="{% if school.logo %}{{ school.logo.url }}{% endif %}"
+                            data-school-city="{{ school.city|default:'' }}"
+                            {% if selected_school and selected_school.pk == school.pk or active_schools|length == 1 %}selected{% endif %}>
                         🏫 {{ school.name }}{% if school.city %} ({{ school.city }}){% endif %}
                     </option>
                     {% empty %}
                     <option value="1" selected>🏫 {{ current_institution.institution_name|default:"Institución Educativa Central" }}</option>
                     {% endfor %}
                 </select>
+                <div id="reg-school-preview" class="mt-2 p-2 rounded-3 border align-items-center gap-2" style="display:none; transition:all 0.2s;">
+                    <div id="reg-school-preview-logo" class="rounded-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width:32px;height:32px;"></div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <strong class="d-block text-dark small text-truncate" id="reg-school-preview-name"></strong>
+                        <small class="text-muted" style="font-size:0.68rem;">Colores y sede institucional aplicados</small>
+                    </div>
+                    <span class="badge" id="reg-school-preview-badge" style="font-size:0.65rem;">Sede Activa</span>
+                </div>
                 <div class="form-text small mt-1" style="font-size: 0.72rem;">
                     Tu cuenta y tu <strong>ID ÚNICO</strong> quedarán vinculados formalmente a esta institución educativa.
                 </div>
@@ -372,6 +386,82 @@
         applyModelAdaptation(initialChecked.value);
     } else {
         updateRegisterFields('{{ current_institution.institution_type|default:"COLEGIO" }}');
+    }
+
+    // ── CAMBIO AUTOMÁTICO EN TIEMPO REAL AL ELEGIR COLEGIO ──
+    const regSchoolSelect = document.getElementById('reg-school-select');
+
+    function applyRegisterSchoolTheme() {
+        if (!regSchoolSelect) return;
+        const opt = regSchoolSelect.options[regSchoolSelect.selectedIndex];
+        if (!opt || !opt.value) return;
+
+        const pColor = opt.dataset.primaryColor || '#7c3aed';
+        const sColor = opt.dataset.secondaryColor || '#c4b5fd';
+        const sName = opt.dataset.schoolName || opt.text.replace('🏫', '').trim();
+        const sLogo = opt.dataset.schoolLogo || '';
+
+        const root = document.documentElement;
+        root.style.setProperty('--ac-primary', pColor);
+        root.style.setProperty('--bs-primary', pColor);
+        root.style.setProperty('--ac-primary-pastel', sColor);
+        root.style.setProperty('--ac-primary-light', sColor);
+
+        // Actualizar botones y acentos
+        document.querySelectorAll('.btn-primary, .bg-primary').forEach(function(el) {
+            el.style.backgroundColor = pColor;
+            el.style.borderColor = pColor;
+        });
+        document.querySelectorAll('.text-primary').forEach(function(el) {
+            el.style.color = pColor;
+        });
+        document.querySelectorAll('.border-primary, .border-primary-subtle').forEach(function(el) {
+            el.style.borderColor = pColor;
+        });
+
+        // Mostrar tarjeta de previsualización
+        const previewBox = document.getElementById('reg-school-preview');
+        const previewName = document.getElementById('reg-school-preview-name');
+        const previewLogo = document.getElementById('reg-school-preview-logo');
+        const previewBadge = document.getElementById('reg-school-preview-badge');
+
+        if (previewBox) {
+            previewBox.style.display = 'flex';
+            previewBox.style.background = `color-mix(in srgb, ${sColor} 22%, white 78%)`;
+            previewBox.style.borderColor = pColor;
+            if (previewName) previewName.textContent = sName;
+            if (previewBadge) {
+                previewBadge.style.backgroundColor = pColor;
+                previewBadge.style.color = 'white';
+            }
+            if (previewLogo) {
+                previewLogo.style.backgroundColor = pColor;
+                if (sLogo) {
+                    previewLogo.innerHTML = `<img src="${sLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:.25rem;">`;
+                } else {
+                    previewLogo.innerHTML = `<i class="bi bi-mortarboard-fill text-white fs-6"></i>`;
+                }
+            }
+        }
+
+        // Guardar preferencia y actualizar URL sin recargar
+        try {
+            if (window.history && window.history.replaceState) {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.set('school_id', opt.value);
+                window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search);
+            }
+            localStorage.setItem('academix_preferred_school_id', opt.value);
+        } catch(e) {}
+    }
+
+    if (regSchoolSelect) {
+        regSchoolSelect.addEventListener('change', applyRegisterSchoolTheme);
+        const savedSchoolId = (new URLSearchParams(window.location.search)).get('school_id') || localStorage.getItem('academix_preferred_school_id');
+        if (savedSchoolId && (!regSchoolSelect.value || regSchoolSelect.value === '')) {
+            regSchoolSelect.value = savedSchoolId;
+        }
+        applyRegisterSchoolTheme();
     }
 })();
 </script>

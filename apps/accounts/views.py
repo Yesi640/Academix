@@ -30,6 +30,15 @@ def login_view(request):
     institution_types = InstitutionSetting.InstitutionType.choices
     current_institution = InstitutionSetting.get_settings()
 
+    if selected_school:
+        if selected_school.primary_color:
+            current_institution.primary_color = selected_school.primary_color
+        if selected_school.secondary_color:
+            current_institution.secondary_color = selected_school.secondary_color
+        if selected_school.logo:
+            current_institution.logo = selected_school.logo
+        current_institution.institution_name = selected_school.name
+
     if request.method == 'POST':
         if form.is_valid():
             user = form.get_user()
@@ -127,6 +136,15 @@ def register_view(request):
     selected_school_id = request.POST.get('school_id') or request.GET.get('school_id')
     selected_school = active_schools.filter(pk=selected_school_id).first() if selected_school_id else None
     multi_school_mode = active_schools.count() > 1
+
+    if selected_school:
+        if selected_school.primary_color:
+            current_institution.primary_color = selected_school.primary_color
+        if selected_school.secondary_color:
+            current_institution.secondary_color = selected_school.secondary_color
+        if selected_school.logo:
+            current_institution.logo = selected_school.logo
+        current_institution.institution_name = selected_school.name
 
     form = RegistrationForm(request.POST or None)
 
