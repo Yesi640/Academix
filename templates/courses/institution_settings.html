@@ -1,352 +1,360 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Adaptabilidad y Trazabilidad Institucional | ACADEMIX{% endblock %}
+{% block title %}Personalización y Marca Institucional | ACADEMIX{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <div>
         <h3 class="fw-bold text-dark mb-1">
-            <i class="bi bi-sliders2 text-primary me-2"></i>Adaptabilidad Institucional
+            <i class="bi bi-palette2 text-primary me-2"></i>Personalización y Marca Institucional (White-Label)
         </h3>
         <p class="text-muted small mb-0">
-            Parámetros, trazabilidad y vocabulario oficial de la institución activa en la plataforma.
+            Personaliza el logotipo, los colores corporativos y la información oficial para adaptar la plataforma a cualquier colegio o escuela.
         </p>
     </div>
     <div class="d-flex gap-2">
-        <button class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#changePresetModal">
-            <i class="bi bi-arrow-repeat"></i>
-            <span>Cambiar Modelo Institucional</span>
-        </button>
-        <a href="{% url 'courses:academic_structure' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1">
+        <a href="{% url 'courses:academic_structure' %}" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 shadow-sm">
             <i class="bi bi-arrow-left"></i>
             <span>Estructura Académica</span>
         </a>
     </div>
 </div>
 
-<!-- Tarjeta Principal: Estado de la Institución Activa -->
-<div class="card ac-card border-0 shadow-sm mb-4">
-    <div class="card-body p-4">
-        <div class="row align-items-center g-4">
-            <div class="col-lg-8">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <div class="rounded-3 p-3 text-white shadow-sm d-flex align-items-center justify-content-center"
-                         style="width: 56px; height: 56px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
-                        {% if inst_settings.institution_type == 'UNIVERSIDAD' %}
-                            <i class="bi bi-mortarboard-fill fs-3"></i>
-                        {% elif inst_settings.institution_type == 'SENA_TECNICO' %}
-                            <i class="bi bi-gear-wide-connected fs-3"></i>
-                        {% elif inst_settings.institution_type == 'ACADEMIA' %}
-                            <i class="bi bi-palette-fill fs-3"></i>
-                        {% else %}
-                            <i class="bi bi-backpack4-fill fs-3"></i>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small mb-1">
-                            <i class="bi bi-check-circle-fill me-1"></i>Modelo Activo: {{ inst_settings.get_institution_type_display }}
+<form method="POST" enctype="multipart/form-data" id="institutionBrandForm">
+    {% csrf_token %}
+
+    <div class="row g-4 mb-4">
+        <!-- COLUMNA IZQUIERDA: LOGOTIPO Y PALETA DE COLORES -->
+        <div class="col-lg-6">
+            <!-- 1. LOGOTIPO INSTITUCIONAL -->
+            <div class="card ac-card border-0 shadow-sm mb-4 h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="p-2 rounded-3 text-white" style="background: var(--ac-primary, #7c3aed);">
+                            <i class="bi bi-image"></i>
                         </span>
-                        <h4 class="fw-bold text-dark mb-0">{{ inst_settings.institution_name }}</h4>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Logotipo Oficial del Colegio</h5>
+                            <small class="text-muted">Aparece en la barra lateral, boletines y pantalla de inicio</small>
+                        </div>
                     </div>
+                    {% if inst_settings.logo %}
+                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                        <i class="bi bi-check-circle me-1"></i>Logo Activo
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Sin Logo Subido</span>
+                    {% endif %}
                 </div>
-                <p class="text-muted small mb-0">{{ inst_settings.slogan|default:"Sistema Integral de Gestión Académica y Control Escolar" }}</p>
-            </div>
-            <div class="col-lg-4 text-lg-end">
-                <button class="btn btn-primary btn-sm px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#changePresetModal">
-                    <i class="bi bi-magic me-1"></i> Cambiar de Modelo
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Panel de Trazabilidad Activa Exclusiva -->
-<div class="card ac-card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-        <div>
-            <h5 class="fw-bold text-dark mb-0">
-                <i class="bi bi-diagram-3-fill text-success me-2"></i>Trazabilidad Académica e Institucional Vigente
-            </h5>
-            <p class="text-muted small mb-0">Términos y roles aplicados exclusivamente a la institución actual.</p>
-        </div>
-        <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
-            <i class="bi bi-shield-check me-1"></i>Trazabilidad Aislada y Activa
-        </span>
-    </div>
-    <div class="card-body p-4">
-        <div class="row g-3">
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Cargo de Dirección</small>
-                    <div class="fw-bold text-primary fs-6">{{ inst_settings.term_director }}</div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Máxima autoridad y supervisión</small>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Formador / Docente</small>
-                    <div class="fw-bold text-success fs-6">{{ inst_settings.term_teacher }} <span class="text-muted fw-normal">({{ inst_settings.term_teachers }})</span></div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Responsable de asignación y notas</small>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Estudiante / Participante</small>
-                    <div class="fw-bold text-dark fs-6">{{ inst_settings.term_student }} <span class="text-muted fw-normal">({{ inst_settings.term_students }})</span></div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Titular de matrícula y calificaciones</small>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Nivel / Ciclo</small>
-                    <div class="fw-bold text-info fs-6">{{ inst_settings.term_grade }}</div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Etapa formativa o temporal</small>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Grupo / Salón / Ficha</small>
-                    <div class="fw-bold text-warning-emphasis fs-6">{{ inst_settings.term_section }} <span class="text-muted fw-normal">({{ inst_settings.term_sections }})</span></div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Agrupación lectiva de alumnos</small>
-                </div>
-            </div>
-            <div class="col-md-4 col-sm-6">
-                <div class="p-3 bg-light rounded-3 border">
-                    <small class="text-muted text-uppercase fw-semibold d-block mb-1" style="font-size: 0.72rem;">Unidad Curricular / Asignatura</small>
-                    <div class="fw-bold text-danger fs-6">{{ inst_settings.term_subject }} <span class="text-muted fw-normal">({{ inst_settings.term_subjects }})</span></div>
-                    <small class="text-secondary" style="font-size: 0.75rem;">Contenido temático evaluable</small>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Formulario Detallado de Personalización de Terminología -->
-<div class="card ac-card border-0 shadow-sm">
-    <div class="card-header bg-white py-3 border-bottom">
-        <h5 class="fw-bold text-dark mb-0">
-            <i class="bi bi-pencil-square text-primary me-2"></i>Edición de Parámetros de la Institución Activa
-        </h5>
-        <p class="text-muted small mb-0">Ajuste con total libertad el nombre institucional y cada una de las etiquetas del sistema.</p>
-    </div>
-    <div class="card-body p-4">
-        <form method="POST">
-            {% csrf_token %}
-            <input type="hidden" name="action" value="save_custom">
-            <input type="hidden" name="institution_type" value="{{ inst_settings.institution_type }}">
-
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Nombre Oficial de la Institución</label>
-                    <input type="text" name="institution_name" class="form-control" value="{{ inst_settings.institution_name }}" required>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label fw-bold small">Lema o Subtítulo Institucional</label>
-                    <input type="text" name="slogan" class="form-control" value="{{ inst_settings.slogan }}">
-                </div>
-            </div>
-
-            {% if inst_settings.institution_type == 'COLEGIO' %}
-            <div class="card bg-light border-0 rounded-3 p-3 mb-4 border-start border-4 border-primary">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <i class="bi bi-diagram-2-fill text-primary fs-5"></i>
-                    <h6 class="fw-bold text-dark mb-0">Enfoque y Niveles del Colegio:</h6>
-                </div>
-                <p class="text-muted small mb-2">
-                    Defina si su colegio imparte exclusivamente Primaria, Secundaria/Media, o todos los niveles completos. ACADEMIX ajustará automáticamente los grados escolares y cursos visibles.
-                </p>
-                <div class="row g-2">
-                    {% for scope_code, scope_name in school_scopes %}
-                    <div class="col-md-4">
-                        <div class="form-check p-3 bg-white rounded-3 border h-100">
-                            <input class="form-check-input ms-0 me-2" type="radio" name="school_scope" id="scope_{{ scope_code }}" value="{{ scope_code }}" {% if inst_settings.school_scope == scope_code %}checked{% endif %}>
-                            <label class="form-check-label fw-bold text-dark small" for="scope_{{ scope_code }}">
-                                {{ scope_name }}
-                            </label>
-                            <div class="form-text small text-muted" style="font-size:0.75rem;">
-                                {% if scope_code == 'PRIMARIA' %}
-                                Transición, 1°, 2°, 3°, 4° y 5° de Básica Primaria.
-                                {% elif scope_code == 'SECUNDARIA' %}
-                                6°, 7°, 8°, 9° de Secundaria y 10°, 11° de Media.
+                <div class="card-body p-4">
+                    <div class="row align-items-center g-4">
+                        <div class="col-sm-5 text-center">
+                            <div class="p-3 rounded-4 border bg-light d-flex flex-column align-items-center justify-content-center mx-auto shadow-sm"
+                                 style="width: 170px; height: 170px; position: relative; overflow: hidden;" id="logoPreviewContainer">
+                                {% if inst_settings.logo %}
+                                    <img src="{{ inst_settings.logo.url }}" alt="Logo Institucional" id="logoPreviewImg"
+                                         style="max-width: 100%; max-height: 100%; object-fit: contain;">
                                 {% else %}
-                                Todos los niveles regulares: Transición hasta 11°.
+                                    <div id="logoPlaceholder" class="text-center text-muted">
+                                        <i class="bi bi-mortarboard-fill display-4" style="color: var(--ac-primary, #7c3aed);"></i>
+                                        <small class="d-block mt-2 fw-semibold text-secondary" style="font-size: 0.72rem;">Sin logo personalizado</small>
+                                    </div>
+                                    <img src="" alt="Previsualización" id="logoPreviewImg" style="max-width: 100%; max-height: 100%; object-fit: contain; display: none;">
                                 {% endif %}
                             </div>
+                            <small class="text-muted d-block mt-2" style="font-size: 0.75rem;">Vista previa de visualización</small>
+                        </div>
+                        <div class="col-sm-7">
+                            <label class="form-label fw-bold small text-dark mb-1">Cargar Archivo del Logo:</label>
+                            <input type="file" name="logo" id="logoInput" class="form-control form-control-sm mb-2" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+                            <small class="text-muted d-block mb-3" style="font-size: 0.75rem;">
+                                <i class="bi bi-info-circle me-1 text-primary"></i>Recomendado: Formato <strong>PNG transparente o SVG</strong>. Tamaño óptimo: 250×250 px o superior.
+                            </small>
+
+                            {% if inst_settings.logo %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="remove_logo" value="1" id="removeLogoCheck">
+                                <label class="form-check-label text-danger small fw-semibold" for="removeLogoCheck">
+                                    <i class="bi bi-trash3 me-1"></i>Eliminar logotipo actual y usar ícono predeterminado
+                                </label>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
-            {% endif %}
+        </div>
 
-            <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Términos que rigen en toda la plataforma:</h6>
-
-            <div class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Alumno (Singular)</label>
-                    <input type="text" name="term_student" class="form-control form-control-sm" value="{{ inst_settings.term_student }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Alumnos (Plural)</label>
-                    <input type="text" name="term_students" class="form-control form-control-sm" value="{{ inst_settings.term_students }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Profesor (Singular)</label>
-                    <input type="text" name="term_teacher" class="form-control form-control-sm" value="{{ inst_settings.term_teacher }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Profesores (Plural)</label>
-                    <input type="text" name="term_teachers" class="form-control form-control-sm" value="{{ inst_settings.term_teachers }}" required>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Nivel Académico</label>
-                    <input type="text" name="term_grade" class="form-control form-control-sm" value="{{ inst_settings.term_grade }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Grupo / Clase (Singular)</label>
-                    <input type="text" name="term_section" class="form-control form-control-sm" value="{{ inst_settings.term_section }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Grupos / Clases (Plural)</label>
-                    <input type="text" name="term_sections" class="form-control form-control-sm" value="{{ inst_settings.term_sections }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Materia / Asignatura (Singular)</label>
-                    <input type="text" name="term_subject" class="form-control form-control-sm" value="{{ inst_settings.term_subject }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Materias (Plural)</label>
-                    <input type="text" name="term_subjects" class="form-control form-control-sm" value="{{ inst_settings.term_subjects }}" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label small fw-semibold">Cargo de Dirección</label>
-                    <input type="text" name="term_director" class="form-control form-control-sm" value="{{ inst_settings.term_director }}" required>
-                </div>
-            </div>
-
-            <div class="mt-4 pt-3 border-top text-end">
-                <button type="submit" class="btn btn-primary px-4 shadow-sm">
-                    <i class="bi bi-save me-1"></i> Guardar Cambios de Terminología
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Modal para Cambiar el Modelo Institucional -->
-<div class="modal fade" id="changePresetModal" tabindex="-1" aria-labelledby="changePresetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold" id="changePresetModalLabel">
-                    <i class="bi bi-magic text-primary me-2"></i>Seleccionar Modelo Institucional
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body p-4">
-                <p class="text-muted small mb-3">
-                    Al seleccionar un modelo, el sistema adaptará automáticamente toda la trazabilidad y vocabulario de la plataforma a la institución elegida:
-                </p>
-                <div class="row g-3">
-                    <!-- Preset Colegio -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 border {% if inst_settings.institution_type == 'COLEGIO' %}border-primary bg-primary-subtle shadow-sm{% else %}bg-light{% endif %} h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="bi bi-backpack4-fill fs-4 text-primary"></i>
-                                    <h6 class="fw-bold text-dark mb-0">Colegio / Escuela</h6>
-                                </div>
-                                <p class="small text-muted mb-2" style="font-size: 0.8rem;">
-                                    <strong>Básica Primaria, Secundaria y Media.</strong><br>
-                                    Términos: Estudiante, Docente, Grado, Curso, Asignatura, Rector(a).
-                                </p>
-                            </div>
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="apply_preset">
-                                <input type="hidden" name="preset" value="COLEGIO">
-                                <button type="submit" class="btn btn-sm {% if inst_settings.institution_type == 'COLEGIO' %}btn-primary{% else %}btn-outline-primary{% endif %} w-100">
-                                    {% if inst_settings.institution_type == 'COLEGIO' %}<i class="bi bi-check-circle me-1"></i>Activo{% else %}Activar Modo Colegio{% endif %}
-                                </button>
-                            </form>
+        <!-- 2. PALETA DE COLORES DE LA ESCUELA -->
+        <div class="col-lg-6">
+            <div class="card ac-card border-0 shadow-sm mb-4 h-100">
+                <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="p-2 rounded-3 text-white" style="background: var(--ac-primary, #7c3aed);">
+                            <i class="bi bi-palette-fill"></i>
+                        </span>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">Colores del Sitio Web (Tema)</h5>
+                            <small class="text-muted">Aplica los colores representativos de la escuela a toda la plataforma</small>
                         </div>
                     </div>
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">En Vivo</span>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Paletas Rápidas Prediseñadas de Colegios -->
+                    <label class="form-label fw-bold small text-dark mb-2">
+                        <i class="bi bi-stars text-warning me-1"></i>Paletas Populares de Colegios (1 Clic):
+                    </label>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#7c3aed" data-secondary="#c4b5fd" title="Púrpura ACADEMIX">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #7c3aed;"></span>
+                            <small class="fw-semibold">Púrpura</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#1e40af" data-secondary="#93c5fd" title="Azul Colegial">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #1e40af;"></span>
+                            <small class="fw-semibold">Azul Colegio</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#15803d" data-secondary="#86efac" title="Verde Esperanza">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #15803d;"></span>
+                            <small class="fw-semibold">Verde Bosque</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#b91c1c" data-secondary="#fca5a5" title="Rojo Tradición">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #b91c1c;"></span>
+                            <small class="fw-semibold">Rojo Granate</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#881337" data-secondary="#f43f5e" title="Vino Tinto Prestigio">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #881337;"></span>
+                            <small class="fw-semibold">Vino Tinto</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#0f766e" data-secondary="#5eead4" title="Verde Esmeralda">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #0f766e;"></span>
+                            <small class="fw-semibold">Esmeralda</small>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary border preset-color-btn d-flex align-items-center gap-2 px-2 py-1"
+                                data-primary="#0f172a" data-secondary="#94a3b8" title="Azul Marino Noche">
+                            <span class="rounded-circle d-inline-block" style="width: 16px; height: 16px; background: #0f172a;"></span>
+                            <small class="fw-semibold">Azul Marino</small>
+                        </button>
+                    </div>
 
-                    <!-- Preset Universidad -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 border {% if inst_settings.institution_type == 'UNIVERSIDAD' %}border-primary bg-primary-subtle shadow-sm{% else %}bg-light{% endif %} h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="bi bi-mortarboard-fill fs-4 text-success"></i>
-                                    <h6 class="fw-bold text-dark mb-0">Universidad / Superior</h6>
-                                </div>
-                                <p class="small text-muted mb-2" style="font-size: 0.8rem;">
-                                    <strong>Pregrado y Posgrado.</strong><br>
-                                    Términos: Estudiante, Profesor(a), Semestre, Grupo, Materia, Decano(a).
-                                </p>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark mb-1">Color Principal (Primario):</label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color p-1" id="primaryColorPicker" 
+                                       value="{{ inst_settings.primary_color|default:'#7c3aed' }}" style="max-width: 50px;">
+                                <input type="text" name="primary_color" id="primaryColorText" class="form-control font-monospace"
+                                       value="{{ inst_settings.primary_color|default:'#7c3aed' }}" placeholder="#7c3aed">
                             </div>
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="apply_preset">
-                                <input type="hidden" name="preset" value="UNIVERSIDAD">
-                                <button type="submit" class="btn btn-sm {% if inst_settings.institution_type == 'UNIVERSIDAD' %}btn-success text-white{% else %}btn-outline-success{% endif %} w-100">
-                                    {% if inst_settings.institution_type == 'UNIVERSIDAD' %}<i class="bi bi-check-circle me-1"></i>Activo{% else %}Activar Modo Universidad{% endif %}
-                                </button>
-                            </form>
+                            <small class="text-muted" style="font-size: 0.72rem;">Barra lateral, botones y encabezados</small>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="form-label fw-bold small text-dark mb-1">Color Secundario / Acento:</label>
+                            <div class="input-group">
+                                <input type="color" class="form-control form-control-color p-1" id="secondaryColorPicker" 
+                                       value="{{ inst_settings.secondary_color|default:'#c4b5fd' }}" style="max-width: 50px;">
+                                <input type="text" name="secondary_color" id="secondaryColorText" class="form-control font-monospace"
+                                       value="{{ inst_settings.secondary_color|default:'#c4b5fd' }}" placeholder="#c4b5fd">
+                            </div>
+                            <small class="text-muted" style="font-size: 0.72rem;">Insignias, bordes suaves y detalles</small>
                         </div>
                     </div>
 
-                    <!-- Preset SENA -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 border {% if inst_settings.institution_type == 'SENA_TECNICO' %}border-primary bg-primary-subtle shadow-sm{% else %}bg-light{% endif %} h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="bi bi-gear-wide-connected fs-4 text-warning"></i>
-                                    <h6 class="fw-bold text-dark mb-0">Técnico / SENA</h6>
-                                </div>
-                                <p class="small text-muted mb-2" style="font-size: 0.8rem;">
-                                    <strong>Formación Técnica y Tecnológica.</strong><br>
-                                    Términos: Aprendiz, Instructor(a), Trimestre, Ficha, Competencia / Módulo, Subdirector(a).
-                                </p>
-                            </div>
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="apply_preset">
-                                <input type="hidden" name="preset" value="SENA_TECNICO">
-                                <button type="submit" class="btn btn-sm {% if inst_settings.institution_type == 'SENA_TECNICO' %}btn-warning text-dark fw-bold{% else %}btn-outline-warning text-dark{% endif %} w-100">
-                                    {% if inst_settings.institution_type == 'SENA_TECNICO' %}<i class="bi bi-check-circle me-1"></i>Activo{% else %}Activar Modo SENA / Técnico{% endif %}
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-
-                    <!-- Preset Academia -->
-                    <div class="col-md-6">
-                        <div class="p-3 rounded-3 border {% if inst_settings.institution_type == 'ACADEMIA' %}border-primary bg-primary-subtle shadow-sm{% else %}bg-light{% endif %} h-100 d-flex flex-column justify-content-between">
-                            <div>
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <i class="bi bi-palette-fill fs-4 text-info"></i>
-                                    <h6 class="fw-bold text-dark mb-0">Academia / Cursos</h6>
-                                </div>
-                                <p class="small text-muted mb-2" style="font-size: 0.8rem;">
-                                    <strong>Idiomas, Artes, Diplomados.</strong><br>
-                                    Términos: Alumno(a), Tutor(a), Nivel, Grupo/Clase, Módulo/Taller, Director(a).
-                                </p>
-                            </div>
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="action" value="apply_preset">
-                                <input type="hidden" name="preset" value="ACADEMIA">
-                                <button type="submit" class="btn btn-sm {% if inst_settings.institution_type == 'ACADEMIA' %}btn-info text-white{% else %}btn-outline-info{% endif %} w-100">
-                                    {% if inst_settings.institution_type == 'ACADEMIA' %}<i class="bi bi-check-circle me-1"></i>Activo{% else %}Activar Modo Academia{% endif %}
-                                </button>
-                            </form>
+                    <!-- Cuadro de Previsualización en Vivo de Botones y Elementos -->
+                    <div class="mt-4 p-3 rounded-3 border bg-light" id="themeLivePreviewBox">
+                        <small class="text-muted text-uppercase fw-bold d-block mb-2" style="font-size: 0.7rem;">Previsualización en tiempo real:</small>
+                        <div class="d-flex flex-wrap align-items-center gap-2">
+                            <button type="button" class="btn btn-sm text-white px-3 fw-semibold shadow-sm" id="previewBtnPrimary"
+                                    style="background: {{ inst_settings.primary_color|default:'#7c3aed' }};">
+                                Botón Principal
+                            </button>
+                            <span class="badge px-3 py-2 fw-semibold" id="previewBadge"
+                                  style="background: {{ inst_settings.secondary_color|default:'#c4b5fd' }}; color: #1e1b4b;">
+                                Insignia / Estado
+                            </span>
+                            <span class="fw-bold" id="previewText" style="color: {{ inst_settings.primary_color|default:'#7c3aed' }};">
+                                Título Institucional
+                            </span>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <!-- 3. DATOS OFICIALES DE LA ESCUELA (PARA COMERCIALIZACIÓN / VENTA) -->
+    <div class="card ac-card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <span class="p-2 rounded-3 text-white" style="background: var(--ac-primary, #7c3aed);">
+                    <i class="bi bi-building-check"></i>
+                </span>
+                <div>
+                    <h5 class="fw-bold text-dark mb-0">Información y Datos Oficiales del Colegio</h5>
+                    <small class="text-muted">Personaliza el nombre, lema y registros legales de la institución compradora</small>
+                </div>
+            </div>
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                <i class="bi bi-shield-lock-fill me-1"></i>Colegio / Escuela
+            </span>
+        </div>
+        <div class="card-body p-4">
+            <div class="row g-3 mb-3">
+                <div class="col-md-7">
+                    <label class="form-label fw-bold small text-dark">Nombre Oficial de la Institución Educativa: <span class="text-danger">*</span></label>
+                    <input type="text" name="institution_name" class="form-control" value="{{ inst_settings.institution_name }}" required
+                           placeholder="Ej: Colegio Gimnasio Campestre San José">
+                    <div class="form-text text-muted">Aparecerá en el portal web, diplomas, boletines y certificaciones oficiales.</div>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-bold small text-dark">Lema o Subtítulo Institucional:</label>
+                    <input type="text" name="slogan" class="form-control" value="{{ inst_settings.slogan }}"
+                           placeholder="Ej: Ciencia, Virtud y Excelencia Académica">
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">Código DANE / Registro Oficial:</label>
+                    <input type="text" name="dane_code" class="form-control" value="{{ inst_settings.dane_code }}"
+                           placeholder="Ej: 111001098765">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">NIT / Resolución de Aprobación:</label>
+                    <input type="text" name="consecutive_resolution" class="form-control" value="{{ inst_settings.consecutive_resolution }}"
+                           placeholder="Ej: Res. 1234 de MinEducación / NIT 900.123.456-7">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">Enfoque Académico:</label>
+                    <select name="school_scope" class="form-select">
+                        {% for code, label in school_scopes %}
+                        <option value="{{ code }}" {% if inst_settings.school_scope == code %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text text-muted">Ajusta los grados automáticamente (Transición a 11°).</div>
+                </div>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">Correo Electrónico Institucional:</label>
+                    <input type="email" name="contact_email" class="form-control" value="{{ inst_settings.contact_email }}"
+                           placeholder="rectoria@colegio.edu.co">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">Teléfono / PBX de Contacto:</label>
+                    <input type="text" name="contact_phone" class="form-control" value="{{ inst_settings.contact_phone }}"
+                           placeholder="PBX: (601) 745-0000 / 310 1234567">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-bold small text-dark">Página Web Oficial (Opcional):</label>
+                    <input type="url" name="website_url" class="form-control" value="{{ inst_settings.website_url }}"
+                           placeholder="https://www.colegiosanjose.edu.co">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÓN FINAL DE GUARDADO Y APLICACIÓN INMEDIATA -->
+    <div class="d-flex justify-content-end gap-3 mb-5">
+        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary px-4 py-2 fw-semibold">Cancelar</a>
+        <button type="submit" class="btn text-white px-5 py-2 fw-bold shadow-sm d-flex align-items-center gap-2"
+                style="background: var(--ac-primary, #7c3aed); border: none; font-size: 1rem;">
+            <i class="bi bi-check2-circle fs-5"></i>
+            <span>Guardar y Aplicar Identidad a Todo el Sitio Web</span>
+        </button>
+    </div>
+</form>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Previsualización dinámica de Logo al seleccionar archivo
+    const logoInput = document.getElementById('logoInput');
+    const logoPreviewImg = document.getElementById('logoPreviewImg');
+    const logoPlaceholder = document.getElementById('logoPlaceholder');
+
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    logoPreviewImg.src = evt.target.result;
+                    logoPreviewImg.style.display = 'block';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // 2. Sincronización bidireccional de pickers de colores
+    const pPicker = document.getElementById('primaryColorPicker');
+    const pText = document.getElementById('primaryColorText');
+    const sPicker = document.getElementById('secondaryColorPicker');
+    const sText = document.getElementById('secondaryColorText');
+
+    const previewBtn = document.getElementById('previewBtnPrimary');
+    const previewBadge = document.getElementById('previewBadge');
+    const previewText = document.getElementById('previewText');
+
+    function updatePreviewColors() {
+        const prim = pPicker.value;
+        const sec = sPicker.value;
+        if (previewBtn) previewBtn.style.backgroundColor = prim;
+        if (previewBadge) previewBadge.style.backgroundColor = sec;
+        if (previewText) previewText.style.color = prim;
+    }
+
+    if (pPicker && pText) {
+        pPicker.addEventListener('input', function() {
+            pText.value = pPicker.value;
+            updatePreviewColors();
+        });
+        pText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(pText.value)) {
+                pPicker.value = pText.value;
+                updatePreviewColors();
+            }
+        });
+    }
+
+    if (sPicker && sText) {
+        sPicker.addEventListener('input', function() {
+            sText.value = sPicker.value;
+            updatePreviewColors();
+        });
+        sText.addEventListener('input', function() {
+            if (/^#[0-9A-Fa-f]{6}$/.test(sText.value)) {
+                sPicker.value = sText.value;
+                updatePreviewColors();
+            }
+        });
+    }
+
+    // 3. Botones de Paletas Rápidas
+    document.querySelectorAll('.preset-color-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const prim = this.getAttribute('data-primary');
+            const sec = this.getAttribute('data-secondary');
+            if (pPicker && pText) {
+                pPicker.value = prim;
+                pText.value = prim;
+            }
+            if (sPicker && sText) {
+                sPicker.value = sec;
+                sText.value = sec;
+            }
+            updatePreviewColors();
+        });
+    });
+});
+</script>
 {% endblock %}

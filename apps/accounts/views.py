@@ -22,23 +22,9 @@ def login_view(request):
         return redirect('accounts:dashboard')
 
     form = LoginForm(request, data=request.POST or None)
-    institution_types = InstitutionSetting.InstitutionType.choices
     current_institution = InstitutionSetting.get_settings()
 
-    model_param = request.GET.get('model')
-    if model_param and model_param in dict(InstitutionSetting.InstitutionType.choices):
-        if current_institution.institution_type != model_param:
-            current_institution.apply_preset(model_param)
-            current_institution.refresh_from_db()
-
     if request.method == 'POST':
-        # Aplicar el modelo institucional seleccionado antes de autenticar
-        selected_type = request.POST.get('institution_type', '').strip()
-        if selected_type and selected_type in dict(InstitutionSetting.InstitutionType.choices):
-            if current_institution.institution_type != selected_type:
-                current_institution.apply_preset(selected_type)
-                current_institution.refresh_from_db()
-
         if form.is_valid():
             user = form.get_user()
             login(request, user)
@@ -126,20 +112,12 @@ def register_view(request):
 
     model_param = request.GET.get('model')
     if model_param and model_param in dict(InstitutionSetting.InstitutionType.choices):
-        if current_institution.institution_type != model_param:
-            current_institution.apply_preset(model_param)
-            current_institution.refresh_from_db()
+        current_institution.apply_preset(model_param)
+        current_institution.refresh_from_db()
 
     form = RegistrationForm(request.POST or None)
 
     if request.method == 'POST':
-        # Aplicar el modelo institucional seleccionado si se especificó
-        selected_type = request.POST.get('institution_type', '').strip()
-        if selected_type and selected_type in dict(InstitutionSetting.InstitutionType.choices):
-            if current_institution.institution_type != selected_type:
-                current_institution.apply_preset(selected_type)
-                current_institution.refresh_from_db()
-
         if form.is_valid():
             role = form.cleaned_data['role']
             username = form.cleaned_data['username']
@@ -237,19 +215,16 @@ def register_view(request):
 
 def switch_institution_model_view(request):
     """
-    Endpoint AJAX/GET/POST para cambiar inmediatamente el modelo institucional activo
-    y retornar su terminología para adaptación dinámica del frontend en login y registro.
+    Endpoint de terminología institucional fija para Colegio / Escuela.
     """
     from apps.courses.models import InstitutionSetting
     from django.http import JsonResponse
 
     model_type = request.POST.get('model') or request.GET.get('model') or request.POST.get('institution_type')
     settings_obj = InstitutionSetting.get_settings()
-
     if model_type and model_type in dict(InstitutionSetting.InstitutionType.choices):
-        if settings_obj.institution_type != model_type:
-            settings_obj.apply_preset(model_type)
-            settings_obj.refresh_from_db()
+        settings_obj.apply_preset(model_type)
+        settings_obj.refresh_from_db()
         return JsonResponse({
             'status': 'ok',
             'model': model_type,
@@ -267,7 +242,24 @@ def switch_institution_model_view(request):
                 'director': settings_obj.term_director,
             }
         })
-    return JsonResponse({'status': 'error', 'message': 'Modelo institucional no válido'}, status=400)
+
+    return JsonResponse({
+        'status': 'ok',
+        'model': 'COLEGIO',
+        'model_display': 'Colegio / Escuela (Básica y Media)',
+        'terms': {
+            'student': settings_obj.term_student,
+            'students': settings_obj.term_students,
+            'teacher': settings_obj.term_teacher,
+            'teachers': settings_obj.term_teachers,
+            'grade': settings_obj.term_grade,
+            'section': settings_obj.term_section,
+            'sections': settings_obj.term_sections,
+            'subject': settings_obj.term_subject,
+            'subjects': settings_obj.term_subjects,
+            'director': settings_obj.term_director,
+        }
+    })
 
 def logout_view(request):
     """
@@ -605,3 +597,67 @@ def get_global_theme_api(request):
     if theme:
         return JsonResponse({'ok': True, 'theme': theme})
     return JsonResponse({'ok': False, 'theme': None})
+
+
+@login_required
+def users_management_view(request):
+    """
+    Panel Administrativo Integral de Gestión de Usuarios.
+    Permite al Administrador y Rector ver, buscar, filtrar por rol y alternar el estado
+    (activo/inactivo) de cualquier usuario de la institución sin necesidad de ingresar al admin de Django.
+    """
+    if not (request.user.is_admin_role or request.user.is_rector):
+        messages.error(request, 'No tiene permisos para administrar usuarios institucionales.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        target_user_id = request.POST.get('user_id')
+        if action == 'toggle_active' and target_user_id:
+            try:
+                target_user = CustomUser.objects.get(id=target_user_id)
+                if target_user.id == request.user.id:
+                    messages.warning(request, 'No puedes desactivar tu propia cuenta de acceso actual.')
+                else:
+                    target_user.is_active = not target_user.is_active
+                    target_user.save(update_fields=['is_active'])
+                    estado_str = "activado" if target_user.is_active else "desactivado"
+                    messages.success(request, f'Usuario {target_user.username} {estado_str} correctamente.')
+            except CustomUser.DoesNotExist:
+                messages.error(request, 'Usuario no encontrado.')
+        return redirect('accounts:users_list')
+
+    role_filter = request.GET.get('role', '').strip()
+    search_query = request.GET.get('q', '').strip()
+    status_filter = request.GET.get('status', '').strip()
+
+    users_qs = CustomUser.objects.all().order_by('-date_joined')
+
+    if role_filter:
+        users_qs = users_qs.filter(role=role_filter)
+
+    if status_filter == 'active':
+        users_qs = users_qs.filter(is_active=True)
+    elif status_filter == 'inactive':
+        users_qs = users_qs.filter(is_active=False)
+
+    if search_query:
+        from django.db.models import Q
+        users_qs = users_qs.filter(
+            Q(username__icontains=search_query) |
+            Q(first_name__icontains=search_query) |
+            Q(last_name__icontains=search_query) |
+            Q(document_number__icontains=search_query) |
+            Q(email__icontains=search_query)
+        )
+
+    context = {
+        'users_list': users_qs[:200],
+        'total_count': users_qs.count(),
+        'roles': CustomUser.Role.choices,
+        'selected_role': role_filter,
+        'search_query': search_query,
+        'selected_status': status_filter,
+    }
+    return render(request, 'accounts/users_list.html', context)
+

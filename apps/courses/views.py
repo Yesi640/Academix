@@ -204,59 +204,96 @@ def create_section_view(request):
 @login_required
 def institution_settings_view(request):
     """
-    Panel de configuración institucional y adaptación de terminología.
-    Permite parametrizar ACADEMIX para Colegios, Universidades, Institutos Técnicos (SENA) o Academias,
-    y definir el enfoque escolar (Primaria, Secundaria o Completo).
-    Accesible para Administrador y Rector.
+    Panel de Personalización de Marca e Identidad Escolar (White-Label).
+    Permite al Administrador y Rector cambiar el logotipo de la escuela,
+    la paleta de colores de todo el sitio web (primario y secundario) y
+    la información oficial del colegio para comercializar a cualquier institución educativa.
     """
     if not (request.user.is_admin_role or request.user.is_rector):
-        messages.error(request, 'No tiene permisos para modificar los parámetros institucionales.')
+        messages.error(request, 'No tiene permisos para modificar la identidad y parámetros institucionales.')
         return redirect('dashboard')
 
     settings_obj = InstitutionSetting.get_settings()
 
     if request.method == 'POST':
-        action = request.POST.get('action')
+        # 1. Manejo del Logo Institucional
+        if 'logo' in request.FILES:
+            settings_obj.logo = request.FILES['logo']
+        elif request.POST.get('remove_logo') == '1':
+            if settings_obj.logo:
+                settings_obj.logo.delete(save=False)
+            settings_obj.logo = None
 
-        if action == 'apply_preset':
-            preset = request.POST.get('preset')
-            if preset in dict(InstitutionSetting.InstitutionType.choices):
-                settings_obj.apply_preset(preset)
-                messages.success(request, f'Configuración adaptada exitosamente al modo: {settings_obj.get_institution_type_display()}')
-            else:
-                messages.error(request, 'Preset no válido.')
-        else:
-            # Actualización manual detallada
-            settings_obj.institution_name = request.POST.get('institution_name', settings_obj.institution_name).strip()
-            settings_obj.slogan = request.POST.get('slogan', settings_obj.slogan).strip()
-            settings_obj.institution_type = request.POST.get('institution_type', settings_obj.institution_type)
+        # 2. Paleta de Colores de la Escuela
+        primary_color = request.POST.get('primary_color', '').strip()
+        secondary_color = request.POST.get('secondary_color', '').strip()
+        if primary_color:
+            settings_obj.primary_color = primary_color
+        if secondary_color:
+            settings_obj.secondary_color = secondary_color
 
-            # Enfoque del colegio (Primaria / Secundaria / Completo)
-            if settings_obj.institution_type == InstitutionSetting.InstitutionType.COLEGIO:
-                school_scope = request.POST.get('school_scope')
-                if school_scope in dict(InstitutionSetting.SchoolLevelScope.choices):
-                    settings_obj.school_scope = school_scope
-                    from .services import ensure_standard_colegio_grades
-                    ensure_standard_colegio_grades(school_scope)
+        # 3. Datos Oficiales de la Escuela
+        inst_name = request.POST.get('institution_name', '').strip()
+        if inst_name:
+            settings_obj.institution_name = inst_name
+        settings_obj.slogan = request.POST.get('slogan', settings_obj.slogan).strip()
+        settings_obj.dane_code = request.POST.get('dane_code', '').strip()
+        settings_obj.consecutive_resolution = request.POST.get('consecutive_resolution', '').strip()
+        settings_obj.contact_email = request.POST.get('contact_email', '').strip()
+        settings_obj.contact_phone = request.POST.get('contact_phone', '').strip()
+        settings_obj.website_url = request.POST.get('website_url', '').strip()
 
-            settings_obj.term_student = request.POST.get('term_student', settings_obj.term_student).strip()
-            settings_obj.term_students = request.POST.get('term_students', settings_obj.term_students).strip()
-            settings_obj.term_teacher = request.POST.get('term_teacher', settings_obj.term_teacher).strip()
-            settings_obj.term_teachers = request.POST.get('term_teachers', settings_obj.term_teachers).strip()
-            settings_obj.term_grade = request.POST.get('term_grade', settings_obj.term_grade).strip()
-            settings_obj.term_section = request.POST.get('term_section', settings_obj.term_section).strip()
-            settings_obj.term_sections = request.POST.get('term_sections', settings_obj.term_sections).strip()
-            settings_obj.term_subject = request.POST.get('term_subject', settings_obj.term_subject).strip()
-            settings_obj.term_subjects = request.POST.get('term_subjects', settings_obj.term_subjects).strip()
-            settings_obj.term_director = request.POST.get('term_director', settings_obj.term_director).strip()
-            settings_obj.save()
-            messages.success(request, 'Parámetros institucionales actualizados correctamente.')
+        # Enfoque escolar (Primaria, Secundaria o Completo)
+        school_scope = request.POST.get('school_scope')
+        if school_scope in dict(InstitutionSetting.SchoolLevelScope.choices):
+            settings_obj.school_scope = school_scope
+            from .services import ensure_standard_colegio_grades
+            ensure_standard_colegio_grades(school_scope)
 
+        # Fijar permanentemente modelo COLEGIO
+        settings_obj.institution_type = InstitutionSetting.InstitutionType.COLEGIO
+        settings_obj.save()
+
+        # 4. Sincronizar tema global en todo el sistema
+        try:
+            from apps.accounts.models import SystemThemeSettings
+            theme_data = {
+                'key': 'custom_school',
+                'name': settings_obj.institution_name,
+                'primary': settings_obj.primary_color,
+                'primaryDark': settings_obj.primary_color,
+                'primaryLight': settings_obj.secondary_color,
+                'primaryPastel': settings_obj.secondary_color,
+                'sidebarGradient': f"linear-gradient(180deg, {settings_obj.primary_color} 0%, #0f172a 100%)",
+                'shadow': f"0 10px 25px -5px {settings_obj.primary_color}40",
+            }
+            SystemThemeSettings.set_global_theme(theme_data, request.user)
+        except Exception:
+            pass
+
+        # 5. Registrar en Auditoría Inmutable
+        from apps.audit.services import log_audit
+        from apps.audit.models import AuditLog
+        log_audit(
+            action=AuditLog.Action.CONFIG_CHANGE,
+            table_name='courses_institutionsetting',
+            record_id=str(settings_obj.id),
+            new_values={
+                'institution_name': settings_obj.institution_name,
+                'primary_color': settings_obj.primary_color,
+                'secondary_color': settings_obj.secondary_color,
+                'has_logo': bool(settings_obj.logo),
+            },
+            reason=f'Personalización de marca e identidad escolar para {settings_obj.institution_name}',
+            user=request.user,
+            request=request
+        )
+
+        messages.success(request, f'¡Identidad visual y datos de "{settings_obj.institution_name}" actualizados con éxito en todo el sistema!')
         return redirect('courses:institution_settings')
 
     context = {
         'inst_settings': settings_obj,
-        'institution_types': InstitutionSetting.InstitutionType.choices,
         'school_scopes': InstitutionSetting.SchoolLevelScope.choices,
     }
     return render(request, 'courses/institution_settings.html', context)

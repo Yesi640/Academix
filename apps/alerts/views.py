@@ -84,3 +84,67 @@ def activities_list_view(request):
     }
     return render(request, 'alerts/activities_list.html', context)
 
+
+@login_required
+def alerts_management_view(request):
+    """
+    Panel de Control y Emisión de Semáforos y Alertas Institucionales.
+    Permite al Administrador y Rector emitir avisos (🔴 Bloqueo, 🟡 Advertencia, 🔵 Informativo),
+    ver las alertas del sistema y desactivar alertas vigentes.
+    """
+    from django.contrib import messages
+    if not (request.user.is_admin_role or request.user.is_rector):
+        messages.error(request, 'No tiene permisos para administrar las alertas del sistema.')
+        return redirect('dashboard')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        if action == 'create':
+            title = request.POST.get('title', '').strip()
+            message = request.POST.get('message', '').strip()
+            level = request.POST.get('level', SystemAlert.Level.INFO)
+            target_role = request.POST.get('target_role', '').strip()
+            if target_role == 'ALL':
+                target_role = ''
+            is_dismissible = request.POST.get('is_dismissible') == '1'
+
+            if title and message:
+                SystemAlert.objects.create(
+                    title=title,
+                    message=message,
+                    level=level,
+                    target_role=target_role or None,
+                    is_dismissible=is_dismissible,
+                    is_active=True
+                )
+                messages.success(request, f'Alerta institucional "{title}" emitida exitosamente.')
+            else:
+                messages.warning(request, 'El título y el mensaje son obligatorios.')
+        elif action == 'toggle_active':
+            alert_id = request.POST.get('alert_id')
+            try:
+                alert_obj = SystemAlert.objects.get(id=alert_id)
+                alert_obj.is_active = not alert_obj.is_active
+                alert_obj.save(update_fields=['is_active'])
+                st = "reactivada" if alert_obj.is_active else "desactivada"
+                messages.success(request, f'Alerta {st} correctamente.')
+            except SystemAlert.DoesNotExist:
+                messages.error(request, 'Alerta no encontrada.')
+        return redirect('alerts:management')
+
+    alerts_list = SystemAlert.objects.all().order_by('-created_at')[:100]
+    context = {
+        'alerts_list': alerts_list,
+        'levels': SystemAlert.Level.choices,
+        'roles': [
+            ('ALL', 'Todos los Usuarios (Institucional)'),
+            ('TEACHER', 'Docentes'),
+            ('STUDENT', 'Estudiantes'),
+            ('PARENT', 'Padres de Familia / Acudientes'),
+            ('SECRETARIA', 'Secretaría Académica'),
+            ('RECTOR', 'Directivos / Rectoría'),
+        ]
+    }
+    return render(request, 'alerts/management.html', context)
+
+

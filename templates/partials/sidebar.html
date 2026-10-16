@@ -1,7 +1,11 @@
 <aside id="sidebar">
-    <a href="{% url 'dashboard' %}" class="sidebar-brand">
-        <i class="bi bi-mortarboard-fill"></i>
-        <span>ACADEMIX</span>
+    <a href="{% url 'dashboard' %}" class="sidebar-brand d-flex align-items-center">
+        {% if institution.logo %}
+            <img src="{{ institution.logo.url }}" alt="{{ institution.institution_name }}" style="max-height: 36px; max-width: 36px; object-fit: contain; border-radius: 6px;" class="me-2">
+        {% else %}
+            <i class="bi bi-mortarboard-fill me-2 fs-4"></i>
+        {% endif %}
+        <span class="text-truncate">{{ institution.institution_name|default:'ACADEMIX' }}</span>
     </a>
 
     <div class="sidebar-user-badge">
@@ -165,15 +169,17 @@
         </li>
         {% endif %}
 
-        <!-- Accesos para Administrador -->
-        {% if user.is_admin_role %}
-        <li class="sidebar-menu-header">Administración</li>
+        <!-- Accesos para Administrador y Rector -->
+        {% if user.is_admin_role or user.is_rector %}
+        <li class="sidebar-menu-header">Administración y Marca</li>
         <li class="sidebar-item">
             <a href="{% url 'courses:institution_settings' %}" class="sidebar-link {% if 'institution-settings' in request.path %}active{% endif %}">
-                <i class="bi bi-sliders2 text-primary"></i>
-                <span>Adaptabilidad Institucional</span>
+                <i class="bi bi-palette-fill text-warning"></i>
+                <span>Personalización y Marca</span>
             </a>
         </li>
+        {% endif %}
+        {% if user.is_admin_role %}
         <li class="sidebar-item">
             <a href="{% url 'audit:list' %}" class="sidebar-link {% if 'audit' in request.path %}active{% endif %}">
                 <i class="bi bi-shield-check"></i>
@@ -181,13 +187,13 @@
             </a>
         </li>
         <li class="sidebar-item">
-            <a href="/admin/accounts/customuser/" class="sidebar-link">
+            <a href="{% url 'accounts:users_list' %}" class="sidebar-link {% if 'accounts/users' in request.path %}active{% endif %}">
                 <i class="bi bi-people-fill"></i>
                 <span>Gestión Usuarios</span>
             </a>
         </li>
         <li class="sidebar-item">
-            <a href="/admin/alerts/systemalert/" class="sidebar-link">
+            <a href="{% url 'alerts:management' %}" class="sidebar-link {% if 'alerts/management' in request.path %}active{% endif %}">
                 <i class="bi bi-exclamation-triangle-fill"></i>
                 <span>Semáforos y Alertas</span>
             </a>

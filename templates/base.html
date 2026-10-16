@@ -21,6 +21,30 @@
     <link rel="stylesheet" href="{% static 'css/academix.css' %}?v=3.6">
     <meta name="csrf-token" content="{{ csrf_token }}">
 
+    {% if institution and institution.primary_color %}
+    <style>
+        :root {
+            --ac-primary: {{ institution.primary_color }} !important;
+            --bs-primary: {{ institution.primary_color }} !important;
+            --ac-sidebar-gradient: linear-gradient(180deg, {{ institution.primary_color }} 0%, #0f172a 100%) !important;
+            {% if institution.secondary_color %}
+            --ac-primary-pastel: {{ institution.secondary_color }} !important;
+            --ac-primary-light: {{ institution.secondary_color }} !important;
+            {% endif %}
+        }
+        .btn-primary, .bg-primary {
+            background-color: {{ institution.primary_color }} !important;
+            border-color: {{ institution.primary_color }} !important;
+        }
+        .text-primary {
+            color: {{ institution.primary_color }} !important;
+        }
+        .border-primary {
+            border-color: {{ institution.primary_color }} !important;
+        }
+    </style>
+    {% endif %}
+
     <!-- Contexto del Usuario y Rol para Personalización Aislada -->
     <script>
     window.ACADEMIX_CURRENT_USER = {
