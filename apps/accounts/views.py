@@ -22,6 +22,7 @@ def login_view(request):
         return redirect('accounts:dashboard')
 
     form = LoginForm(request, data=request.POST or None)
+    institution_types = InstitutionSetting.InstitutionType.choices
     current_institution = InstitutionSetting.get_settings()
 
     if request.method == 'POST':
