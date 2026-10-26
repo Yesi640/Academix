@@ -1,0 +1,1390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>Sustentación Proyecto ACADEMIX | 16 Diapositivas - ADSO SENA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #f8fafc;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --primary: #1d4ed8;
+      --primary-light: #3b82f6;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --text-body: #334155;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-body);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* TOP HEADER & CONTROLS */
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid var(--card-border);
+      padding: 0.85rem 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #1d4ed8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: white;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.25);
+    }
+
+    .brand-text h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .brand-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      background: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+      padding: 0.15rem 0.55rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* FILTERS BY THEME */
+    .speaker-filters {
+      display: flex;
+      gap: 0.4rem;
+      background: #f1f5f9;
+      padding: 0.3rem 0.4rem;
+      border-radius: 999px;
+      border: 1px solid var(--card-border);
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      padding: 0.45rem 1rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .filter-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .filter-btn.active[data-target="all"] {
+      background: #1e293b;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(30, 41, 59, 0.2);
+    }
+
+    .filter-btn.active[data-target="pilar1"] {
+      background: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+    }
+
+    .filter-btn.active[data-target="pilar2"] {
+      background: #7c3aed;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(124, 58, 237, 0.25);
+    }
+
+    .filter-btn.active[data-target="pilar3"] {
+      background: #059669;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .action-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: var(--text-main);
+      padding: 0.45rem 0.95rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all 0.2s;
+    }
+
+    .action-btn:hover {
+      background: #f8fafc;
+      border-color: #475569;
+    }
+
+    /* PRESENTATION CONTAINER */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      position: relative;
+    }
+
+    .slide-wrapper {
+      width: 100%;
+      max-width: 1140px;
+      min-height: 590px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .slide-header {
+      padding: 1.1rem 2rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #fafbfc;
+    }
+
+    .speaker-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-pilar1 {
+      background: #f0f9ff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    .badge-pilar2 {
+      background: #f5f3ff;
+      color: #6d28d9;
+      border: 1px solid #ddd6fe;
+    }
+
+    .badge-pilar3 {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+
+    .badge-team {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
+    .doc-link-pill {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      background: #f1f5f9;
+      padding: 0.35rem 0.8rem;
+      border-radius: 6px;
+      border: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-weight: 500;
+    }
+
+    .slide-body {
+      flex: 1;
+      padding: 2.2rem 2.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      background: #ffffff;
+    }
+
+    .slide-title-area {
+      margin-bottom: 1.6rem;
+    }
+
+    .slide-title-area h2 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.95rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: var(--text-main);
+    }
+
+    .slide-title-area p.subtitle {
+      font-size: 0.98rem;
+      color: #475569;
+      margin-top: 0.35rem;
+      font-weight: 500;
+    }
+
+    /* GRID & CONTENT CARDS */
+    .slide-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+      margin-top: 0.4rem;
+    }
+
+    .content-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.35rem;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .content-box:hover {
+      border-color: #334155;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .content-box h3 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .content-box ul {
+      list-style: none;
+      font-size: 0.88rem;
+      color: #334155;
+      line-height: 1.65;
+    }
+
+    .content-box ul li {
+      position: relative;
+      padding-left: 1.25rem;
+      margin-bottom: 0.45rem;
+    }
+
+    .content-box ul li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      color: #2563eb;
+      font-size: 1.2rem;
+      line-height: 1;
+      top: -1px;
+    }
+
+    .metric-pill {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      padding: 0.15rem 0.55rem;
+      border-radius: 4px;
+      font-size: 0.78rem;
+    }
+
+    /* SPEAKER NOTES DRAWER */
+    .speaker-notes-drawer {
+      background: #eff6ff;
+      border-top: 1px solid #bfdbfe;
+      padding: 1.2rem 2.5rem;
+      font-size: 0.9rem;
+      line-height: 1.65;
+      color: #1e3a8a;
+      position: relative;
+      display: none;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .speaker-notes-drawer.open {
+      display: block;
+    }
+
+    .speaker-notes-drawer strong {
+      color: #1d4ed8;
+      font-family: 'Outfit', sans-serif;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    /* FOOTER CONTROLS */
+    .slide-footer {
+      padding: 0.9rem 2rem;
+      background: #fafbfc;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .progress-bar-container {
+      flex: 1;
+      max-width: 320px;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 1.5rem;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: #1d4ed8;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 0.6rem;
+    }
+
+    .nav-btn {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: var(--text-main);
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover:not(:disabled) {
+      background: #1d4ed8;
+      color: #ffffff;
+      border-color: #1d4ed8;
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .slide-counter {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+    }
+
+    /* TABLE STYLES */
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      margin-top: 0.6rem;
+    }
+
+    .custom-table th {
+      background: #f1f5f9;
+      color: #0f172a;
+      text-align: left;
+      padding: 0.7rem 0.9rem;
+      border-bottom: 2px solid #cbd5e1;
+      font-weight: 700;
+    }
+
+    .custom-table td {
+      padding: 0.7rem 0.9rem;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+    }
+
+    .custom-table tr:hover td {
+      background: #f8fafc;
+    }
+
+    /* HUB DOCUMENTAL STYLES */
+    .doc-hub-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.1rem;
+      margin-top: 0.6rem;
+    }
+
+    .doc-pillar-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .doc-pillar-header {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.45rem 0.8rem;
+      border-radius: 6px;
+      margin-bottom: 0.2rem;
+    }
+
+    .pillar-pilar1 { background: #f0f9ff; color: #0369a1; border: 1px solid #bae6fd; }
+    .pillar-pilar2 { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+    .pillar-pilar3 { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+
+    .doc-card {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 1.1rem;
+      text-decoration: none;
+      display: block;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .doc-card:hover {
+      background: #f8fafc;
+      border-color: #475569;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .doc-card-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.4rem;
+    }
+
+    .doc-card-desc {
+      font-size: 0.8rem;
+      color: #475569;
+      margin-top: 0.45rem;
+      line-height: 1.5;
+    }
+
+    .doc-card-arrow {
+      font-size: 0.85rem;
+      color: #64748b;
+      transition: transform 0.2s;
+    }
+
+    .doc-card:hover .doc-card-arrow {
+      color: #1d4ed8;
+      transform: translateX(3px);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .doc-hub-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      header { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+      .speaker-filters { justify-content: center; overflow-x: auto; }
+      .slide-body { padding: 1.5rem; }
+      .slide-title-area h2 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOP APP BAR -->
+  <header>
+    <div class="brand">
+      <div class="brand-logo">A</div>
+      <div class="brand-text">
+        <h1>ACADEMIX — Sustentación de Proyecto <span class="brand-badge">Colegio & Multi-Colegio</span></h1>
+        <p>Tecnología en Análisis y Desarrollo de Software (ADSO) • Ficha 2834512 SENA</p>
+      </div>
+    </div>
+
+    <!-- FILTER BY THEME (NO INTEGRANTE 1,2,3) -->
+    <div class="speaker-filters">
+      <button class="filter-btn active" data-target="all">Todos (16)</button>
+      <button class="filter-btn" data-target="pilar1">📘 Gestión Académica & UX</button>
+      <button class="filter-btn" data-target="pilar2">⚙️ Arquitectura & Base de Datos</button>
+      <button class="filter-btn" data-target="pilar3">🛡️ Infraestructura & Seguridad</button>
+    </div>
+
+    <div class="header-actions">
+      <button class="action-btn" id="toggle-notes-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        Notas / Speech
+      </button>
+      <button class="action-btn" id="fullscreen-btn">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+        Pantalla Completa
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN SLIDE AREA -->
+  <main>
+    <div class="slide-wrapper" id="slide-container">
+      
+      <!-- SLIDE TOP META -->
+      <div class="slide-header">
+        <span class="speaker-badge badge-team" id="speaker-badge">🏛️ APERTURA — EQUIPO COMPLETO</span>
+        <span class="doc-link-pill" id="doc-ref-pill">
+          📄 Ref: DOCUMENTO_TECNICO_APA7_SENA.md
+        </span>
+      </div>
+
+      <!-- SLIDE BODY CONTENT (INJECTED DYNAMICALLY) -->
+      <div class="slide-body" id="slide-content">
+        <!-- Contenido dinámico -->
+      </div>
+
+      <!-- SPEECH / SPEAKER NOTES -->
+      <div class="speaker-notes-drawer" id="speaker-notes">
+        <strong>🎙️ Guión Sugerido para la Exposición:</strong>
+        <p id="speech-text"></p>
+      </div>
+
+      <!-- BOTTOM NAVIGATION BAR -->
+      <div class="slide-footer">
+        <div class="slide-counter" id="slide-counter">Diapositiva 1 / 16</div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="nav-controls">
+          <button class="nav-btn" id="prev-btn" title="Anterior (Flecha Izquierda)">❮</button>
+          <button class="nav-btn" id="next-btn" title="Siguiente (Flecha Derecha / Espacio)">❯</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- JAVASCRIPT SLIDE ENGINE (EXACTLY 16 SLIDES) -->
+  <script>
+    const slidesData = [
+      /* SLIDE 1 - APERTURA */
+      {
+        speaker: "all",
+        badgeText: "🏛️ APERTURA — EQUIPO DE DESARROLLO",
+        badgeClass: "badge-team",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md",
+        title: "Plataforma de Gestión Escolar y Multi-Colegio ACADEMIX",
+        subtitle: "Sustentación de Proyecto Formativo — Tecnología en Análisis y Desarrollo de Software (ADSO) SENA",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🎓 Ficha y Contexto Institucional</h3>
+              <ul>
+                <li><strong>Programa:</strong> Tecnología en Análisis y Desarrollo de Software (ADSO).</li>
+                <li><strong>Ficha SENA:</strong> 2834512 — Centro de Tecnologías de la Información.</li>
+                <li><strong>Enfoque Especializado:</strong> Colegios de Educación Básica y Media Técnica.</li>
+                <li><strong>Modelo de Entrega:</strong> SaaS Multi-Colegio con despliegue On-Premise local.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>📌 3 Pilares Temáticos de la Sustentación</h3>
+              <ul>
+                <li><strong>Pilar 1 (Gestión Académica & UX):</strong> Modelo curricular por RAPs al 100%, asistencia y convivencia.</li>
+                <li><strong>Pilar 2 (Arquitectura & Datos):</strong> 15 micro-apps Django, PostgreSQL en 3FN y motor de boletines PDF.</li>
+                <li><strong>Pilar 3 (Infraestructura & Seguridad):</strong> Seguridad RBAC 6 roles, auditoría Ley 1581 y entrega técnica.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Buenos días estimados instructores y jurados evaluadores. En representación de nuestro equipo de desarrollo, damos apertura a la sustentación oficial del proyecto ACADEMIX. Diseñamos una solución integral de software enfocada exclusivamente en Colegios de Educación Básica y Media, con capacidad de operar en red local o en la nube bajo un modelo Multi-Colegio. Nuestra presentación está estructurada en tres pilares temáticos de igual rigor técnico y profundidad: Gestión Académica y Experiencia de Usuario, Arquitectura de Software y Base de Datos, e Infraestructura, Seguridad y Entrega Formal."
+      },
+
+      /* SLIDE 2 - PILAR 1: GESTIÓN & UX */
+      {
+        speaker: "pilar1",
+        badgeText: "📘 GESTIÓN ACADÉMICA & UX",
+        badgeClass: "badge-pilar1",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 1)",
+        title: "Planteamiento del Problema y Justificación Escolar",
+        subtitle: "De la dispersión de planillas en papel a la centralización digital en tiempo real",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>⚠️ Diagnóstico de la Problemática Escolar</h3>
+              <ul>
+                <li><strong>Dispersión en Hojas de Cálculo:</strong> Docentes llevando notas en archivos de Excel aislados y propensos a desincronización o borrado accidental.</li>
+                <li><strong>Reprocesos Administrativos:</strong> Semanas de retraso en secretaría para digitar, consolidar actas de periodo y generar los boletines bimestrales.</li>
+                <li><strong>Falta de Información a Familias:</strong> Los acudientes solo se enteraban del bajo rendimiento o ausentismo al finalizar el periodo escolar.</li>
+                <li><strong>Vulnerabilidad de Datos:</strong> Registro manual del observador de conducta en carpetas de papel sin respaldo ni custodia formal.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>💡 Solución Integral con ACADEMIX</h3>
+              <ul>
+                <li><strong>Planilla Única Centralizada:</strong> Calificación directa por docentes en plataforma web accesible desde cualquier dispositivo del colegio.</li>
+                <li><strong>Cálculo Automático Inmediato:</strong> Definitivas ponderadas y actualización al instante del consolidado académico sin digitación manual.</li>
+                <li><strong>Seguimiento Formativo Integral:</strong> Registro diario de asistencia, observador pedagógico y aula digital de tareas y talleres.</li>
+                <li><strong>Transparencia Directiva:</strong> Monitoreo en tiempo real para Rectoría y alertas tempranas para acudientes y comités de evaluación.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Al diagnosticar la operación de las instituciones escolares en Colombia, identificamos una problemática crítica: la desconexión operativa. Las notas se manejaban en libros físicos o plantillas de Excel desconectadas, provocando semanas de caos en secretaría para consolidar periodos, y dejando a los acudientes sin enterarse a tiempo del riesgo de reprobación de sus hijos. ACADEMIX resuelve este problema unificando la planilla docente, el control diario de asistencia, el observador de conducta y las tareas escolares en un solo software escolar en tiempo real."
+      },
+
+      /* SLIDE 3 - PILAR 1: GESTIÓN & UX */
+      {
+        speaker: "pilar1",
+        badgeText: "📘 GESTIÓN ACADÉMICA & UX",
+        badgeClass: "badge-pilar1",
+        docRef: "docs/MANUAL_DE_NAVEGACION_PASO_A_PASO.md",
+        title: "Arquitectura Multi-Colegio y Estructura Organizacional",
+        subtitle: "Aislamiento institucional completo y gestión de sedes dentro de un mismo núcleo de software",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🏢 Arquitectura Multi-Colegio (SaaS Escolar)</h3>
+              <ul>
+                <li><strong>Entidad School Independiente:</strong> Cada institución registrada posee su propio código DANE, resolución ministerial, logo, colores institucionales y directivas.</li>
+                <li><strong>Aislamiento Estricto de Datos:</strong> Un docente o estudiante matriculado en el 'Colegio A' no tiene visibilidad ni acceso a la información del 'Colegio B'.</li>
+                <li><strong>Consolidación Multi-Sede:</strong> Permite a administradores distritales o secretarías de educación supervisar múltiples planteles bajo un solo servidor.</li>
+                <li><strong>Personalización de Marca:</strong> Inyección dinámica de colores corporativos e insignias en interfaz y encabezados de reportes.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>🏫 Jerarquía Curricular Escolar</h3>
+              <ul>
+                <li><strong>Niveles Educativos:</strong> Estructurado para Preescolar, Básica Primaria (1° a 5°), Básica Secundaria (6° a 9°) y Media Técnica (10° y 11°).</li>
+                <li><strong>Organización por Grupos:</strong> Grados, Cursos (ej: 601, 602, 1101), Asignaturas y Salones de clase asignados formalmente.</li>
+                <li><strong>Dirección de Grupo:</strong> Asignación formal de docentes directores de curso con privilegios para redactar conceptos integrales en boletines.</li>
+                <li><strong>Vigencia y Periodos:</strong> Parametrización anual (ej: 2026) con apertura y cierre controlado de 4 periodos académicos bimestrales.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Uno de los mayores requerimientos definidos en nuestro proyecto fue descartar modelos ajenos como universidades o institutos técnicos para concentrarnos 100% en colegios de Básica y Media. Pero fuimos más allá: implementamos un patrón Multi-Colegio donde una sola instancia del software puede albergar diferentes colegios o sedes de forma totalmente aislada. Cada colegio cuenta con su propio código DANE, sus directivas, sus colores e insignia oficial, organizando a sus alumnos en grados, grupos y periodos escolares sin mezclar expedientes."
+      },
+
+      /* SLIDE 4 - PILAR 1: GESTIÓN & UX */
+      {
+        speaker: "pilar1",
+        badgeText: "📘 GESTIÓN ACADÉMICA & UX",
+        badgeClass: "badge-pilar1",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 2)",
+        title: "Motor de Evaluación Curricular y Cálculo Ponderado",
+        subtitle: "Estructura pedagógica por RAPs con validación estricta al 100% y Decreto 1290",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📐 Desglose Pedagógico Multinivel</h3>
+              <ul>
+                <li><strong>Área del Conocimiento:</strong> Agrupador curricular fundamental (ej: Matemáticas, Ciencias Naturales, Humanidades).</li>
+                <li><strong>Asignatura Específica:</strong> Materia dictada por el docente (ej: Álgebra, Biología, Lengua Castellana) con intensidad horaria semanal.</li>
+                <li><strong>Competencias Formativas:</strong> Habilidades generales a desarrollar durante el año lectivo.</li>
+                <li><strong>Resultados de Aprendizaje (RAPs):</strong> Indicadores de logro observables evaluados numéricamente en escala de 1.0 a 5.0.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>⚙️ Regla del 100% y Escala Nacional</h3>
+              <ul>
+                <li><strong>Validación Matemática del 100%:</strong> La suma de los pesos porcentuales de los RAPs debe ser exactamente 100%. Blindado en frontend (JS reactivo) y en backend con <code>clean()</code> de Django.</li>
+                <li><strong>Escala Valorativa (Decreto 1290 de 2009):</strong>
+                  <br>• Desempeño Superior: 4.6 a 5.0
+                  <br>• Desempeño Alto: 4.0 a 4.5
+                  <br>• Desempeño Básico: 3.0 a 3.9 (Mínimo aprobatorio)
+                  <br>• Desempeño Bajo: 1.0 a 2.9 (Reprobatorio con alerta temprana)
+                </li>
+                <li><strong>Histórico Inmutable:</strong> Bloqueo automático de edición de notas una vez la directiva ejecuta el cierre oficial del periodo lectivo.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "El núcleo pedagógico de Academix se apega rigurosamente al Decreto 1290 de evaluación escolar en Colombia. Estructuramos la jerarquía en Área, Asignatura, Competencias y Resultados de Aprendizaje o RAPs. Para blindar la exactitud matemática del sistema, implementamos una regla estricta: los porcentajes de evaluación deben sumar exactamente el 100%. Si un docente intenta asignar 90% o 110%, el sistema no solo lo avisa en pantalla en tiempo real mediante JavaScript, sino que el método clean() del modelo en Django rechaza la transacción protegiendo la integridad del boletín."
+      },
+
+      /* SLIDE 5 - PILAR 1: GESTIÓN & UX */
+      {
+        speaker: "pilar1",
+        badgeText: "📘 GESTIÓN ACADÉMICA & UX",
+        badgeClass: "badge-pilar1",
+        docRef: "docs/MANUAL_DE_NAVEGACION_PASO_A_PASO.md",
+        title: "Experiencia de Usuario (UX/UI): Asistencia, Observador y Tareas",
+        subtitle: "Interfaces adaptativas y herramientas formativas para el trabajo diario en el aula",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📋 Control Diario de Asistencia</h3>
+              <ul>
+                <li><strong>Toma Rápida en 1 Clic:</strong> Matriz interactiva de alumnos con opciones: Asistió (A), Falla Injustificada (FI), Falla Justificada (FJ) y Retardo (R).</li>
+                <li><strong>Semáforo de Deserción:</strong> Conteo acumulado de ausencias que dispara alertas amarillas y rojas cuando el alumno supera el 20% o 25% de inasistencia del periodo.</li>
+                <li><strong>Justificación Formal:</strong> Registro digital de excusas médicas adjuntas por coordinación o secretaría.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>📖 Observador del Alumno y Aula de Tareas</h3>
+              <ul>
+                <li><strong>Observador Pedagógico Digital:</strong> Tipificación de faltas según Manual de Convivencia (Leve, Grave, Gravísima) con derecho a descargo escrito del estudiante.</li>
+                <li><strong>Gestión de Tareas y Talleres:</strong> Creación de actividades escolares con fecha y hora límite de entrega, instrucciones y adjuntos (PDF, DOCX).</li>
+                <li><strong>Retroalimentación Docente:</strong> Envío digital del alumno, calificación con rúbrica cualitativa/cuantitativa y sincronización directa con la planilla.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Para garantizar que el software sea adoptado con agrado por los profesores, priorizamos la experiencia de usuario con interfaces intuitivas y limpias. Desarrollamos la toma de asistencia en un solo clic, incorporando un semáforo que detecta riesgo de deserción o pérdida por fallas. Asimismo, digitalizamos el Observador del Estudiante garantizando el debido proceso escolar y creamos el aula de tareas, permitiendo recibir trabajos digitales sin recurrir a correos dispersos o grupos de WhatsApp."
+      },
+
+      /* SLIDE 6 - PILAR 2: ARQUITECTURA & DATOS */
+      {
+        speaker: "pilar2",
+        badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
+        badgeClass: "badge-pilar2",
+        docRef: "docs/DICCIONARIO_DE_CODIGO_Y_CARPETAS_ACADEMIX.md",
+        title: "Patrón Arquitectónico MVT y 15 Micro-Apps Django",
+        subtitle: "Diseño modular de software con desacoplamiento funcional y alta mantenibilidad",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🏗️ Patrón Modelo-Vista-Template (MVT)</h3>
+              <ul>
+                <li><strong>Modelos (Models):</strong> Capa de persistencia en ORM que mapea objetos Python a tablas relacionales con validaciones nativas de negocio.</li>
+                <li><strong>Vistas (Views):</strong> Lógica de control encargada de autenticación, control RBAC, procesamiento transaccional y respuesta HTTP.</li>
+                <li><strong>Plantillas (Templates):</strong> Capa de presentación renderizada en servidor con Bootstrap 5 y diseño responsive sin dependencias pesadas.</li>
+                <li><strong>Framework Base:</strong> Python 3.12 y Django 5.x por su estabilidad empresarial, seguridad nativa y ecosistema ORM maduro.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>📦 Desacoplamiento en 15 Micro-Apps</h3>
+              <ul>
+                <li><strong>apps/accounts:</strong> Usuarios, roles, perfiles y autenticación institucional.</li>
+                <li><strong>apps/courses:</strong> Niveles, grados, áreas, asignaturas y asignaciones docentes.</li>
+                <li><strong>apps/grades:</strong> Planilla de notas, RAPs, porcentajes y cálculo de promedios.</li>
+                <li><strong>apps/attendance, tasks, observer:</strong> Operación diaria de convivencia y aula.</li>
+                <li><strong>apps/bulletins & reports:</strong> Motores de exportación en PDF y analítica escolar.</li>
+                <li><strong>apps/audit & alerts:</strong> Trazabilidad inmutable de eventos y semáforos de riesgo.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Pasando al segundo pilar, la ingeniería de software y backend de ACADEMIX se diseñó sobre Python y Django utilizando el patrón Modelo-Vista-Template. Para evitar código monolítico o acoplado, dividimos el sistema en 15 micro-aplicaciones especializadas dentro de la carpeta apps. Cada micro-app tiene una responsabilidad única: accounts gestiona la identidad institucional, courses administra la malla curricular, grades se encarga del cálculo evaluativo, y bulletins genera los informes oficiales. Esto facilita el mantenimiento, las pruebas unitarias y la escalabilidad del sistema."
+      },
+
+      /* SLIDE 7 - PILAR 2: ARQUITECTURA & DATOS */
+      {
+        speaker: "pilar2",
+        badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
+        badgeClass: "badge-pilar2",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 3)",
+        title: "Modelado Relacional en 3FN e Integridad Referencial",
+        subtitle: "Estructura de datos normalizada para erradicar redundancias y proteger el histórico escolar",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🗄️ Normalización en Tercera Forma Normal (3FN)</h3>
+              <ul>
+                <li><strong>1FN (Atomicidad):</strong> Eliminación de atributos multivaluados y listas; cada columna contiene datos atómicos e indivisibles.</li>
+                <li><strong>2FN (Dependencia Completa):</strong> Cada atributo no clave depende funcionalmente de la totalidad de la clave primaria.</li>
+                <li><strong>3FN (Sin Dependencias Transitivas):</strong> Ningún atributo depende de otro no clave; las entidades se vinculan por ForeignKeys explícitas (ej: Estudiante → Matrícula → Curso → Grado).</li>
+                <li><strong>Motor Compatible:</strong> PostgreSQL 16 para producción y SQLite/MySQL para laboratorios de desarrollo.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>🛡️ Cláusulas de Integridad Referencial</h3>
+              <ul>
+                <li><strong>Protección contra Borrado (PROTECT):</strong> Los modelos históricos de calificaciones y matrículas utilizan <code>on_delete=models.PROTECT</code> para impedir que el borrado de un usuario elimine sus notas pasadas.</li>
+                <li><strong>Restricciones de Unicidad (UniqueConstraint):</strong> Un estudiante solo puede tener un registro de matrícula activo por año lectivo y un docente una sola asignación por materia y curso.</li>
+                <li><strong>Campos de Auditoría:</strong> Sellado de tiempo obligatorio con <code>auto_now_add</code> y <code>auto_now</code> en todas las tablas transaccionales.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "En la base de datos aplicamos una normalización rigurosa en Tercera Forma Normal (3FN). Descompusimos la información para que no exista redundancia de nombres o materias, evitando anomalías de inserción y borrado. Un aspecto fundamental de nuestra defensa técnica es la integridad referencial: configuramos cláusulas on_delete=models.PROTECT en las calificaciones. Esto significa que si un directivo intenta eliminar a un estudiante que ya tiene notas registradas, la base de datos rechaza la operación protegiendo la validez legal del historial académico."
+      },
+
+      /* SLIDE 8 - PILAR 2: ARQUITECTURA & DATOS */
+      {
+        speaker: "pilar2",
+        badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
+        badgeClass: "badge-pilar2",
+        docRef: "docs/DICCIONARIO_DE_CODIGO_Y_CARPETAS_ACADEMIX.md",
+        title: "Optimización de Consultas ORM y Alta Concurrencia",
+        subtitle: "Eliminación del problema N+1, agregaciones a nivel SQL y transacciones atómicas",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>⚡ Solución al Problema N+1 de Consultas SQL</h3>
+              <ul>
+                <li><strong>Diagnóstico N+1:</strong> Al listar una planilla de 40 estudiantes con sus asignaturas, el ORM estándar ejecutaría 41 consultas SQL individuales, saturando la base de datos.</li>
+                <li><strong>Uso de select_related():</strong> Aplicado en relaciones ForeignKeys (ej: <code>student.user</code>, <code>course.grade</code>) para resolver la consulta mediante un solo JOIN SQL directo.</li>
+                <li><strong>Uso de prefetch_related():</strong> Utilizado en relaciones Many-to-Many o inversas (ej: listar notas y asistencias acumuladas) reduciendo decenas de queries a solo 2 consultas optimizadas.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>💾 Agregaciones SQL y Transacciones ACID</h3>
+              <ul>
+                <li><strong>Cálculos en Motor de Base de Datos:</strong> Los promedios generales y consolidados se calculan con <code>Avg()</code>, <code>Sum()</code> y expresiones <code>Case-When</code> directamente en PostgreSQL, no en memoria Python.</li>
+                <li><strong>Transacciones Atómicas (@transaction.atomic):</strong> Procesos sensibles como el cierre de periodo o la matriculación masiva se ejecutan bajo bloques transaccionales; si falla un solo registro, el sistema revierte todos los cambios garantizando consistencia.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Para que el software responda velozmente cuando 50 profesores ingresan notas al mismo tiempo, optimizamos el ORM de Django resolviendo el problema N+1. Si consultamos un curso sin optimizar, Django ejecuta decenas de consultas innecesarias. Con select_related y prefetch_related unificamos esas consultas en uno o dos viajes al motor SQL. Además, el cálculo de los promedios no satura la memoria del servidor porque se ejecuta directamente en PostgreSQL mediante funciones de agregación SQL dentro de transacciones atómicas seguras."
+      },
+
+      /* SLIDE 9 - PILAR 2: ARQUITECTURA & DATOS */
+      {
+        speaker: "pilar2",
+        badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
+        badgeClass: "badge-pilar2",
+        docRef: "docs/MANUAL_DE_ENTREGA_CLIENTE.md",
+        title: "Motor de Boletines Oficiales PDF y Certificados",
+        subtitle: "Generación de documentos imprimibles de alta fidelidad estética y memoria optimizada",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📄 Estructura del Boletín Oficial Escolar</h3>
+              <ul>
+                <li><strong>Encabezado Institucional:</strong> Escudo oficial del colegio, nombre legal, código DANE, número de resolución y datos del estudiante.</li>
+                <li><strong>Consolidado de Calificaciones:</strong> Tabla por periodos con nota numérica (1.0 a 5.0), equivalencia cualitativa (Decreto 1290) e intensidad horaria.</li>
+                <li><strong>Informe Formativo:</strong> Desglose de fallas justificadas e injustificadas, puesto del estudiante en el curso y promedio ponderado.</li>
+                <li><strong>Concepto del Director:</strong> Observaciones integrales redactadas por el docente tutor y espacio oficial para firmas de Rectoría.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>⚙️ Tecnología de Renderizado y Rendimiento</h3>
+              <ul>
+                <li><strong>Motor de Maquetación:</strong> Implementación con WeasyPrint y plantillas HTML5/CSS diseñadas en hoja tamaño Carta (Letter) con saltos de página controlados.</li>
+                <li><strong>Generación por Lotes (Batch Processing):</strong> Exportación masiva de cursos completos (ej: 40 boletines en un solo archivo PDF consolidado) para facilitar la impresión física.</li>
+                <li><strong>Streaming HTTP:</strong> Envío del PDF mediante <code>FileResponse</code> optimizado, evitando retener archivos binarios gigantes en la memoria RAM del servidor.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "El producto final más visible para la comunidad escolar es el Boletín de Calificaciones. Desarrollamos un motor de generación de boletines PDF basado en plantillas HTML y WeasyPrint que cumple con todos los requisitos del Ministerio de Educación: muestra el promedio ponderado, el puesto en el curso, el conteo de fallas, la escala cualitativa y el concepto del director de grupo. El motor cuenta con procesamiento por lotes para generar el curso completo en un solo PDF listo para imprimir sin bloquear el servidor web."
+      },
+
+      /* SLIDE 10 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      {
+        speaker: "pilar3",
+        badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
+        badgeClass: "badge-pilar3",
+        docRef: "docs/GUIA_AUDITORIA_CRUZADA_ACCESO_Y_ROLES.md",
+        title: "Control de Acceso Basado en Roles (RBAC)",
+        subtitle: "Aislamiento estricto de privilegios y blindaje de seguridad en todos los endpoints",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>👥 Matriz de 6 Roles Institucionales</h3>
+              <ul>
+                <li><strong>1. Super-Administrador:</strong> Mantenimiento global de la plataforma, creación de colegios y auditoría maestra.</li>
+                <li><strong>2. Rector / Directivo:</strong> Supervisión de sedes, aprobación y cierre oficial de periodos lectivos y emisión de certificados.</li>
+                <li><strong>3. Secretaría Académica:</strong> Matrícula escolar, asignación de cursos, gestión de usuarios y generación masiva de boletines.</li>
+                <li><strong>4. Docente:</strong> Calificación de RAPs, toma diaria de asistencia y asignación de tareas exclusivamente en sus materias.</li>
+                <li><strong>5. Estudiante:</strong> Consulta de notas parciales, entrega de tareas y seguimiento a su observador.</li>
+                <li><strong>6. Acudiente / Padre:</strong> Supervisión formativa del hijo a cargo, asistencia y alertas de rendimiento.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>🔒 Blindaje Multicapa de Endpoints</h3>
+              <ul>
+                <li><strong>Decoradores y Mixins:</strong> Protección obligatoria con <code>@login_required</code> y validación estricta de pertenencia al rol y a la escuela correspondiente.</li>
+                <li><strong>Protección contra OWASP Top 10:</strong> Token anti-falsificación CSRF en todos los formularios POST, escape automático contra XSS en templates y consultas parametrizadas contra inyecciones SQL.</li>
+                <li><strong>Validación de Matrícula:</strong> Un docente no puede ingresar notas en una materia que no le fue asignada por secretaría.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Al ingresar al tercer pilar de infraestructura y seguridad, el pilar central es nuestro modelo RBAC. Definimos 6 roles claramente delimitados: Administrador, Rector, Secretaría, Docente, Estudiante y Acudiente. Ningún usuario puede invadir la vista o funciones de otro rol. Los docentes solo pueden calificar las asignaturas que secretaría les asignó, los estudiantes no pueden modificar sus notas y los acudientes solo ven el expediente de sus propios hijos. Todo endpoint está protegido contra ataques CSRF, XSS e inyecciones SQL según las directrices de OWASP."
+      },
+
+      /* SLIDE 11 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      {
+        speaker: "pilar3",
+        badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
+        badgeClass: "badge-pilar3",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 4)",
+        title: "Auditoría Inmutable y Cumplimiento Ley 1581",
+        subtitle: "Trazabilidad forense de operaciones y custodia legal de datos personales de menores",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📜 Módulo de Auditoría Inmutable (AuditLog)</h3>
+              <ul>
+                <li><strong>Estructura Append-Only:</strong> Tabla de base de datos protegida a la que solo se puede añadir información; no permite modificación ni borrado de eventos.</li>
+                <li><strong>Metadatos Forenses:</strong> Registra usuario responsable, rol, dirección IP de origen, fecha y hora exacta (timestamp) y tabla afectada.</li>
+                <li><strong>Captura de Diferencias (Diff JSON):</strong> Almacena en formato JSON el valor previo y el valor nuevo modificado (ej: cambio de nota de 2.8 a 4.0 con motivo justificado).</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>⚖️ Blindaje Jurídico Ley 1581 de 2012 (Habeas Data)</h3>
+              <ul>
+                <li><strong>Custodia de Datos de Menores:</strong> Cumplimiento del Artículo 7 de la Ley 1581 y Decreto 1377; los datos de estudiantes son clasificados como sensibles y no compartidos con terceros.</li>
+                <li><strong>Autorización de Tratamiento:</strong> Registro de consentimiento informado en el formulario de matrícula firmado por el padre o acudiente legal.</li>
+                <li><strong>Principio de Confidencialidad:</strong> Almacenamiento On-Premise que garantiza que las notas y observadores nunca salgan del control del colegio.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Dado que el sistema custodia información sensible de niños y jóvenes, implementamos un módulo de Auditoría Inmutable llamado AuditLog. Cada vez que alguien crea, modifica o borra un registro —por ejemplo, si se rectifica una nota— el sistema guarda quién lo hizo, desde qué dirección IP, a qué hora y el valor exacto anterior y posterior en formato JSON. Esta tabla no se puede alterar ni borrar, cumpliendo a cabalidad con la Ley Estatutaria 1581 de Habeas Data para proteger la responsabilidad civil y legal de la institución."
+      },
+
+      /* SLIDE 12 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      {
+        speaker: "pilar3",
+        badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
+        badgeClass: "badge-pilar3",
+        docRef: "docs/MANUAL_DE_ENTREGA_CLIENTE.md",
+        title: "Infraestructura On-Premise y Despliegue en Red Local",
+        subtitle: "Arquitectura autónoma de servidores, segmentación por VLANs y viabilidad financiera",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🖥️ Topología de Servidores y Red Local</h3>
+              <ul>
+                <li><strong>Servidor de Aplicación:</strong> Servidor Linux Ubuntu / Debian ejecutando Gunicorn como servidor de procesos WSGI y Python 3.12.</li>
+                <li><strong>Proxy Inverso Nginx:</strong> Encargado de terminación SSL, balanceo de conexiones concurrentes y entrega estática de archivos (CSS, JS, imágenes).</li>
+                <li><strong>Segmentación por VLANs:</strong>
+                  <br>• VLAN 10 (Servidores y Base de Datos)
+                  <br>• VLAN 20 (Administración y Rectoría)
+                  <br>• VLAN 30 (Aulas y Docentes) aislada de la red directiva mediante firewall.
+                </li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>💰 Viabilidad Financiera (CAPEX vs OPEX)</h3>
+              <ul>
+                <li><strong>Independencia de Internet:</strong> El sistema funciona al 100% en la red cableada o Wi-Fi del colegio aunque se caiga el servicio de Internet externo.</li>
+                <li><strong>Cero Costos Recurrentes (OPEX):</strong> No se pagan costosas mensualidades en dólares por licencias SaaS externas ni almacenamiento en la nube.</li>
+                <li><strong>Script de Arranque Automático:</strong> Entrega de script batch/bash para encendido seguro del servidor con recuperación ante cortes eléctricos.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "En la infraestructura técnica diseñamos un modelo On-Premise de alta disponibilidad. El sistema se aloja en un servidor físico dentro del colegio utilizando Nginx como proxy inverso y Gunicorn como servidor de aplicaciones. La red se segmenta en tres VLANs para que los dispositivos de las aulas no tengan acceso indebido a la base de datos de administración. Este enfoque On-Premise ofrece dos ventajas contundentes: funciona en red local sin depender de que haya Internet y le ahorra al colegio pagos mensuales recurrentes en la nube."
+      },
+
+      /* SLIDE 13 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      {
+        speaker: "pilar3",
+        badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
+        badgeClass: "badge-pilar3",
+        docRef: "docs/MANUAL_CREACION_USUARIOS_Y_ROLES.md",
+        title: "Protocolo de Puesta en Marcha, Respaldos y Soporte",
+        subtitle: "Garantía de continuidad operativa, políticas de backup y entrega formal al cliente",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📦 Puesta en Marcha y Migración</h3>
+              <ul>
+                <li><strong>Aprovisionamiento Escalonado:</strong> Flujo formal: 1. Creación de Escuela → 2. Creación de Rector → 3. Cursos y Materias → 4. Carga de Docentes y Estudiantes.</li>
+                <li><strong>Importación Masiva (Excel/CSV):</strong> Carga limpia de matrículas con validación previa de duplicidad en documentos de identidad y correos institucionales.</li>
+                <li><strong>Generación de Credenciales:</strong> Asignación segura de ID único escolar para alumnos y contraseña inicial con forzado de cambio al primer ingreso.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>💾 Políticas de Respaldo y Acuerdo de Soporte (SLA)</h3>
+              <ul>
+                <li><strong>Backups Automatizados:</strong> Volcado diario nocturno de la base de datos con <code>pg_dump</code> comprimido en almacenamiento secundario físico.</li>
+                <li><strong>Recuperación ante Desastres (RTO &lt; 2h):</strong> Procedimiento documentado de restauración del sistema en caso de falla de hardware en menos de 120 minutos.</li>
+                <li><strong>Garantía Técnica Escolar:</strong> Acta formal de entrega que incluye 6 meses de garantía sobre el código y SLA de soporte prioritario para épocas de cierre de boletines.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "El ciclo de ingeniería culmina con la entrega y puesta en marcha del sistema. Documentamos el protocolo exacto para cargar las listas de estudiantes desde Excel sin errores de duplicados, asignando credenciales institucionales automáticas. Adicionalmente, entregamos una política de copias de seguridad automatizadas que respalda la base de datos todas las noches con un tiempo de recuperación ante desastres menor a 2 horas, respaldado por un acta formal de entrega con 6 meses de garantía técnica."
+      },
+
+      /* SLIDE 14 - HUB DOCUMENTAL */
+      {
+        speaker: "all",
+        badgeText: "📚 ECOSISTEMA DOCUMENTAL COMPLETO",
+        badgeClass: "badge-team",
+        docRef: "docs/PRESENTACION_OFICIAL_3_INTEGRANTES.md",
+        title: "Biblioteca Documental y Manuales del Sistema",
+        subtitle: "Los 6 documentos oficiales y definitivos que respaldan la sustentación ante el jurado",
+        content: `
+          <div class="doc-hub-grid">
+            <!-- PILAR 1 -->
+            <div class="doc-pillar-col">
+              <div class="doc-pillar-header pillar-pilar1">📘 Pilar 1: Gestión & UX</div>
+              
+              <a href="MANUAL_DE_NAVEGACION_PASO_A_PASO.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>👣 Manual de Navegación Paso a Paso</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Tutorial integral con 9 rutas guiadas de uso: inicio de sesión, planilla de notas, toma de asistencia, observador y tareas.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <span class="metric-pill">Manual Completo de Usuario</span>
+                </div>
+              </a>
+
+              <a href="MANUAL_CREACION_USUARIOS_Y_ROLES.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>👥 Creación de Usuarios y Roles</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Protocolo formal para aprovisionar colegios, directivos, docentes y alumnos con claves y códigos de carnet escolar.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <span class="metric-pill">Aprovisionamiento Escolar</span>
+                </div>
+              </a>
+            </div>
+
+            <!-- PILAR 2 -->
+            <div class="doc-pillar-col">
+              <div class="doc-pillar-header pillar-pilar2">⚙️ Pilar 2: Arquitectura & Datos</div>
+
+              <a href="DOCUMENTO_TECNICO_APA7_SENA.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>📑 Documento Técnico APA 7 (SENA)</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Informe maestro de competencias: requerimientos, modelo relacional 3FN, estándar ISO/IEC 25010 y Decreto 1290.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <span class="metric-pill">Informe Técnico Maestro</span>
+                </div>
+              </a>
+
+              <a href="DICCIONARIO_DE_CODIGO_Y_CARPETAS_ACADEMIX.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>💻 Diccionario de Código y Carpetas</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Radiografía técnica del software: explicación de las 15 micro-apps, modelos, vistas, URLs y scripts raíz.
+                </div>
+                <div style="margin-top: 0.6rem; display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+                  <span class="metric-pill">Arquitectura del Código</span>
+                  <a href="DICCIONARIO_DE_CODIGO_Y_CARPETAS_ACADEMIX.docx" download style="text-decoration: none;" title="Descargar versión en Microsoft Word">
+                    <span class="metric-pill" style="background: #e0f2fe; color: #0284c7; border-color: #bae6fd; cursor: pointer;">📄 Abrir en Word (.docx)</span>
+                  </a>
+                </div>
+              </a>
+            </div>
+
+            <!-- PILAR 3 -->
+            <div class="doc-pillar-col">
+              <div class="doc-pillar-header pillar-pilar3">🛡️ Pilar 3: Infraestructura & Seguridad</div>
+
+              <a href="GUIA_AUDITORIA_CRUZADA_ACCESO_Y_ROLES.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>🛡️ Auditoría Cruzada y Matriz RBAC</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Matriz de pruebas de seguridad: certificación de aislamiento entre los 6 roles institucionales y endpoints.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <span class="metric-pill">Seguridad & Permisos</span>
+                </div>
+              </a>
+
+              <a href="MANUAL_DE_ENTREGA_CLIENTE.md" target="_blank" class="doc-card">
+                <div class="doc-card-title">
+                  <span>📦 Manual de Entrega al Cliente</span>
+                  <span class="doc-card-arrow">↗</span>
+                </div>
+                <div class="doc-card-desc">
+                  Acta formal de entrega para Rectoría, credenciales iniciales, SLA de atención, garantía de 6 meses y script local.
+                </div>
+                <div style="margin-top: 0.6rem;">
+                  <span class="metric-pill">Cierre & Entrega Oficial</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        `,
+        speech: "En esta diapositiva presentamos el ecosistema documental definitivo de ACADEMIX: exactamente 6 documentos maestros, depurados y sin versiones repetidas. Cada pilar temático está respaldado por dos documentos exhaustivos: el pilar de Gestión cuenta con los manuales de Navegación y Creación de Usuarios; el pilar de Software cuenta con el Documento Técnico APA 7 y el Diccionario de Código (disponible en Word); y el pilar de Infraestructura cuenta con la Guía de Auditoría RBAC y el Manual de Entrega al Cliente con acta formal."
+      },
+
+      /* SLIDE 15 - CONCLUSIONES */
+      {
+        speaker: "all",
+        badgeText: "👥 EQUIPO COMPLETO — CONCLUSIONES",
+        badgeClass: "badge-team",
+        docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 5)",
+        title: "Conclusiones y Validación de Calidad (ISO/IEC 25010)",
+        subtitle: "Cumplimiento del 100% de los requisitos formativos y madurez de la ingeniería de software",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>🎯 Evaluación según Estándar ISO/IEC 25010</h3>
+              <ul>
+                <li><strong>Adecuación Funcional (100%):</strong> Cobertura total de la matrícula, asistencia, evaluación por RAPs y emisión de boletines.</li>
+                <li><strong>Fiabilidad y Precisión:</strong> Cero discrepancias aritméticas en notas gracias a la validación estricta del 100% y transacciones ACID.</li>
+                <li><strong>Seguridad de la Información:</strong> Matriz RBAC certificada, cifrado de credenciales y auditoría inmutable bajo Ley 1581.</li>
+                <li><strong>Usabilidad Escolar:</strong> Interfaces limpias con diseño accesible para docentes y acudientes sin capacitación técnica compleja.</li>
+              </ul>
+            </div>
+            <div class="content-box">
+              <h3>🏆 Logros Principales del Proyecto</h3>
+              <ul>
+                <li><strong>Transformación Escolar:</strong> Eliminación de reprocesos en secretaría y erradicación del papel en el seguimiento disciplinario.</li>
+                <li><strong>Multi-Colegio Operativo:</strong> Capacidad probada para gestionar varias instituciones educativas de forma simultánea e independiente.</li>
+                <li><strong>Autonomía Financiera:</strong> Solución On-Premise que ahorra costos recurrentes a instituciones educativas públicas y privadas.</li>
+              </ul>
+            </div>
+          </div>
+        `,
+        speech: "Como equipo de desarrollo, concluimos que ACADEMIX superó con éxito todas las metas del proyecto formativo ADSO. Evaluamos el sistema bajo la norma internacional ISO/IEC 25010 alcanzando el 100% en adecuación funcional, precisión matemática y seguridad de la información. Demostramos que es posible construir una plataforma de alta gama tecnológica, adaptada a la legislación colombiana y financieramente viable para los colegios de nuestro país."
+      },
+
+      /* SLIDE 16 - PREGUNTAS Y CIERRE */
+      {
+        speaker: "all",
+        badgeText: "👥 EQUIPO COMPLETO — CIERRE",
+        badgeClass: "badge-team",
+        docRef: "docs/PRESENTACION_OFICIAL_3_INTEGRANTES.md (Cap. 4)",
+        title: "Ronda de Preguntas de los Jurados Técnicos",
+        subtitle: "El equipo se encuentra preparado para resolver las inquietudes de la mesa evaluadora",
+        content: `
+          <div class="slide-grid">
+            <div class="content-box">
+              <h3>📘 Tema 1: Gestión Académica & UX</h3>
+              <p style="font-size: 0.85rem; color: #475569; line-height: 1.55;">
+                <strong>Preparada para responder sobre:</strong> Algoritmo ponderado de RAPs al 100%, semáforos de asistencia, escala valorativa Decreto 1290 y arquitectura del observador de conducta.
+              </p>
+            </div>
+            <div class="content-box">
+              <h3>⚙️ Tema 2: Arquitectura & Base de Datos</h3>
+              <p style="font-size: 0.85rem; color: #475569; line-height: 1.55;">
+                <strong>Preparada para responder sobre:</strong> Normalización 3FN, resolución del problema N+1 con prefetch, cláusulas PROTECT contra borrado y generación masiva de boletines PDF.
+              </p>
+            </div>
+            <div class="content-box">
+              <h3>🛡️ Tema 3: Infraestructura & Seguridad</h3>
+              <p style="font-size: 0.85rem; color: #475569; line-height: 1.55;">
+                <strong>Preparada para responder sobre:</strong> Matriz RBAC de 6 roles, registro forense en AuditLog, tratamiento de datos Ley 1581, segmentación por VLANs y esquema On-Premise.
+              </p>
+            </div>
+          </div>
+          <div style="text-align: center; margin-top: 1.5rem; padding: 1.1rem; background: #eff6ff; border-radius: 10px; border: 1px solid #bfdbfe;">
+            <p style="color: #1d4ed8; font-weight: 700; font-size: 1.1rem; font-family: 'Outfit', sans-serif;">
+              ¡Muchas gracias por su atención! Abrimos oficialmente el espacio para preguntas e inquietudes del jurado evaluador.
+            </p>
+          </div>
+        `,
+        speech: "Agradecemos profundamente el tiempo y la atención de nuestros instructores y jurados técnicos. Cada una de nosotras se encuentra totalmente capacitada y lista para profundizar en el código fuente, la base de datos o la documentación técnica. Abrimos formalmente el espacio para sus preguntas."
+      }
+    ];
+
+    let currentSlideIndex = 0;
+    let filteredIndices = slidesData.map((_, i) => i);
+    let activeFilter = "all";
+    let isNotesOpen = false;
+
+    // DOM ELEMENTS
+    const slideContent = document.getElementById('slide-content');
+    const speakerBadge = document.getElementById('speaker-badge');
+    const docRefPill = document.getElementById('doc-ref-pill');
+    const speechText = document.getElementById('speech-text');
+    const speakerNotesDrawer = document.getElementById('speaker-notes');
+    const slideCounter = document.getElementById('slide-counter');
+    const progressBar = document.getElementById('progress-bar');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const toggleNotesBtn = document.getElementById('toggle-notes-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const filterBtns = document.querySelectorAll('.filter-btn');
+
+    function renderSlide(index) {
+      if (index < 0 || index >= filteredIndices.length) return;
+      currentSlideIndex = index;
+      const actualIndex = filteredIndices[index];
+      const data = slidesData[actualIndex];
+
+      // Update badge & pill
+      speakerBadge.textContent = data.badgeText;
+      speakerBadge.className = `speaker-badge ${data.badgeClass}`;
+      docRefPill.textContent = `📄 Ref: ${data.docRef}`;
+
+      // Update Content
+      slideContent.innerHTML = `
+        <div class="slide-title-area">
+          <h2>${data.title}</h2>
+          <p class="subtitle">${data.subtitle}</p>
+        </div>
+        ${data.content}
+      `;
+
+      // Update Speech
+      speechText.textContent = data.speech;
+
+      // Update Progress and Counter (16 SLIDES)
+      slideCounter.textContent = `Diapositiva ${actualIndex + 1} / ${slidesData.length}`;
+      const progressPercent = ((actualIndex + 1) / slidesData.length) * 100;
+      progressBar.style.width = `${progressPercent}%`;
+
+      // Update Nav Buttons
+      prevBtn.disabled = (currentSlideIndex === 0);
+      nextBtn.disabled = (currentSlideIndex === filteredIndices.length - 1);
+    }
+
+    // FILTER HANDLERS (THEMES)
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const target = btn.getAttribute('data-target');
+        activeFilter = target;
+
+        if (target === 'all') {
+          filteredIndices = slidesData.map((_, i) => i);
+        } else {
+          filteredIndices = [];
+          slidesData.forEach((s, idx) => {
+            if (s.speaker === target || s.speaker === 'all') {
+              filteredIndices.push(idx);
+            }
+          });
+        }
+        renderSlide(0);
+      });
+    });
+
+    // NAVIGATION
+    function nextSlide() {
+      if (currentSlideIndex < filteredIndices.length - 1) {
+        renderSlide(currentSlideIndex + 1);
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlideIndex > 0) {
+        renderSlide(currentSlideIndex - 1);
+      }
+    }
+
+    nextBtn.addEventListener('click', nextSlide);
+    prevBtn.addEventListener('click', prevSlide);
+
+    // KEYBOARD NAVIGATION
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      } else if (e.key.toLowerCase() === 'n') {
+        toggleNotes();
+      }
+    });
+
+    // TOGGLE NOTES
+    function toggleNotes() {
+      isNotesOpen = !isNotesOpen;
+      if (isNotesOpen) {
+        speakerNotesDrawer.classList.add('open');
+        toggleNotesBtn.style.background = '#e0e7ff';
+        toggleNotesBtn.style.borderColor = '#6366f1';
+        toggleNotesBtn.style.color = '#1e3a8a';
+      } else {
+        speakerNotesDrawer.classList.remove('open');
+        toggleNotesBtn.style.background = '';
+        toggleNotesBtn.style.borderColor = '';
+        toggleNotesBtn.style.color = '';
+      }
+    }
+    toggleNotesBtn.addEventListener('click', toggleNotes);
+
+    // FULLSCREEN
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => alert(`Error de pantalla completa: ${err.message}`));
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // INIT
+    renderSlide(0);
+  </script>
+</body>
+</html>

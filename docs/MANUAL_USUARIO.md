@@ -24,16 +24,29 @@ Academix se amolda automáticamente a la naturaleza de tu institución. Dependie
 
 ## 2. Acceso al Sistema y Roles
 
-### 2.1 Inicio de Sesión
-1. Ingresa a la dirección URL de tu institución en el navegador (ejemplo: `http://localhost:8000/` o la IP de red local).
-2. Ingresa tu **Nombre de Usuario** o **Correo Electrónico** y tu **Contraseña**.
-3. Haz clic en **Ingresar**.
+### 2.0 Cómo Poner en Marcha el Sistema (Servidor)
+Antes de ingresar al navegador, asegúrate de que el servidor esté activo:
+- Haz doble clic en el archivo **`iniciar_servidor_produccion.bat`** (acceso local en el mismo equipo).
+- O haz doble clic en **`iniciar_servidor_red.bat`** (si vas a ingresar desde otros equipos o celulares en la red Wi-Fi).
 
-### 2.2 Roles Disponibles
-- 👑 **Administrador / Directivo (Rector / Decano / Subdirector / Director)**: Control total del sistema, configuración institucional, matrículas, asignaciones y reportes consolidados.
-- 👨‍🏫 **Docente / Instructor / Profesor / Tutor**: Gestión de calificaciones, toma de asistencia diaria, creación de tareas y retroalimentación académica.
-- 🎓 **Estudiante / Aprendiz / Alumno**: Consulta de notas, seguimiento de asistencia, entrega de tareas y descarga de boletines.
-- 👨‍👩‍👧 **Acudiente / Padre de Familia**: Supervisión del avance académico, asistencia y alertas de su acudido.
+### 2.1 Inicio de Sesión
+1. Ingresa a la dirección URL en el navegador: `http://localhost:8000/` (o la IP mostrada en consola si trabajas en red).
+2. Haz clic en **"Ingresar al Portal"**.
+3. Selecciona tu **Rol**.
+4. Ingresa tu **Usuario o Identificación**, el **ID ÚNICO del Alumno** (si eres Alumno o Padre) y tu **Contraseña**.
+5. Haz clic en **Ingresar al Sistema**.
+
+### 2.2 Tabla de Usuarios y Credenciales de Prueba para Evaluación
+Para pruebas inmediatas sin necesidad de crear cuentas previas:
+
+| Rol | Usuario | ID ÚNICO del Alumno | Contraseña | Perfil / Titular |
+| :--- | :--- | :--- | :--- | :--- |
+| **👑 Administrador** | `admin` | *(No aplica)* | `Admin2026*` | Administrador General |
+| **🏛️ Rector / Directivo** | `rector` | *(No aplica)* | `Rector2026*` | Rector Institucional |
+| **📋 Secretaría** | `secretaria1` | *(No aplica)* | `Secre2026*` | Secretaría Académica |
+| **👨‍🏫 Docente** | `docente1` | *(No aplica)* | `Profe2026*` | Docente de Área |
+| **🎓 Estudiante** | `est_1023456789` | `EST-456789` *(o `1023456789`)* | `Estudiante2026*` | Carlos Andrés Gómez |
+| **👨‍👩‍👧 Acudiente / Padre** | `manuel` | `EST-456789` *(o `1023456789`)* | `Padre2026*` | Manuel Gómez (Padre) |
 
 ---
 

@@ -636,13 +636,14 @@ def users_management_view(request):
     Permite al Administrador y Rector ver, buscar, filtrar por rol y alternar el estado
     (activo/inactivo) de cualquier usuario de la institución sin necesidad de ingresar al admin de Django.
     """
-    if not (request.user.is_admin_role or request.user.is_rector):
+    if not (request.user.is_admin_role or request.user.is_rector or request.user.is_superuser or request.user.is_staff):
         messages.error(request, 'No tiene permisos para administrar usuarios institucionales.')
-        return redirect('dashboard')
+        return redirect('accounts:dashboard')
 
     if request.method == 'POST':
         action = request.POST.get('action')
         target_user_id = request.POST.get('user_id')
+
         if action == 'toggle_active' and target_user_id:
             try:
                 target_user = CustomUser.objects.get(id=target_user_id)
@@ -655,6 +656,49 @@ def users_management_view(request):
                     messages.success(request, f'Usuario {target_user.username} {estado_str} correctamente.')
             except CustomUser.DoesNotExist:
                 messages.error(request, 'Usuario no encontrado.')
+
+        elif action == 'create_user':
+            username = request.POST.get('new_username', '').strip()
+            first_name = request.POST.get('new_first_name', '').strip()
+            last_name = request.POST.get('new_last_name', '').strip()
+            role = request.POST.get('new_role', '').strip()
+            email = request.POST.get('new_email', '').strip()
+            password = request.POST.get('new_password', '').strip()
+            doc_type = request.POST.get('new_doc_type', 'CC').strip()
+            doc_num = request.POST.get('new_doc_num', '').strip() or None
+
+            if not username or not password or not role:
+                messages.error(request, 'El nombre de usuario, la contraseña y el rol son obligatorios.')
+            elif CustomUser.objects.filter(username=username).exists():
+                messages.error(request, f'El nombre de usuario "{username}" ya existe en el sistema.')
+            elif doc_num and CustomUser.objects.filter(document_number=doc_num).exists():
+                messages.error(request, f'Ya existe un usuario con el documento {doc_num}.')
+            else:
+                new_user = CustomUser(
+                    username=username,
+                    first_name=first_name,
+                    last_name=last_name,
+                    role=role,
+                    email=email or f"{username}@academix.edu.co",
+                    document_type=doc_type,
+                    document_number=doc_num,
+                    is_active=True
+                )
+                new_user.set_password(password)
+                if getattr(request.user, 'school', None):
+                    new_user.school = request.user.school
+                new_user.save()
+                log_audit(
+                    user=request.user,
+                    action='CREATE',
+                    table_name='CustomUser',
+                    record_id=new_user.id,
+                    new_values={'username': new_user.username, 'role': new_user.role},
+                    reason=f'Creación de usuario institucional: {new_user.username} ({new_user.get_role_display()})',
+                    request=request
+                )
+                messages.success(request, f'¡Usuario {new_user.username} ({new_user.get_role_display()}) creado exitosamente!')
+
         return redirect('accounts:users_list')
 
     role_filter = request.GET.get('role', '').strip()

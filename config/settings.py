@@ -266,6 +266,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'ACADEMIX <notificaciones@a
 
 # Configuración WhiteNoise para producción web (compresión y caché de estáticos)
 WHITENOISE_USE_FINDERS = True
+WHITENOISE_MANIFEST_STRICT = False
 STORAGES = {
     "default": {
         "BACKEND": "django.core.files.storage.FileSystemStorage",

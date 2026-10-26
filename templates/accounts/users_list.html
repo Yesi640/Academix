@@ -12,9 +12,12 @@
             Control centralizado de cuentas de acceso, roles, estados y credenciales de la comunidad escolar.
         </p>
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 align-items-center">
+        <button type="button" class="btn btn-primary d-flex align-items-center gap-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#createUserModal">
+            <i class="bi bi-person-plus-fill"></i>+ Nuevo Usuario
+        </button>
         <span class="badge bg-primary px-3 py-2 fs-6 rounded-pill d-flex align-items-center gap-1 shadow-sm">
-            <i class="bi bi-person-check-fill me-1"></i>{{ total_count }} Usuarios Registrados
+            <i class="bi bi-person-check-fill me-1"></i>{{ total_count }} Usuarios
         </span>
     </div>
 </div>
@@ -146,6 +149,79 @@
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modal: Crear Nuevo Usuario Institucional -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-labelledby="createUserModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="createUserModalLabel">
+                    <i class="bi bi-person-plus-fill me-2"></i>Crear Nuevo Usuario Institucional
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{% url 'accounts:users_list' %}">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="create_user">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombre de Usuario <span class="text-danger">*</span></label>
+                            <input type="text" name="new_username" class="form-control" placeholder="ej: docente_perez" required>
+                            <div class="form-text">Identificador único con el que iniciará sesión.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Rol Institucional <span class="text-danger">*</span></label>
+                            <select name="new_role" class="form-select" required>
+                                <option value="">Seleccione el rol...</option>
+                                {% for code, label in roles %}
+                                <option value="{{ code }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Nombres <span class="text-danger">*</span></label>
+                            <input type="text" name="new_first_name" class="form-control" placeholder="ej: Juan Carlos" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Apellidos <span class="text-danger">*</span></label>
+                            <input type="text" name="new_last_name" class="form-control" placeholder="ej: Pérez Gómez" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Tipo Documento</label>
+                            <select name="new_doc_type" class="form-select">
+                                <option value="CC">Cédula de Ciudadanía (CC)</option>
+                                <option value="TI">Tarjeta de Identidad (TI)</option>
+                                <option value="CE">Cédula de Extranjería (CE)</option>
+                                <option value="PEP">Permiso Especial (PEP)</option>
+                                <option value="PASSPORT">Pasaporte</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Número Documento</label>
+                            <input type="text" name="new_doc_num" class="form-control" placeholder="ej: 1023456789">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Correo Electrónico</label>
+                            <input type="email" name="new_email" class="form-control" placeholder="ej: juan@colegio.edu.co">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Contraseña Inicial <span class="text-danger">*</span></label>
+                            <input type="password" name="new_password" class="form-control" placeholder="Mínimo 8 caracteres" required>
+                            <div class="form-text text-muted">El usuario podrá cambiarla voluntariamente tras su primer ingreso.</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                        <i class="bi bi-check-circle-fill me-1"></i>Crear Usuario
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}
