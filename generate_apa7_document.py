@@ -220,7 +220,7 @@ def create_full_document(output_path):
 
     add_cover_info("Autores", "Equipo de Desarrollo de Software - Proyecto Academix")
     add_cover_info("Programa de Formación", "Tecnología en Análisis y Desarrollo de Software (ADSO)")
-    add_cover_info("Ficha de Caracterización", "2834512 / Fase de Diseño y Ejecución")
+    add_cover_info("Ficha de Caracterización", "3173430 / Fase de Diseño y Ejecución")
     add_cover_info("Instructor Técnico", "Ingeniería de Sistemas e Informática SENA")
     add_cover_info("Institución", "Servicio Nacional de Aprendizaje (SENA) - Centro de Formación en Tecnologías de la Información")
     add_cover_info("Ciudad y Fecha", "Bogotá D.C., Colombia, 30 de septiembre de 2026")

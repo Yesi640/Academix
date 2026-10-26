@@ -1,7 +1,7 @@
 # GUION Y ESTRUCTURA MAESTRA DE PRESENTACIÓN DE PROYECTO: ACADEMIX
 ## Sustentación Oficial — Tecnología en Análisis y Desarrollo de Software (ADSO) - SENA
 **Proyecto:** Plataforma de Gestión Escolar y Multi-Colegio — ACADEMIX  
-**Ficha SENA:** 2834512 • Centro de Tecnologías de la Información  
+**Ficha SENA:** 3173430 • Centro de Tecnologías de la Información  
 **Duración Total Estimada:** 25 a 30 Minutos (8 minutos por pilar temático + 5 minutos de apertura, conclusiones y preguntas)  
 **Estructura:** 16 Diapositivas Exactas • Enfoque 100% Colegios (Básica y Media) y Multi-Colegio • 3 Pilares Temáticos con Igualdad de Contenido y Tiempo
 
@@ -29,7 +29,7 @@
 - **Título en Pantalla:** Plataforma de Gestión Escolar y Multi-Colegio ACADEMIX
 - **Subtítulo:** Sustentación de Proyecto Formativo — Tecnología en Análisis y Desarrollo de Software (ADSO) SENA
 - **Puntos Clave:**
-  - Ficha SENA 2834512 — Centro de Tecnologías de la Información.
+  - Ficha SENA 3173430 — Centro de Tecnologías de la Información.
   - Software enfocado exclusivamente en Colegios de Educación Básica y Media Técnica.
   - Modelo de Entrega SaaS Multi-Colegio con posibilidad de despliegue On-Premise local.
 - **Guión Sugerido (Speech):**

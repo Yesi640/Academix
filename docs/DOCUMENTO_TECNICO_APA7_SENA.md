@@ -3,7 +3,7 @@
 
 **Autores:** Equipo de Desarrollo de Software - Proyecto Academix  
 **Programa de Formación:** Tecnología en Análisis y Desarrollo de Software (ADSO)  
-**Ficha de Caracterización:** 2834512 / Fase de Diseño y Ejecución  
+**Ficha de Caracterización:** 3173430 / Fase de Diseño y Ejecución  
 **Instructor Técnico:** Ingeniería de Sistemas e Informática SENA  
 **Institución:** Servicio Nacional de Aprendizaje (SENA) - Centro de Formación en Tecnologías de la Información  
 **Ciudad y Fecha:** Bogotá D.C., Colombia, 30 de septiembre de 2026  
