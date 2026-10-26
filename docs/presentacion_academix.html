@@ -105,37 +105,45 @@
     /* FILTERS BY THEME */
     .speaker-filters {
       display: flex;
-      gap: 0.4rem;
+      gap: 0.35rem;
       background: #f1f5f9;
       padding: 0.3rem 0.4rem;
       border-radius: 999px;
       border: 1px solid var(--card-border);
+      flex-wrap: wrap;
     }
 
     .filter-btn {
       background: transparent;
       border: none;
       color: var(--text-muted);
-      padding: 0.45rem 1rem;
-      font-size: 0.78rem;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.77rem;
       font-weight: 600;
       border-radius: 999px;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.35rem;
+      white-space: nowrap;
     }
 
     .filter-btn:hover {
       color: var(--text-main);
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.7);
     }
 
     .filter-btn.active[data-target="all"] {
       background: #1e293b;
       color: #ffffff;
-      box-shadow: 0 2px 6px rgba(30, 41, 59, 0.2);
+      box-shadow: 0 2px 6px rgba(30, 41, 59, 0.25);
+    }
+
+    .filter-btn.active[data-target="apertura"] {
+      background: #d97706;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(217, 119, 6, 0.25);
     }
 
     .filter-btn.active[data-target="pilar1"] {
@@ -154,6 +162,18 @@
       background: #059669;
       color: #ffffff;
       box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+    }
+
+    .filter-btn.active[data-target="documentos"] {
+      background: #4f46e5;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    }
+
+    .filter-btn.active[data-target="cierre"] {
+      background: #475569;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(71, 85, 105, 0.25);
     }
 
     .header-actions {
@@ -228,6 +248,12 @@
       letter-spacing: 0.05em;
     }
 
+    .badge-apertura {
+      background: #fffbeb;
+      color: #b45309;
+      border: 1px solid #fde68a;
+    }
+
     .badge-pilar1 {
       background: #f0f9ff;
       color: #0369a1;
@@ -246,10 +272,16 @@
       border: 1px solid #bbf7d0;
     }
 
+    .badge-docs {
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+    }
+
     .badge-team {
-      background: #fffbeb;
-      color: #b45309;
-      border: 1px solid #fde68a;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
     }
 
     .doc-link-pill {
@@ -456,33 +488,6 @@
       font-weight: 600;
     }
 
-    /* TABLE STYLES */
-    .custom-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.86rem;
-      margin-top: 0.6rem;
-    }
-
-    .custom-table th {
-      background: #f1f5f9;
-      color: #0f172a;
-      text-align: left;
-      padding: 0.7rem 0.9rem;
-      border-bottom: 2px solid #cbd5e1;
-      font-weight: 700;
-    }
-
-    .custom-table td {
-      padding: 0.7rem 0.9rem;
-      border-bottom: 1px solid #e2e8f0;
-      color: #334155;
-    }
-
-    .custom-table tr:hover td {
-      background: #f8fafc;
-    }
-
     /* HUB DOCUMENTAL STYLES */
     .doc-hub-grid {
       display: grid;
@@ -568,7 +573,7 @@
 
     @media (max-width: 768px) {
       header { flex-direction: column; gap: 0.75rem; align-items: stretch; }
-      .speaker-filters { justify-content: center; overflow-x: auto; }
+      .speaker-filters { justify-content: center; }
       .slide-body { padding: 1.5rem; }
       .slide-title-area h2 { font-size: 1.5rem; }
     }
@@ -586,12 +591,15 @@
       </div>
     </div>
 
-    <!-- FILTER BY THEME (NO INTEGRANTE 1,2,3) -->
+    <!-- SECTIONS NAV: APERTURA, CADA TEMA INDEPENDIENTE, DOCUMENTOS Y CIERRE -->
     <div class="speaker-filters">
       <button class="filter-btn active" data-target="all">Todos (16)</button>
+      <button class="filter-btn" data-target="apertura">🏛️ Apertura</button>
       <button class="filter-btn" data-target="pilar1">📘 Gestión Académica & UX</button>
       <button class="filter-btn" data-target="pilar2">⚙️ Arquitectura & Base de Datos</button>
       <button class="filter-btn" data-target="pilar3">🛡️ Infraestructura & Seguridad</button>
+      <button class="filter-btn" data-target="documentos">📚 Ecosistema Documental</button>
+      <button class="filter-btn" data-target="cierre">👥 Conclusiones & Cierre</button>
     </div>
 
     <div class="header-actions">
@@ -612,7 +620,7 @@
       
       <!-- SLIDE TOP META -->
       <div class="slide-header">
-        <span class="speaker-badge badge-team" id="speaker-badge">🏛️ APERTURA — EQUIPO COMPLETO</span>
+        <span class="speaker-badge badge-apertura" id="speaker-badge">🏛️ APERTURA — EQUIPO DE DESARROLLO</span>
         <span class="doc-link-pill" id="doc-ref-pill">
           📄 Ref: DOCUMENTO_TECNICO_APA7_SENA.md
         </span>
@@ -647,11 +655,11 @@
   <!-- JAVASCRIPT SLIDE ENGINE (EXACTLY 16 SLIDES) -->
   <script>
     const slidesData = [
-      /* SLIDE 1 - APERTURA */
+      /* SLIDE 1 - APERTURA EXCLUSIVA */
       {
-        speaker: "all",
+        speaker: "apertura",
         badgeText: "🏛️ APERTURA — EQUIPO DE DESARROLLO",
-        badgeClass: "badge-team",
+        badgeClass: "badge-apertura",
         docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md",
         title: "Plataforma de Gestión Escolar y Multi-Colegio ACADEMIX",
         subtitle: "Sustentación de Proyecto Formativo — Tecnología en Análisis y Desarrollo de Software (ADSO) SENA",
@@ -679,7 +687,7 @@
         speech: "Buenos días estimados instructores y jurados evaluadores. En representación de nuestro equipo de desarrollo, damos apertura a la sustentación oficial del proyecto ACADEMIX. Diseñamos una solución integral de software enfocada exclusivamente en Colegios de Educación Básica y Media, con capacidad de operar en red local o en la nube bajo un modelo Multi-Colegio. Nuestra presentación está estructurada en tres pilares temáticos de igual rigor técnico y profundidad: Gestión Académica y Experiencia de Usuario, Arquitectura de Software y Base de Datos, e Infraestructura, Seguridad y Entrega Formal."
       },
 
-      /* SLIDE 2 - PILAR 1: GESTIÓN & UX */
+      /* SLIDE 2 - PILAR 1 (1/4) */
       {
         speaker: "pilar1",
         badgeText: "📘 GESTIÓN ACADÉMICA & UX",
@@ -712,7 +720,7 @@
         speech: "Al diagnosticar la operación de las instituciones escolares en Colombia, identificamos una problemática crítica: la desconexión operativa. Las notas se manejaban en libros físicos o plantillas de Excel desconectadas, provocando semanas de caos en secretaría para consolidar periodos, y dejando a los acudientes sin enterarse a tiempo del riesgo de reprobación de sus hijos. ACADEMIX resuelve este problema unificando la planilla docente, el control diario de asistencia, el observador de conducta y las tareas escolares en un solo software escolar en tiempo real."
       },
 
-      /* SLIDE 3 - PILAR 1: GESTIÓN & UX */
+      /* SLIDE 3 - PILAR 1 (2/4) */
       {
         speaker: "pilar1",
         badgeText: "📘 GESTIÓN ACADÉMICA & UX",
@@ -737,7 +745,7 @@
                 <li><strong>Niveles Educativos:</strong> Estructurado para Preescolar, Básica Primaria (1° a 5°), Básica Secundaria (6° a 9°) y Media Técnica (10° y 11°).</li>
                 <li><strong>Organización por Grupos:</strong> Grados, Cursos (ej: 601, 602, 1101), Asignaturas y Salones de clase asignados formalmente.</li>
                 <li><strong>Dirección de Grupo:</strong> Asignación formal de docentes directores de curso con privilegios para redactar conceptos integrales en boletines.</li>
-                <li><strong>Vigencia y Periodos:</strong> Parametrización anual (ej: 2026) con apertura y cierre controlado de 4 periodos académicos bimestrales.</li>
+                <li><strong>Vigencia y Periodos:</strong> Parametrización anual con apertura y cierre controlado de 4 periodos académicos bimestrales.</li>
               </ul>
             </div>
           </div>
@@ -745,7 +753,7 @@
         speech: "Uno de los mayores requerimientos definidos en nuestro proyecto fue descartar modelos ajenos como universidades o institutos técnicos para concentrarnos 100% en colegios de Básica y Media. Pero fuimos más allá: implementamos un patrón Multi-Colegio donde una sola instancia del software puede albergar diferentes colegios o sedes de forma totalmente aislada. Cada colegio cuenta con su propio código DANE, sus directivas, sus colores e insignia oficial, organizando a sus alumnos en grados, grupos y periodos escolares sin mezclar expedientes."
       },
 
-      /* SLIDE 4 - PILAR 1: GESTIÓN & UX */
+      /* SLIDE 4 - PILAR 1 (3/4) */
       {
         speaker: "pilar1",
         badgeText: "📘 GESTIÓN ACADÉMICA & UX",
@@ -782,7 +790,7 @@
         speech: "El núcleo pedagógico de Academix se apega rigurosamente al Decreto 1290 de evaluación escolar en Colombia. Estructuramos la jerarquía en Área, Asignatura, Competencias y Resultados de Aprendizaje o RAPs. Para blindar la exactitud matemática del sistema, implementamos una regla estricta: los porcentajes de evaluación deben sumar exactamente el 100%. Si un docente intenta asignar 90% o 110%, el sistema no solo lo avisa en pantalla en tiempo real mediante JavaScript, sino que el método clean() del modelo en Django rechaza la transacción protegiendo la integridad del boletín."
       },
 
-      /* SLIDE 5 - PILAR 1: GESTIÓN & UX */
+      /* SLIDE 5 - PILAR 1 (4/4) */
       {
         speaker: "pilar1",
         badgeText: "📘 GESTIÓN ACADÉMICA & UX",
@@ -813,7 +821,7 @@
         speech: "Para garantizar que el software sea adoptado con agrado por los profesores, priorizamos la experiencia de usuario con interfaces intuitivas y limpias. Desarrollamos la toma de asistencia en un solo clic, incorporando un semáforo que detecta riesgo de deserción o pérdida por fallas. Asimismo, digitalizamos el Observador del Estudiante garantizando el debido proceso escolar y creamos el aula de tareas, permitiendo recibir trabajos digitales sin recurrir a correos dispersos o grupos de WhatsApp."
       },
 
-      /* SLIDE 6 - PILAR 2: ARQUITECTURA & DATOS */
+      /* SLIDE 6 - PILAR 2 (1/4) */
       {
         speaker: "pilar2",
         badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
@@ -848,7 +856,7 @@
         speech: "Pasando al segundo pilar, la ingeniería de software y backend de ACADEMIX se diseñó sobre Python y Django utilizando el patrón Modelo-Vista-Template. Para evitar código monolítico o acoplado, dividimos el sistema en 15 micro-aplicaciones especializadas dentro de la carpeta apps. Cada micro-app tiene una responsabilidad única: accounts gestiona la identidad institucional, courses administra la malla curricular, grades se encarga del cálculo evaluativo, y bulletins genera los informes oficiales. Esto facilita el mantenimiento, las pruebas unitarias y la escalabilidad del sistema."
       },
 
-      /* SLIDE 7 - PILAR 2: ARQUITECTURA & DATOS */
+      /* SLIDE 7 - PILAR 2 (2/4) */
       {
         speaker: "pilar2",
         badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
@@ -880,7 +888,7 @@
         speech: "En la base de datos aplicamos una normalización rigurosa en Tercera Forma Normal (3FN). Descompusimos la información para que no exista redundancia de nombres o materias, evitando anomalías de inserción y borrado. Un aspecto fundamental de nuestra defensa técnica es la integridad referencial: configuramos cláusulas on_delete=models.PROTECT en las calificaciones. Esto significa que si un directivo intenta eliminar a un estudiante que ya tiene notas registradas, la base de datos rechaza la operación protegiendo la validez legal del historial académico."
       },
 
-      /* SLIDE 8 - PILAR 2: ARQUITECTURA & DATOS */
+      /* SLIDE 8 - PILAR 2 (3/4) */
       {
         speaker: "pilar2",
         badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
@@ -910,7 +918,7 @@
         speech: "Para que el software responda velozmente cuando 50 profesores ingresan notas al mismo tiempo, optimizamos el ORM de Django resolviendo el problema N+1. Si consultamos un curso sin optimizar, Django ejecuta decenas de consultas innecesarias. Con select_related y prefetch_related unificamos esas consultas en uno o dos viajes al motor SQL. Además, el cálculo de los promedios no satura la memoria del servidor porque se ejecuta directamente en PostgreSQL mediante funciones de agregación SQL dentro de transacciones atómicas seguras."
       },
 
-      /* SLIDE 9 - PILAR 2: ARQUITECTURA & DATOS */
+      /* SLIDE 9 - PILAR 2 (4/4) */
       {
         speaker: "pilar2",
         badgeText: "⚙️ ARQUITECTURA & BASE DE DATOS",
@@ -933,7 +941,7 @@
               <h3>⚙️ Tecnología de Renderizado y Rendimiento</h3>
               <ul>
                 <li><strong>Motor de Maquetación:</strong> Implementación con WeasyPrint y plantillas HTML5/CSS diseñadas en hoja tamaño Carta (Letter) con saltos de página controlados.</li>
-                <li><strong>Generación por Lotes (Batch Processing):</strong> Exportación masiva de cursos completos (ej: 40 boletines en un solo archivo PDF consolidado) para facilitar la impresión física.</li>
+                <li><strong>Generación por Lotes (Batch Processing):</strong> Exportación masiva de cursos completos en un solo archivo PDF consolidado para facilitar la impresión física.</li>
                 <li><strong>Streaming HTTP:</strong> Envío del PDF mediante <code>FileResponse</code> optimizado, evitando retener archivos binarios gigantes en la memoria RAM del servidor.</li>
               </ul>
             </div>
@@ -942,7 +950,7 @@
         speech: "El producto final más visible para la comunidad escolar es el Boletín de Calificaciones. Desarrollamos un motor de generación de boletines PDF basado en plantillas HTML y WeasyPrint que cumple con todos los requisitos del Ministerio de Educación: muestra el promedio ponderado, el puesto en el curso, el conteo de fallas, la escala cualitativa y el concepto del director de grupo. El motor cuenta con procesamiento por lotes para generar el curso completo en un solo PDF listo para imprimir sin bloquear el servidor web."
       },
 
-      /* SLIDE 10 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      /* SLIDE 10 - PILAR 3 (1/4) */
       {
         speaker: "pilar3",
         badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
@@ -976,7 +984,7 @@
         speech: "Al ingresar al tercer pilar de infraestructura y seguridad, el pilar central es nuestro modelo RBAC. Definimos 6 roles claramente delimitados: Administrador, Rector, Secretaría, Docente, Estudiante y Acudiente. Ningún usuario puede invadir la vista o funciones de otro rol. Los docentes solo pueden calificar las asignaturas que secretaría les asignó, los estudiantes no pueden modificar sus notas y los acudientes solo ven el expediente de sus propios hijos. Todo endpoint está protegido contra ataques CSRF, XSS e inyecciones SQL según las directrices de OWASP."
       },
 
-      /* SLIDE 11 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      /* SLIDE 11 - PILAR 3 (2/4) */
       {
         speaker: "pilar3",
         badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
@@ -1007,7 +1015,7 @@
         speech: "Dado que el sistema custodia información sensible de niños y jóvenes, implementamos un módulo de Auditoría Inmutable llamado AuditLog. Cada vez que alguien crea, modifica o borra un registro —por ejemplo, si se rectifica una nota— el sistema guarda quién lo hizo, desde qué dirección IP, a qué hora y el valor exacto anterior y posterior en formato JSON. Esta tabla no se puede alterar ni borrar, cumpliendo a cabalidad con la Ley Estatutaria 1581 de Habeas Data para proteger la responsabilidad civil y legal de la institución."
       },
 
-      /* SLIDE 12 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      /* SLIDE 12 - PILAR 3 (3/4) */
       {
         speaker: "pilar3",
         badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
@@ -1042,7 +1050,7 @@
         speech: "En la infraestructura técnica diseñamos un modelo On-Premise de alta disponibilidad. El sistema se aloja en un servidor físico dentro del colegio utilizando Nginx como proxy inverso y Gunicorn como servidor de aplicaciones. La red se segmenta en tres VLANs para que los dispositivos de las aulas no tengan acceso indebido a la base de datos de administración. Este enfoque On-Premise ofrece dos ventajas contundentes: funciona en red local sin depender de que haya Internet y le ahorra al colegio pagos mensuales recurrentes en la nube."
       },
 
-      /* SLIDE 13 - PILAR 3: INFRAESTRUCTURA & SEGURIDAD */
+      /* SLIDE 13 - PILAR 3 (4/4) */
       {
         speaker: "pilar3",
         badgeText: "🛡️ INFRAESTRUCTURA & SEGURIDAD",
@@ -1073,11 +1081,11 @@
         speech: "El ciclo de ingeniería culmina con la entrega y puesta en marcha del sistema. Documentamos el protocolo exacto para cargar las listas de estudiantes desde Excel sin errores de duplicados, asignando credenciales institucionales automáticas. Adicionalmente, entregamos una política de copias de seguridad automatizadas que respalda la base de datos todas las noches con un tiempo de recuperación ante desastres menor a 2 horas, respaldado por un acta formal de entrega con 6 meses de garantía técnica."
       },
 
-      /* SLIDE 14 - HUB DOCUMENTAL */
+      /* SLIDE 14 - HUB DOCUMENTAL EXCLUSIVO */
       {
-        speaker: "all",
+        speaker: "documentos",
         badgeText: "📚 ECOSISTEMA DOCUMENTAL COMPLETO",
-        badgeClass: "badge-team",
+        badgeClass: "badge-docs",
         docRef: "docs/PRESENTACION_OFICIAL_3_INTEGRANTES.md",
         title: "Biblioteca Documental y Manuales del Sistema",
         subtitle: "Los 6 documentos oficiales y definitivos que respaldan la sustentación ante el jurado",
@@ -1185,7 +1193,7 @@
 
       /* SLIDE 15 - CONCLUSIONES */
       {
-        speaker: "all",
+        speaker: "cierre",
         badgeText: "👥 EQUIPO COMPLETO — CONCLUSIONES",
         badgeClass: "badge-team",
         docRef: "docs/DOCUMENTO_TECNICO_APA7_SENA.md (Cap. 5)",
@@ -1217,8 +1225,8 @@
 
       /* SLIDE 16 - PREGUNTAS Y CIERRE */
       {
-        speaker: "all",
-        badgeText: "👥 EQUIPO COMPLETO — CIERRE",
+        speaker: "cierre",
+        badgeText: "👥 EQUIPO COMPLETO — PREGUNTAS Y CIERRE",
         badgeClass: "badge-team",
         docRef: "docs/PRESENTACION_OFICIAL_3_INTEGRANTES.md (Cap. 4)",
         title: "Ronda de Preguntas de los Jurados Técnicos",
@@ -1296,8 +1304,12 @@
       // Update Speech
       speechText.textContent = data.speech;
 
-      // Update Progress and Counter (16 SLIDES)
-      slideCounter.textContent = `Diapositiva ${actualIndex + 1} / ${slidesData.length}`;
+      // Update Progress and Counter
+      if (activeFilter === 'all') {
+        slideCounter.textContent = `Diapositiva ${actualIndex + 1} / ${slidesData.length}`;
+      } else {
+        slideCounter.textContent = `Diapositiva ${actualIndex + 1} / ${slidesData.length} (Sección: ${currentSlideIndex + 1} de ${filteredIndices.length})`;
+      }
       const progressPercent = ((actualIndex + 1) / slidesData.length) * 100;
       progressBar.style.width = `${progressPercent}%`;
 
@@ -1306,7 +1318,7 @@
       nextBtn.disabled = (currentSlideIndex === filteredIndices.length - 1);
     }
 
-    // FILTER HANDLERS (THEMES)
+    // STRICT FILTER HANDLERS (Cada tema muestra ÚNICAMENTE lo que le pertenece)
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         filterBtns.forEach(b => b.classList.remove('active'));
@@ -1317,9 +1329,10 @@
         if (target === 'all') {
           filteredIndices = slidesData.map((_, i) => i);
         } else {
+          // FILTRO ESTRICTO: NO INCLUIR APERTURA NI OTRAS DIAPOSITIVAS EN LOS TEMAS INDIVIDUALES
           filteredIndices = [];
           slidesData.forEach((s, idx) => {
-            if (s.speaker === target || s.speaker === 'all') {
+            if (s.speaker === target) {
               filteredIndices.push(idx);
             }
           });
