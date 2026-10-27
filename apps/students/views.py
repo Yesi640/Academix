@@ -183,15 +183,25 @@ def create_student_view(request):
                 )
 
                 # Correo automatico de bienvenida con credenciales
-                try:
-                    from apps.accounts.email_service import send_registration_email
-                    from apps.students.models import StudentProfile as _SP
-                    _sp = _SP.objects.filter(user=user).first()
-                    send_registration_email(user=user, password=password,
-                        student_code=_sp.student_code if _sp else None, role_label="Estudiante")
-                except Exception:
-                    pass
-                messages.success(request, f'¡Estudiante {user.get_full_name()} registrado exitosamente! Usuario: {username} (Contraseña inicial: {password})')
+                has_external_email = bool(email and not email.endswith('@academix.edu.co'))
+                email_sent = False
+                if has_external_email:
+                    try:
+                        from apps.accounts.email_service import send_registration_email
+                        from apps.students.models import StudentProfile as _SP
+                        _sp = _SP.objects.filter(user=user).first()
+                        email_sent = send_registration_email(user=user, password=password,
+                            student_code=_sp.student_code if _sp else None, role_label="Estudiante")
+                    except Exception as mail_err:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Error al enviar correo estudiante: {mail_err}")
+
+                if email_sent:
+                    messages.success(request, f'¡Estudiante {user.get_full_name()} registrado exitosamente! Credenciales enviadas a {email}. Usuario: {username}')
+                elif has_external_email:
+                    messages.warning(request, f'Estudiante {user.get_full_name()} registrado. (No se pudo entregar correo a {email}). Usuario: {username} | Contraseña: {password}')
+                else:
+                    messages.success(request, f'¡Estudiante {user.get_full_name()} registrado! Usuario: {username} | ID: {student_code} | Contraseña: {password} (Nota: No se registró correo electrónico personal para enviar credenciales).')
         except Exception as e:
             messages.error(request, f'Error al registrar nuevo estudiante: {str(e)}')
 

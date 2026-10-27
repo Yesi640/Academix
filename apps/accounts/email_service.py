@@ -16,17 +16,20 @@ def is_valid_recipient(email):
         return False
     email = email.strip().lower()
     domain = email.split('@')[-1]
-    if domain in ['ejemplo.com', 'example.com', 'test.com', 'correo.com']:
+    # Dominios ficticios que no existen y harian rebotar a Gmail SMTP
+    if domain in ['ejemplo.com', 'example.com', 'test.com', 'correo.com', 'academix.edu.co']:
         return False
     return True
 
 
 def _send_async_mail(subject, text_content, html_content, recipient_list):
-    """Despacha correos en un hilo secundario para no bloquear la navegacion del usuario."""
+    """Despacha correos asegurando entrega antes del reciclaje de worker en produccion."""
     valid_recipients = [r.strip() for r in recipient_list if is_valid_recipient(r)]
     if not valid_recipients:
         logger.info(f"Omitiendo envio para {recipient_list}: ningun correo real valido.")
-        return
+        return False
+
+    success_flag = [False]
 
     def _worker():
         try:
@@ -48,6 +51,7 @@ def _send_async_mail(subject, text_content, html_content, recipient_list):
                     msg.encoding = 'utf-8'
                     msg.attach_alternative(html_content, "text/html")
                     msg.send(fail_silently=False)
+                    success_flag[0] = True
                     logger.info(f"[NOTIFICACION_ENVIADA] Correo enviado a {recipient}: {subject}")
                     print(f"[NOTIFICACION_ENVIADA] Correo enviado a {recipient}: {subject}")
                 except Exception as ex_single:
@@ -57,8 +61,11 @@ def _send_async_mail(subject, text_content, html_content, recipient_list):
             logger.error(f"Fallo general en hilo de envio: {e}")
             print(f"[EMAIL_WORKER_ERROR] {e}")
 
-    thread = threading.Thread(target=_worker, daemon=True)
+    thread = threading.Thread(target=_worker, daemon=False)
     thread.start()
+    # Espera hasta 3 segundos para que complete la entrega SMTP en Render sin colgar al usuario
+    thread.join(timeout=3.0)
+    return success_flag[0] or thread.is_alive()
 
 
 # ══════════════════════════════════════════════════════════════════════
@@ -123,8 +130,7 @@ Acceso al sistema: {login_url}
     </div>
     """
 
-    _send_async_mail(asunto, texto_plano, texto_html, [user.email])
-    return True
+    return _send_async_mail(asunto, texto_plano, texto_html, [user.email])
 
 
 # ══════════════════════════════════════════════════════════════════════

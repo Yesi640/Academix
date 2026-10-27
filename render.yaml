@@ -22,6 +22,20 @@ services:
         value: "True"
       - key: CSRF_COOKIE_SECURE
         value: "True"
+      - key: EMAIL_BACKEND
+        value: "django.core.mail.backends.smtp.EmailBackend"
+      - key: EMAIL_HOST
+        value: "smtp.gmail.com"
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        value: "academix651@gmail.com"
+      - key: EMAIL_HOST_PASSWORD
+        value: "uzgn axgt yxpf mvvv"
+      - key: DEFAULT_FROM_EMAIL
+        value: "ACADEMIX <academix651@gmail.com>"
 
 databases:
   - name: academix-db

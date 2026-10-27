@@ -174,12 +174,22 @@ def create_teacher_view(request):
                 )
 
                 # Correo automatico de bienvenida con credenciales
-                try:
-                    from apps.accounts.email_service import send_registration_email
-                    send_registration_email(user=user, password=password, role_label="Docente")
-                except Exception:
-                    pass
-                messages.success(request, f'¡Docente {user.get_full_name()} registrado exitosamente! Usuario: {username} (Contraseña inicial: {password})')
+                has_external_email = bool(email and not email.endswith('@academix.edu.co'))
+                email_sent = False
+                if has_external_email:
+                    try:
+                        from apps.accounts.email_service import send_registration_email
+                        email_sent = send_registration_email(user=user, password=password, role_label="Docente")
+                    except Exception as mail_err:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Error al enviar correo docente: {mail_err}")
+
+                if email_sent:
+                    messages.success(request, f'¡Docente {user.get_full_name()} registrado exitosamente! Credenciales enviadas a {email}. Usuario: {username}')
+                elif has_external_email:
+                    messages.warning(request, f'Docente {user.get_full_name()} registrado. (No se pudo entregar correo a {email}). Usuario: {username} | Contraseña: {password}')
+                else:
+                    messages.success(request, f'¡Docente {user.get_full_name()} registrado! Usuario: {username} | Contraseña inicial: {password} (Nota: No se registró correo electrónico personal para enviar credenciales).')
         except Exception as e:
             messages.error(request, f'Error al registrar docente: {str(e)}')
 

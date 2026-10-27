@@ -285,9 +285,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
 
                     <div class="mb-2">
-                        <label class="form-label small fw-semibold text-secondary">Correo Institucional (Opcional)</label>
-                        <input type="email" name="email" class="form-control" placeholder="Auto-generado si vacío">
-                        <div class="form-text small">La contraseña inicial del {{ institution.term_student|lower|default:'estudiante' }} será su número de documento.</div>
+                        <label class="form-label small fw-semibold text-secondary">Correo Electrónico (para credenciales)</label>
+                        <input type="email" name="email" class="form-control" placeholder="Ej: estudiante@gmail.com (Opcional)">
+                        <div class="form-text small">
+                            <i class="bi bi-info-circle me-1"></i>Si ingresas un correo real, se le enviarán las credenciales. Su contraseña inicial será su número de documento.
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
