@@ -1,255 +1,809 @@
-{% extends 'base.html' %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Usuario | {{ current_institution.institution_name|default:"ACADEMIX" }}</title>
+    <meta name="description" content="Regístrate en el portal institucional de {{ current_institution.institution_name|default:'ACADEMIX' }}. Crea tu cuenta para acceder a la plataforma de gestión académica.">
 
-{% block title %}Registro de Usuario | ACADEMIX{% endblock %}
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <meta name="csrf-token" content="{{ csrf_token }}">
 
-{% block auth_content %}
-<style>
-.institution-selector {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-bottom: 6px;
-}
-@media (max-width: 480px) {
-    .institution-selector {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-.inst-card {
-    position: relative;
-    cursor: pointer;
-    margin: 0;
-}
-.inst-card input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0; height: 0;
-}
-.inst-card-inner {
-    border: 1.5px solid #e2e8f0;
-    border-radius: 9px;
-    padding: 6px 3px;
-    text-align: center;
-    transition: all 0.2s ease-in-out;
-    background: #ffffff;
-    cursor: pointer;
-    user-select: none;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-.inst-card-inner:hover {
-    border-color: #a78bfa;
-    background: #faf5ff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(124,58,237,.12);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner {
-    border-color: #7c3aed;
-    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-    box-shadow: 0 3px 10px rgba(124,58,237,.18);
-    transform: translateY(-1px);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner .inst-icon {
-    transform: scale(1.12);
-}
-.inst-card input[type="radio"]:checked + .inst-card-inner .inst-name {
-    color: #5b21b6;
-    font-weight: 700;
-}
-.inst-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; transition: transform 0.2s; line-height: 1; }
-.inst-name { font-size: 0.67rem; font-weight: 600; color: #374151; line-height: 1.15; }
-.inst-badge {
-    font-size: 0.52rem;
-    padding: 1px 4px;
-    border-radius: 8px;
-    margin-top: 3px;
-    display: inline-block;
-    letter-spacing: 0.2px;
-    white-space: nowrap;
-    line-height: 1.2;
-}
-</style>
+    <style>
+        /* ─────────────────────────────────────────────────────────
+           VARIABLES CSS INSTITUCIONALES
+        ───────────────────────────────────────────────────────── */
+        :root {
+            --inst-primary:        {{ current_institution.primary_color|default:"#7c3aed" }};
+            --inst-primary-rgb:    {{ current_institution.primary_color_rgb|default:"124, 58, 237" }};
+            --inst-secondary:      {{ current_institution.secondary_color|default:"#c4b5fd" }};
+            --inst-secondary-rgb:  {{ current_institution.secondary_color_rgb|default:"196, 181, 253" }};
+            --inst-dark:           color-mix(in srgb, var(--inst-primary) 80%, #000 20%);
+        }
 
-<div class="login-bg py-5">
-    <div class="login-card p-4 p-sm-5 shadow-lg animate__animated animate__fadeIn" style="max-width: 580px; width: 100%;">
-        <div class="text-center mb-3">
-            <div class="d-inline-flex p-3 rounded-circle bg-primary-subtle text-primary mb-2 shadow-sm" id="reg-header-icon-box">
-                <i class="bi bi-person-plus-fill display-6" id="reg-header-icon"></i>
-            </div>
-            <h3 class="fw-bold text-dark mb-1">Registro en ACADEMIX</h3>
-            <p class="text-muted small mb-0" id="reg-subtitle">Seleccione su institución, rol y complete sus datos para acceder</p>
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            background: #0f172a;
+            color: #1f2937;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           BARRA SUPERIOR INSTITUCIONAL
+        ───────────────────────────────────────────────────────── */
+        .reg-topbar {
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 35%, #4f46e5 65%, #1e1b4b 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.15);
+            color: #ffffff;
+            font-size: 0.82rem;
+            padding: 0.5rem 1.75rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            z-index: 101;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        }
+        .reg-topbar-pill {
+            background: rgba(255,255,255,0.18);
+            border: 1px solid rgba(255,255,255,0.32);
+            border-radius: 9999px;
+            padding: 0.22rem 0.85rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+        .reg-topbar a {
+            color: rgba(255,255,255,0.92);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s;
+        }
+        .reg-topbar a:hover { color: #fff; text-decoration: underline; }
+
+        /* ─────────────────────────────────────────────────────────
+           NAVBAR
+        ───────────────────────────────────────────────────────── */
+        .reg-navbar {
+            background: #ffffff;
+            border-bottom: 3px solid var(--inst-primary);
+            padding: 0.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(var(--inst-primary-rgb), 0.08);
+        }
+        .reg-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+        }
+        .reg-brand-logo {
+            width: 46px;
+            height: 46px;
+            border-radius: 0.8rem;
+            background: linear-gradient(135deg, var(--inst-secondary), var(--inst-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 14px rgba(var(--inst-primary-rgb), 0.28);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .reg-brand-logo img { width: 100%; height: 100%; object-fit: cover; }
+        .reg-brand-text strong {
+            display: block;
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: var(--inst-primary);
+            letter-spacing: -0.4px;
+            line-height: 1.1;
+        }
+        .reg-brand-text span {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 600;
+            display: block;
+        }
+        .reg-btn-login {
+            background: linear-gradient(135deg, var(--inst-secondary) 0%, var(--inst-primary) 100%);
+            color: white !important;
+            padding: 0.55rem 1.4rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.86rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 14px rgba(var(--inst-primary-rgb), 0.35);
+        }
+        .reg-btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 22px rgba(var(--inst-primary-rgb), 0.45);
+            color: white !important;
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           STAGE HERO (FONDO OSCURO CON BRILLOS)
+        ───────────────────────────────────────────────────────── */
+        .reg-stage {
+            position: relative;
+            min-height: calc(100vh - 110px);
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 2.5rem 1.25rem 3rem;
+            background: radial-gradient(circle at 50% 20%, #231b54 0%, #0f172a 60%, #080b14 100%);
+            overflow: hidden;
+        }
+
+        /* Glows ambientales */
+        .reg-glow {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(85px);
+            opacity: 0.42;
+        }
+        .reg-glow-1 {
+            top: 0; left: 5%;
+            width: 420px; height: 420px;
+            background: radial-gradient(circle, rgba(var(--inst-primary-rgb, 124,58,237), 0.55) 0%, transparent 70%);
+        }
+        .reg-glow-2 {
+            bottom: 0; right: 5%;
+            width: 460px; height: 460px;
+            background: radial-gradient(circle, rgba(var(--inst-secondary-rgb, 196,181,253), 0.42) 0%, transparent 70%);
+        }
+        .reg-glow-3 {
+            top: 35%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 550px; height: 550px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.22) 0%, transparent 70%);
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           TARJETA PRINCIPAL GLASSMORPHISM
+        ───────────────────────────────────────────────────────── */
+        .reg-stage-card {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1100px;
+            border-radius: 32px;
+            border: 1.5px solid rgba(255,255,255,0.18);
+            background: linear-gradient(135deg, rgba(28,23,62,0.90) 0%, rgba(15,23,42,0.95) 100%);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            box-shadow: 0 35px 85px -10px rgba(0,0,0,0.75), 0 0 55px rgba(var(--inst-primary-rgb, 124,58,237), 0.22);
+            padding: 3rem 3rem;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 991px) {
+            .reg-stage-card { padding: 2rem 1.5rem; border-radius: 24px; }
+        }
+
+        /* ─────────────────────────────────────────────────────────
+           COLUMNA IZQUIERDA: IDENTIDAD
+        ───────────────────────────────────────────────────────── */
+        .reg-logo-squircle {
+            width: 100px;
+            height: 100px;
+            border-radius: 24px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%);
+            border: 2px solid rgba(255,255,255,0.28);
+            box-shadow: 0 16px 36px rgba(0,0,0,0.4), 0 0 35px rgba(var(--inst-primary-rgb, 124,58,237), 0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+        .reg-logo-squircle:hover { transform: scale(1.04); }
+        .reg-logo-squircle img { width: 100%; height: 100%; object-fit: cover; }
+        .reg-logo-icon { font-size: 2.7rem; color: #fff; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3)); }
+
+        .reg-hero-title {
+            font-size: clamp(1.9rem, 3.4vw, 2.8rem);
+            font-weight: 850;
+            color: #ffffff;
+            line-height: 1.12;
+            letter-spacing: -0.5px;
+            text-transform: uppercase;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.55);
+        }
+        .reg-hero-subtitle {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.80);
+            font-weight: 400;
+            line-height: 1.55;
+            max-width: 380px;
+        }
+        .reg-hero-pill-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(255,255,255,0.09);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 9999px;
+            padding: 0.4rem 1.1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Beneficios / features */
+        .reg-feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            padding: 0.85rem 1rem;
+            border-radius: 0.9rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.2s;
+        }
+        .reg-feature-item:hover { background: rgba(255,255,255,0.09); }
+        .reg-feature-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 0.6rem;
+            background: linear-gradient(135deg, var(--inst-secondary), var(--inst-primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: white;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(var(--inst-primary-rgb), 0.35);
+        }
+        .reg-feature-text strong { display: block; font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 0.15rem; }
+        .reg-feature-text small { font-size: 0.73rem; color: rgba(255,255,255,0.6); line-height: 1.4; }
+
+        /* ─────────────────────────────────────────────────────────
+           COLUMNA DERECHA: FORMULARIO
+        ───────────────────────────────────────────────────────── */
+        .reg-form-box {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 24px;
+            padding: 2rem 2.25rem;
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.08);
+        }
+        @media (max-width: 576px) { .reg-form-box { padding: 1.5rem 1rem; } }
+
+        .reg-form-heading {
+            font-size: 0.88rem;
+            font-weight: 850;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #ffffff;
+        }
+        .border-white-10 { border-color: rgba(255,255,255,0.12) !important; }
+
+        /* Labels dentro del formulario */
+        .reg-label {
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            letter-spacing: 0.3px;
+        }
+
+        /* Inputs estilo login */
+        .reg-form-box .form-control,
+        .reg-form-box .form-select {
+            background: rgba(255,255,255,0.92) !important;
+            border: 1px solid rgba(255,255,255,0.65) !important;
+            border-radius: 0.65rem !important;
+            font-size: 0.87rem;
+            color: #1f2937 !important;
+            padding: 0.6rem 0.9rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .reg-form-box .form-control:focus,
+        .reg-form-box .form-select:focus {
+            border-color: var(--inst-primary) !important;
+            box-shadow: 0 0 0 3px rgba(var(--inst-primary-rgb), 0.28) !important;
+            background: #fff !important;
+            outline: none;
+        }
+        .reg-form-box .form-control::placeholder { color: #9ca3af; }
+
+        /* Input group (password) */
+        .reg-form-box .input-group .form-control {
+            border-right: none !important;
+            border-top-right-radius: 0 !important;
+            border-bottom-right-radius: 0 !important;
+        }
+        .reg-form-box .btn-toggle-password {
+            background: rgba(255,255,255,0.88) !important;
+            border: 1px solid rgba(255,255,255,0.65) !important;
+            border-left: none !important;
+            color: #6b7280;
+            border-top-right-radius: 0.65rem !important;
+            border-bottom-right-radius: 0.65rem !important;
+            transition: all 0.2s;
+        }
+        .reg-form-box .btn-toggle-password:hover { background: #fff !important; color: var(--inst-primary); }
+
+        /* Sección de campos agrupados (school, role, etc.) */
+        .reg-section-block {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.13);
+            border-radius: 14px;
+            padding: 1rem 1.1rem 0.85rem;
+        }
+
+        /* Select de escuela */
+        .reg-school-preview {
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            display: none;
+            align-items: center;
+            gap: 0.65rem;
+            margin-top: 0.65rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.07);
+        }
+        .reg-school-preview-logo {
+            width: 30px; height: 30px;
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Aviso alumno */
+        .reg-alert-info {
+            background: rgba(var(--inst-primary-rgb, 124,58,237), 0.18);
+            border: 1px solid rgba(var(--inst-primary-rgb, 124,58,237), 0.35);
+            border-radius: 10px;
+            padding: 0.6rem 0.9rem;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.8rem;
+        }
+        .reg-alert-warning {
+            background: rgba(234, 179, 8, 0.15);
+            border: 1px solid rgba(234, 179, 8, 0.35);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.82rem;
+        }
+        .reg-alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            border-radius: 10px;
+            padding: 0.65rem 0.9rem;
+            color: #fca5a5;
+            font-size: 0.82rem;
+        }
+        .reg-field-error { font-size: 0.73rem; color: #fca5a5; margin-top: 0.3rem; }
+
+        /* Botón submit degradado */
+        .reg-submit-btn {
+            border-radius: 9999px !important;
+            height: 50px !important;
+            background: linear-gradient(135deg, var(--inst-primary, #7c3aed) 0%, var(--inst-dark, #4c1d95) 100%) !important;
+            color: #ffffff !important;
+            font-size: 1rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.3px !important;
+            border: none !important;
+            box-shadow: 0 8px 24px rgba(var(--inst-primary-rgb, 124,58,237), 0.5) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.65rem !important;
+            width: 100%;
+            transition: all 0.25s ease !important;
+            cursor: pointer;
+        }
+        .reg-submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(var(--inst-primary-rgb, 124,58,237), 0.65) !important;
+            color: #ffffff !important;
+        }
+
+        /* Link de login abajo */
+        .reg-login-link-line {
+            text-align: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            margin-top: 1.25rem;
+            padding-top: 1.1rem;
+        }
+        .reg-login-link-line a {
+            color: var(--inst-secondary, #c4b5fd);
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            transition: color 0.2s;
+        }
+        .reg-login-link-line a:hover { color: #fff; }
+
+        /* Footer */
+        .reg-footer {
+            background: #0c0e1a;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            text-align: center;
+            padding: 1.25rem 1rem;
+            color: rgba(255,255,255,0.35);
+            font-size: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .reg-stage { padding: 2rem 1rem 2.5rem; min-height: auto; }
+            .reg-navbar { padding: 0.6rem 1.25rem; }
+            .reg-topbar { font-size: 0.72rem; flex-direction: column; gap: 0.25rem; text-align: center; padding: 0.35rem 1rem; }
+        }
+
+        /* inst-card selector (escuela/rol) */
+        .inst-card { position: relative; cursor: pointer; margin: 0; }
+        .inst-card input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+        .inst-card-inner {
+            border: 1.5px solid rgba(255,255,255,0.18);
+            border-radius: 8px;
+            padding: 6px 3px;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: rgba(255,255,255,0.06);
+            cursor: pointer;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .inst-card-inner:hover {
+            border-color: var(--inst-secondary);
+            background: rgba(255,255,255,0.12);
+            transform: translateY(-1px);
+        }
+        .inst-card input[type="radio"]:checked + .inst-card-inner {
+            border-color: var(--inst-primary);
+            background: color-mix(in srgb, var(--inst-primary) 30%, rgba(255,255,255,0.08));
+            box-shadow: 0 3px 10px rgba(var(--inst-primary-rgb), 0.3);
+        }
+        .inst-card input[type="radio"]:checked + .inst-card-inner .inst-name { color: var(--inst-secondary); font-weight: 700; }
+        .inst-icon { font-size: 1.3rem; display: block; margin-bottom: 2px; line-height: 1; }
+        .inst-name { font-size: 0.67rem; font-weight: 600; color: rgba(255,255,255,0.75); line-height: 1.15; }
+        .inst-badge { font-size: 0.52rem; padding: 1px 4px; border-radius: 8px; margin-top: 3px; display: inline-block; letter-spacing: 0.2px; white-space: nowrap; line-height: 1.2; }
+    </style>
+</head>
+<body>
+
+<!-- ════ TOPBAR INSTITUCIONAL ════ -->
+<div class="reg-topbar">
+    <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center gap-2 text-truncate">
+            <span class="reg-topbar-pill"><i class="bi bi-mortarboard-fill"></i> Integración Media Técnica</span>
+            <span class="d-none d-sm-inline" style="opacity:.85;">Educación para el Seguimiento del Proceso de Integración con la Media Técnica</span>
         </div>
-
-        <form method="POST" action="{% url 'accounts:register' %}" class="needs-validation" id="register-form">
-            {% csrf_token %}
-
-            {% if form.non_field_errors %}
-            <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 border-danger-subtle shadow-sm" role="alert">
-                <i class="bi bi-exclamation-triangle-fill me-2 fs-6 text-danger"></i>
-                <div>
-                    {% for error in form.non_field_errors %}
-                        <span>{{ error }}</span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- 0. Modelo Institucional Escolar y Selección de Escuela Obligatoria -->
-            <input type="hidden" name="institution_type" id="reg-inst-colegio" value="COLEGIO">
-
-            <div class="mb-3 p-3 bg-light rounded border border-primary-subtle shadow-sm">
-                <label for="reg-school-select" class="form-label small fw-bold text-dark d-flex align-items-center justify-content-between mb-2">
-                    <span><i class="bi bi-building-fill text-primary"></i> <span class="text-danger">*</span> Institución / Escuela a Registrarse:</span>
-                    <span class="badge bg-primary text-white" style="font-size:0.62rem;">Obligatorio</span>
-                </label>
-                <select name="school_id" id="reg-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" required>
-                    <option value="" disabled {% if not selected_school and active_schools|length > 1 %}selected{% endif %}>— Seleccione el Colegio o Sede —</option>
-                    {% for school in active_schools %}
-                    <option value="{{ school.pk }}"
-                            data-primary-color="{{ school.primary_color|default:'#7c3aed' }}"
-                            data-secondary-color="{{ school.secondary_color|default:'#c4b5fd' }}"
-                            data-school-name="{{ school.name }}"
-                            data-school-logo="{% if school.logo %}{{ school.logo.url }}{% endif %}"
-                            data-school-city="{{ school.city|default:'' }}"
-                            {% if selected_school and selected_school.pk == school.pk or active_schools|length == 1 %}selected{% endif %}>
-                        🏫 {{ school.name }}{% if school.city %} ({{ school.city }}){% endif %}
-                    </option>
-                    {% empty %}
-                    <option value="1" selected>🏫 {{ current_institution.institution_name|default:"Institución Educativa Central" }}</option>
-                    {% endfor %}
-                </select>
-                <div id="reg-school-preview" class="mt-2 p-2 rounded-3 border align-items-center gap-2" style="display:none; transition:all 0.2s;">
-                    <div id="reg-school-preview-logo" class="rounded-2 flex-shrink-0 d-flex align-items-center justify-content-center" style="width:32px;height:32px;"></div>
-                    <div class="flex-grow-1 overflow-hidden">
-                        <strong class="d-block text-dark small text-truncate" id="reg-school-preview-name"></strong>
-                        <small class="text-muted" style="font-size:0.68rem;">Colores y sede institucional aplicados</small>
-                    </div>
-                    <span class="badge" id="reg-school-preview-badge" style="font-size:0.65rem;">Sede Activa</span>
-                </div>
-                <div class="form-text small mt-1" style="font-size: 0.72rem;">
-                    Tu cuenta y tu <strong>ID ÚNICO</strong> quedarán vinculados formalmente a esta institución educativa.
-                </div>
-            </div>
-
-            <!-- 1. Selección de Rol Obligatoria Adaptable -->
-            <div class="mb-3 p-3 bg-light rounded border border-primary-subtle shadow-sm">
-                <label for="reg-role-select" class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-2">
-                    <i class="bi bi-shield-check text-primary"></i> <span class="text-danger">*</span> <span id="reg-role-label">Rol a Registrar en la Institución:</span>
-                </label>
-                {{ form.role }}
-                <div class="form-text small mt-1" id="role-help-text" style="font-size: 0.75rem;">
-                    Alumnos recibirán un ID ÚNICO generado automáticamente.
-                </div>
-            </div>
-
-            <!-- Aviso para Alumnos (Asignación de ID Único) -->
-            <div class="alert alert-primary py-2 px-3 small mb-3 border-0 shadow-sm" id="student-notice" style="display: none;">
-                <i class="bi bi-info-circle-fill me-1"></i>
-                <span id="student-notice-content"><strong>ID ÚNICO Automático:</strong> Al registrarse como alumno, el sistema le generará y asignará su <strong>ID ÚNICO</strong> exclusivo de acceso.</span>
-            </div>
-
-            <!-- Campo Obligatorio para Padre / Acudiente: ID ÚNICO del Estudiante -->
-            <div class="mb-3 p-3 bg-warning-subtle rounded border border-warning shadow-sm" id="parent-student-id-wrapper" style="display: none;">
-                <label for="reg-student-id-input" class="form-label small fw-bold text-dark d-flex align-items-center gap-1 mb-1" id="parent-student-id-label">
-                    <i class="bi bi-person-badge text-warning-emphasis"></i> <span class="text-danger">*</span> ID ÚNICO del Alumno a Representar:
-                </label>
-                {{ form.student_id_target }}
-                <div class="form-text small mt-1" id="parent-student-id-help" style="font-size: 0.72rem;">
-                    Obligatorio para acudientes. Ingrese el código o ID único de su alumno a cargo (ej: ALU-2026-1001).
-                </div>
-                {% if form.student_id_target.errors %}
-                    <div class="text-danger small mt-1">{{ form.student_id_target.errors.0 }}</div>
-                {% endif %}
-            </div>
-
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Nombres:</label>
-                    {{ form.first_name }}
-                    {% if form.first_name.errors %}
-                        <div class="text-danger small">{{ form.first_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Apellidos:</label>
-                    {{ form.last_name }}
-                    {% if form.last_name.errors %}
-                        <div class="text-danger small">{{ form.last_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="row g-2 mb-3">
-                <div class="col-md-5">
-                    <label class="form-label small fw-bold text-secondary">Tipo Doc:</label>
-                    {{ form.document_type }}
-                </div>
-                <div class="col-md-7">
-                    <label class="form-label small fw-bold text-secondary">Número de Documento:</label>
-                    {{ form.document_number }}
-                    {% if form.document_number.errors %}
-                        <div class="text-danger small">{{ form.document_number.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="row g-2 mb-3">
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Nombre de Usuario:</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="text-danger small">{{ form.username.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Email (Opcional):</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <div class="text-danger small">{{ form.email.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="row g-2 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Contraseña:</label>
-                    {{ form.password }}
-                    {% if form.password.errors %}
-                        <div class="text-danger small">{{ form.password.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Confirmar Contraseña:</label>
-                    {{ form.confirm_password }}
-                    {% if form.confirm_password.errors %}
-                        <div class="text-danger small">{{ form.confirm_password.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-
-            <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-primary btn-lg fw-bold d-flex align-items-center justify-content-center gap-2 shadow" id="reg-submit-btn">
-                    <i class="bi bi-check-circle-fill fs-5"></i>
-                    <span id="reg-submit-text">Registrarse en el Sistema</span>
-                </button>
-            </div>
-
-            <div class="text-center mt-3 pt-3 border-top">
-                <span class="text-muted small">¿Ya tienes una cuenta registrada?</span>
-                <a href="{% url 'accounts:login' %}?model={{ current_institution.institution_type }}" class="small fw-bold text-primary text-decoration-none ms-1" id="reg-login-link">
-                    <i class="bi bi-box-arrow-in-right me-1"></i>Iniciar Sesión
-                </a>
-            </div>
-        </form>
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <span class="badge bg-white text-dark rounded-pill px-3 py-1 d-none d-md-inline-block fw-bold" style="font-size:0.7rem;">
+                <i class="bi bi-patch-check-fill me-1" style="color:var(--inst-primary);"></i>Portal Oficial
+            </span>
+        </div>
     </div>
 </div>
 
+<!-- ════ NAVBAR ════ -->
+<nav class="reg-navbar">
+    <a href="{% url 'accounts:login' %}" class="reg-brand" id="reg-navbar-brand-link">
+        <div class="reg-brand-logo" id="reg-brand-logo-nav">
+            {% if current_institution.logo %}
+                <img src="{{ current_institution.logo.url }}" alt="Logo">
+            {% else %}
+                <i class="bi bi-mortarboard-fill" style="color:white;"></i>
+            {% endif %}
+        </div>
+        <div class="reg-brand-text">
+            <strong id="reg-brand-title">{{ current_institution.institution_name|default:"ACADEMIX" }}</strong>
+            <span>{{ current_institution.get_institution_type_display|default:"Institución Educativa" }}</span>
+        </div>
+    </a>
+
+    <a href="{% url 'accounts:login' %}" class="reg-btn-login" id="reg-btn-login-nav">
+        <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+    </a>
+</nav>
+
+<!-- ════ HERO STAGE ════ -->
+<section class="reg-stage">
+    <!-- Brillos ambientales -->
+    <div class="reg-glow reg-glow-1"></div>
+    <div class="reg-glow reg-glow-2"></div>
+    <div class="reg-glow reg-glow-3"></div>
+
+    <div class="container-xxl">
+        <div class="reg-stage-card">
+            <div class="row align-items-start g-4 g-lg-5">
+
+                <!-- ══ COLUMNA IZQUIERDA: IDENTIDAD ══ -->
+                <div class="col-lg-5 text-center text-lg-start d-flex flex-column align-items-center align-items-lg-start">
+
+                    <div class="reg-logo-squircle mb-4" id="reg-brand-logo-container">
+                        {% if current_institution.logo %}
+                            <img src="{{ current_institution.logo.url }}" alt="Logo">
+                        {% else %}
+                            <i class="bi bi-mortarboard-fill reg-logo-icon"></i>
+                        {% endif %}
+                    </div>
+
+                    <h1 class="reg-hero-title mb-3">REGISTRO<br>INSTITUCIONAL</h1>
+
+                    <p class="reg-hero-subtitle mb-4">
+                        Crea tu cuenta para acceder a la plataforma de gestión académica y seguimiento institucional.
+                    </p>
+
+                    <div class="reg-hero-pill-badge mb-4">
+                        <i class="bi bi-patch-check-fill me-2" style="color:var(--inst-secondary, #c4b5fd);"></i>
+                        <span>Acceso Seguro y Personalizado</span>
+                    </div>
+
+                    <!-- Features/beneficios -->
+                    <div class="d-flex flex-column gap-2 w-100" style="max-width:360px;">
+                        <div class="reg-feature-item">
+                            <div class="reg-feature-icon"><i class="bi bi-person-badge-fill"></i></div>
+                            <div class="reg-feature-text">
+                                <strong>ID Único Automático</strong>
+                                <small>Los estudiantes reciben su código de acceso exclusivo generado por el sistema.</small>
+                            </div>
+                        </div>
+                        <div class="reg-feature-item">
+                            <div class="reg-feature-icon"><i class="bi bi-envelope-fill"></i></div>
+                            <div class="reg-feature-text">
+                                <strong>Credenciales por Correo</strong>
+                                <small>Recibirás tu usuario y contraseña automáticamente en tu email registrado.</small>
+                            </div>
+                        </div>
+                        <div class="reg-feature-item">
+                            <div class="reg-feature-icon"><i class="bi bi-shield-lock-fill"></i></div>
+                            <div class="reg-feature-text">
+                                <strong>Acceso Institucional</strong>
+                                <small>Tu cuenta queda vinculada formalmente a tu institución educativa.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2 mt-4 text-white-50 small">
+                        <i class="bi bi-building"></i>
+                        <span id="reg-hero-school-name">{{ current_institution.institution_name|default:"ACADEMIX" }}</span>
+                    </div>
+                </div>
+
+                <!-- ══ COLUMNA DERECHA: FORMULARIO ══ -->
+                <div class="col-lg-7">
+                    <div class="reg-form-box">
+
+                        <!-- Encabezado del formulario -->
+                        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-white-10">
+                            <span class="reg-form-heading">CREAR CUENTA NUEVA</span>
+                            <span class="badge rounded-pill" style="background:rgba(255,255,255,0.15); color:#ffffff; font-size:0.68rem; font-weight:700;">
+                                <i class="bi bi-person-plus-fill me-1"></i>Registro
+                            </span>
+                        </div>
+
+                        <form method="POST" action="{% url 'accounts:register' %}" class="needs-validation" id="register-form" novalidate>
+                            {% csrf_token %}
+
+                            <!-- Errores generales -->
+                            {% if form.non_field_errors %}
+                            <div class="reg-alert-danger d-flex align-items-start gap-2 mb-3">
+                                <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+                                <div>
+                                    {% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Tipo institución (oculto, colegio fijo) -->
+                            <input type="hidden" name="institution_type" id="reg-inst-colegio" value="COLEGIO">
+
+                            <!-- 1. SELECCIÓN DE ESCUELA -->
+                            <div class="reg-section-block mb-3">
+                                <label for="reg-school-select" class="reg-label mb-2">
+                                    <i class="bi bi-building-fill" style="color:var(--inst-secondary);"></i>
+                                    Institución / Sede
+                                    <span class="text-danger ms-1">*</span>
+                                    <span class="badge ms-auto" style="background:var(--inst-primary); color:#fff; font-size:0.6rem;">Obligatorio</span>
+                                </label>
+                                <select name="school_id" id="reg-school-select" class="form-select form-select-sm fw-bold" required>
+                                    <option value="" disabled {% if not selected_school and active_schools|length > 1 %}selected{% endif %}>— Seleccione el Colegio o Sede —</option>
+                                    {% for school in active_schools %}
+                                    <option value="{{ school.pk }}"
+                                            data-primary-color="{{ school.primary_color|default:'#7c3aed' }}"
+                                            data-secondary-color="{{ school.secondary_color|default:'#c4b5fd' }}"
+                                            data-school-name="{{ school.name }}"
+                                            data-school-logo="{% if school.logo %}{{ school.logo.url }}{% endif %}"
+                                            data-school-city="{{ school.city|default:'' }}"
+                                            {% if selected_school and selected_school.pk == school.pk or active_schools|length == 1 %}selected{% endif %}>
+                                        🏫 {{ school.name }}{% if school.city %} ({{ school.city }}){% endif %}
+                                    </option>
+                                    {% empty %}
+                                    <option value="1" selected>🏫 {{ current_institution.institution_name|default:"Institución Educativa Central" }}</option>
+                                    {% endfor %}
+                                </select>
+
+                                <!-- Preview de escuela seleccionada -->
+                                <div id="reg-school-preview" class="reg-school-preview">
+                                    <div id="reg-school-preview-logo" class="reg-school-preview-logo"></div>
+                                    <div class="flex-grow-1 overflow-hidden">
+                                        <strong class="d-block text-white small text-truncate" id="reg-school-preview-name" style="font-size:.8rem;"></strong>
+                                        <small style="font-size:.68rem; color:rgba(255,255,255,.55);">Colores institucionales aplicados</small>
+                                    </div>
+                                    <span class="badge" id="reg-school-preview-badge" style="font-size:.62rem;">Sede Activa</span>
+                                </div>
+
+                                <div class="mt-1" style="font-size:0.7rem; color:rgba(255,255,255,.45);">
+                                    Tu cuenta y tu <strong style="color:rgba(255,255,255,.65);">ID ÚNICO</strong> quedarán vinculados a esta institución.
+                                </div>
+                            </div>
+
+                            <!-- 2. ROL -->
+                            <div class="reg-section-block mb-3">
+                                <label for="reg-role-select" class="reg-label mb-2">
+                                    <i class="bi bi-shield-check" style="color:var(--inst-secondary);"></i>
+                                    <span id="reg-role-label">Rol a Registrar</span>
+                                    <span class="text-danger ms-1">*</span>
+                                </label>
+                                {{ form.role }}
+                                <div class="mt-1" id="role-help-text" style="font-size:0.7rem; color:rgba(255,255,255,.45);">
+                                    Alumnos recibirán un ID ÚNICO generado automáticamente.
+                                </div>
+                            </div>
+
+                            <!-- Aviso alumno -->
+                            <div class="reg-alert-info d-flex align-items-start gap-2 mb-3" id="student-notice" style="display:none!important;">
+                                <i class="bi bi-info-circle-fill flex-shrink-0 mt-1" style="color:var(--inst-secondary);"></i>
+                                <span id="student-notice-content"><strong>ID ÚNICO Automático:</strong> Al registrarse como alumno, el sistema le asignará su <strong>ID ÚNICO</strong> exclusivo de acceso.</span>
+                            </div>
+
+                            <!-- Campo padre/acudiente: ID del estudiante -->
+                            <div class="reg-alert-warning mb-3" id="parent-student-id-wrapper" style="display:none;">
+                                <label for="reg-student-id-input" class="reg-label mb-1" id="parent-student-id-label" style="color:rgba(255,255,255,0.85);">
+                                    <i class="bi bi-person-badge" style="color:#fbbf24;"></i>
+                                    <span class="text-danger">*</span> ID ÚNICO del Alumno a Representar:
+                                </label>
+                                {{ form.student_id_target }}
+                                <div class="mt-1" id="parent-student-id-help" style="font-size:0.7rem; color:rgba(255,255,255,.55);">
+                                    Obligatorio para acudientes. Ingrese el ID único de su alumno (ej: ALU-2026-1001).
+                                </div>
+                                {% if form.student_id_target.errors %}
+                                    <div class="reg-field-error">{{ form.student_id_target.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- 3. NOMBRES Y APELLIDOS -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-person"></i> Nombres:</label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}<div class="reg-field-error">{{ form.first_name.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-person"></i> Apellidos:</label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}<div class="reg-field-error">{{ form.last_name.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <!-- 4. DOCUMENTO -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-5">
+                                    <label class="reg-label"><i class="bi bi-card-text"></i> Tipo Doc:</label>
+                                    {{ form.document_type }}
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="reg-label"><i class="bi bi-hash"></i> Número de Documento:</label>
+                                    {{ form.document_number }}
+                                    {% if form.document_number.errors %}<div class="reg-field-error">{{ form.document_number.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <!-- 5. USUARIO Y EMAIL -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-at"></i> Usuario:</label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}<div class="reg-field-error">{{ form.username.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-envelope"></i> Email <span style="opacity:.55;">(Opcional)</span>:</label>
+                                    {{ form.email }}
+                                    {% if form.email.errors %}<div class="reg-field-error">{{ form.email.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <!-- 6. CONTRASEÑAS -->
+                            <div class="row g-2 mb-4">
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-lock"></i> Contraseña:</label>
+                                    <div class="input-group">
+                                        {{ form.password }}
+                                        <button type="button" class="btn btn-toggle-password" id="reg-toggle-pwd1" title="Mostrar/ocultar contraseña">
+                                            <i class="bi bi-eye" id="reg-pwd1-icon"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.password.errors %}<div class="reg-field-error">{{ form.password.errors.0 }}</div>{% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="reg-label"><i class="bi bi-lock-fill"></i> Confirmar Contraseña:</label>
+                                    <div class="input-group">
+                                        {{ form.confirm_password }}
+                                        <button type="button" class="btn btn-toggle-password" id="reg-toggle-pwd2" title="Mostrar/ocultar contraseña">
+                                            <i class="bi bi-eye" id="reg-pwd2-icon"></i>
+                                        </button>
+                                    </div>
+                                    {% if form.confirm_password.errors %}<div class="reg-field-error">{{ form.confirm_password.errors.0 }}</div>{% endif %}
+                                </div>
+                            </div>
+
+                            <!-- BOTÓN SUBMIT -->
+                            <div class="d-grid mt-2">
+                                <button type="submit" class="reg-submit-btn" id="reg-submit-btn">
+                                    <i class="bi bi-check-circle-fill fs-5"></i>
+                                    <span id="reg-submit-text">Registrarse en el Sistema</span>
+                                </button>
+                            </div>
+
+                            <!-- Link volver al login -->
+                            <div class="reg-login-link-line">
+                                <span style="color:rgba(255,255,255,.45); font-size:.82rem;">¿Ya tienes una cuenta?</span>
+                                <a href="{% url 'accounts:login' %}" class="ms-2" id="reg-login-link">
+                                    <i class="bi bi-box-arrow-in-right"></i> Iniciar Sesión
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ════ FOOTER ════ -->
+<footer class="reg-footer">
+    <i class="bi bi-shield-lock me-1"></i>
+    &copy; 2026 {{ current_institution.institution_name|default:"ACADEMIX" }} — Plataforma Institucional Académica. Todos los derechos reservados.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 (function() {
-    // Configuración exhaustiva de terminología adaptada por modelo
+    // ── CONFIGURACIÓN DE MODELOS ──
     const MODEL_CONFIGS = {
         'COLEGIO': {
             name: 'Colegio / Escuela',
@@ -268,9 +822,9 @@
                 'default': 'Registro escolar con usuario y credenciales institucionales.'
             },
             studentNotice: '<strong>ID ÚNICO Escolar:</strong> Al registrarse como <strong>estudiante</strong>, el sistema le asignará su <strong>ID ÚNICO</strong> exclusivo de acceso escolar.',
-            parentIdLabel: '<i class="bi bi-person-badge text-warning-emphasis"></i> <span class="text-danger">*</span> ID ÚNICO del Alumno a Representar:',
+            parentIdLabel: '<i class="bi bi-person-badge" style="color:#fbbf24;"></i> <span class="text-danger">*</span> ID ÚNICO del Alumno a Representar:',
             parentIdHelp: 'Obligatorio para acudientes. Ingrese el código o ID único de su alumno (ej: ALU-2026-1001).',
-            btnText: 'Registrarse en Colegio'
+            btnText: 'Registrarse en el Sistema'
         }
     };
 
@@ -278,15 +832,9 @@
         const config = MODEL_CONFIGS[modelKey];
         if (!config) return;
 
-        // 1. Actualizar badge de modelo
-        const regSelectedText = document.getElementById('reg-selected-inst-text');
-        if (regSelectedText) regSelectedText.textContent = config.name;
-
-        // 2. Actualizar subtítulo
         const regSubtitle = document.getElementById('reg-subtitle');
         if (regSubtitle) regSubtitle.textContent = config.subtitle;
 
-        // 3. Reconstruir opciones del desplegable de Roles (eliminando Acudiente en Universidad, SENA y Academia)
         const roleSelect = document.getElementById('reg-role-select');
         if (roleSelect && config.roles) {
             const currentVal = roleSelect.value;
@@ -297,34 +845,24 @@
                 opt.textContent = rLabel;
                 roleSelect.appendChild(opt);
             }
-            if (config.roles[currentVal]) {
-                roleSelect.value = currentVal;
-            } else {
-                roleSelect.value = 'STUDENT';
-            }
+            roleSelect.value = config.roles[currentVal] ? currentVal : 'STUDENT';
         }
 
-        // 4. Adaptar texto del botón de envío
         const submitText = document.getElementById('reg-submit-text');
         if (submitText) submitText.textContent = config.btnText;
 
-        // 5. Adaptar enlace hacia el Login
         const loginLink = document.getElementById('reg-login-link');
-        if (loginLink) {
-            loginLink.href = "{% url 'accounts:login' %}?model=" + encodeURIComponent(modelKey);
-        }
+        if (loginLink) loginLink.href = "{% url 'accounts:login' %}?model=" + encodeURIComponent(modelKey);
 
-        // 6. Actualizar campos condicionales
         updateRegisterFields(modelKey);
 
-        // 7. Notificar al backend de forma asíncrona para sincronizar preset de inmediato
         fetch("{% url 'accounts:switch_model' %}?model=" + encodeURIComponent(modelKey), {
             headers: {'X-Requested-With': 'XMLHttpRequest'}
-        }).catch(function(e) {});
+        }).catch(function(){});
     }
 
     function updateRegisterFields(activeModel) {
-        const currentModel = activeModel || (document.querySelector('input[name="institution_type"]:checked') || {}).value || 'COLEGIO';
+        const currentModel = activeModel || 'COLEGIO';
         const config = MODEL_CONFIGS[currentModel] || MODEL_CONFIGS['COLEGIO'];
 
         const roleSelect = document.getElementById('reg-role-select');
@@ -340,15 +878,12 @@
         const role = roleSelect.value;
 
         if (role === 'STUDENT') {
-            if (studentNotice) {
-                studentNotice.style.display = 'block';
-                if (studentNoticeContent) studentNoticeContent.innerHTML = config.studentNotice;
-            }
+            if (studentNotice) { studentNotice.style.cssText = 'display:flex!important;'; if (studentNoticeContent) studentNoticeContent.innerHTML = config.studentNotice; }
             if (parentStudentWrapper) parentStudentWrapper.style.display = 'none';
             if (studentIdInput) studentIdInput.required = false;
             if (helpText) helpText.innerText = config.roleHelp['STUDENT'];
         } else if (role === 'PARENT') {
-            if (studentNotice) studentNotice.style.display = 'none';
+            if (studentNotice) studentNotice.style.cssText = 'display:none!important;';
             if (parentStudentWrapper) {
                 parentStudentWrapper.style.display = 'block';
                 if (parentStudentLabel) parentStudentLabel.innerHTML = config.parentIdLabel;
@@ -357,30 +892,23 @@
             if (studentIdInput) studentIdInput.required = true;
             if (helpText) helpText.innerText = config.roleHelp['PARENT'];
         } else {
-            if (studentNotice) studentNotice.style.display = 'none';
+            if (studentNotice) studentNotice.style.cssText = 'display:none!important;';
             if (parentStudentWrapper) parentStudentWrapper.style.display = 'none';
             if (studentIdInput) studentIdInput.required = false;
             if (helpText) helpText.innerText = config.roleHelp['default'];
         }
     }
 
-    // Escuchar cambios en los radios de tipo de institución
-    const regRadios = document.querySelectorAll('input[name="institution_type"]');
-    regRadios.forEach(function(radio) {
-        radio.addEventListener('change', function() {
-            applyModelAdaptation(this.value);
-        });
+    // Escuchar radios
+    document.querySelectorAll('input[name="institution_type"]').forEach(function(radio) {
+        radio.addEventListener('change', function() { applyModelAdaptation(this.value); });
     });
 
-    // Escuchar cambios en el selector de roles
+    // Escuchar rol
     const roleSelect = document.getElementById('reg-role-select');
-    if (roleSelect) {
-        roleSelect.addEventListener('change', function() {
-            updateRegisterFields();
-        });
-    }
+    if (roleSelect) roleSelect.addEventListener('change', function() { updateRegisterFields(); });
 
-    // Inicializar de inmediato al cargar la página con el modelo activo
+    // Inicializar
     const initialChecked = document.querySelector('input[name="institution_type"]:checked');
     if (initialChecked) {
         applyModelAdaptation(initialChecked.value);
@@ -388,7 +916,7 @@
         updateRegisterFields('{{ current_institution.institution_type|default:"COLEGIO" }}');
     }
 
-    // ── CAMBIO AUTOMÁTICO EN TIEMPO REAL AL ELEGIR COLEGIO ──
+    // ── TEMA DE ESCUELA EN TIEMPO REAL ──
     const regSchoolSelect = document.getElementById('reg-school-select');
 
     function applyRegisterSchoolTheme() {
@@ -402,24 +930,11 @@
         const sLogo = opt.dataset.schoolLogo || '';
 
         const root = document.documentElement;
-        root.style.setProperty('--ac-primary', pColor);
+        root.style.setProperty('--inst-primary', pColor);
         root.style.setProperty('--bs-primary', pColor);
-        root.style.setProperty('--ac-primary-pastel', sColor);
-        root.style.setProperty('--ac-primary-light', sColor);
+        root.style.setProperty('--inst-secondary', sColor);
 
-        // Actualizar botones y acentos
-        document.querySelectorAll('.btn-primary, .bg-primary').forEach(function(el) {
-            el.style.backgroundColor = pColor;
-            el.style.borderColor = pColor;
-        });
-        document.querySelectorAll('.text-primary').forEach(function(el) {
-            el.style.color = pColor;
-        });
-        document.querySelectorAll('.border-primary, .border-primary-subtle').forEach(function(el) {
-            el.style.borderColor = pColor;
-        });
-
-        // Mostrar tarjeta de previsualización
+        // Preview card
         const previewBox = document.getElementById('reg-school-preview');
         const previewName = document.getElementById('reg-school-preview-name');
         const previewLogo = document.getElementById('reg-school-preview-logo');
@@ -427,24 +942,33 @@
 
         if (previewBox) {
             previewBox.style.display = 'flex';
-            previewBox.style.background = `color-mix(in srgb, ${sColor} 22%, white 78%)`;
             previewBox.style.borderColor = pColor;
             if (previewName) previewName.textContent = sName;
-            if (previewBadge) {
-                previewBadge.style.backgroundColor = pColor;
-                previewBadge.style.color = 'white';
-            }
+            if (previewBadge) { previewBadge.style.backgroundColor = pColor; previewBadge.style.color = 'white'; }
             if (previewLogo) {
                 previewLogo.style.backgroundColor = pColor;
-                if (sLogo) {
-                    previewLogo.innerHTML = `<img src="${sLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:.25rem;">`;
-                } else {
-                    previewLogo.innerHTML = `<i class="bi bi-mortarboard-fill text-white fs-6"></i>`;
-                }
+                previewLogo.innerHTML = sLogo
+                    ? `<img src="${sLogo}" style="width:100%;height:100%;object-fit:cover;border-radius:4px;">`
+                    : `<i class="bi bi-mortarboard-fill text-white" style="font-size:1rem;"></i>`;
             }
         }
 
-        // Guardar preferencia y actualizar URL sin recargar
+        // Logo squircle y navbar
+        const logoContainer = document.getElementById('reg-brand-logo-container');
+        const logoContainerNav = document.getElementById('reg-brand-logo-nav');
+        [logoContainer, logoContainerNav].forEach(function(el) {
+            if (!el) return;
+            if (sLogo) {
+                el.innerHTML = `<img src="${sLogo}" style="width:100%;height:100%;object-fit:cover;">`;
+            }
+        });
+
+        // Nombre en hero
+        const heroName = document.getElementById('reg-hero-school-name');
+        if (heroName) heroName.textContent = sName;
+        const brandTitle = document.getElementById('reg-brand-title');
+        if (brandTitle) brandTitle.textContent = sName;
+
         try {
             if (window.history && window.history.replaceState) {
                 const currentUrl = new URL(window.location.href);
@@ -457,12 +981,47 @@
 
     if (regSchoolSelect) {
         regSchoolSelect.addEventListener('change', applyRegisterSchoolTheme);
-        const savedSchoolId = (new URLSearchParams(window.location.search)).get('school_id') || localStorage.getItem('academix_preferred_school_id');
+        const savedSchoolId = (new URLSearchParams(window.location.search)).get('school_id')
+            || localStorage.getItem('academix_preferred_school_id');
         if (savedSchoolId && (!regSchoolSelect.value || regSchoolSelect.value === '')) {
             regSchoolSelect.value = savedSchoolId;
         }
         applyRegisterSchoolTheme();
     }
+
+    // ── TOGGLE CONTRASEÑAS ──
+    function setupToggle(btnId, iconId, inputId) {
+        const btn = document.getElementById(btnId);
+        const icon = document.getElementById(iconId);
+        const input = document.getElementById(inputId) || (btn && btn.closest('.input-group') && btn.closest('.input-group').querySelector('input'));
+        if (!btn || !input) return;
+        btn.addEventListener('click', function() {
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+            if (icon) {
+                icon.className = isPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+            }
+        });
+    }
+    setupToggle('reg-toggle-pwd1', 'reg-pwd1-icon', null);
+    setupToggle('reg-toggle-pwd2', 'reg-pwd2-icon', null);
+
+    // Fijar toggle a inputs correctos manualmente
+    ['reg-toggle-pwd1', 'reg-toggle-pwd2'].forEach(function(btnId) {
+        const btn = document.getElementById(btnId);
+        if (!btn) return;
+        const grp = btn.closest('.input-group');
+        if (!grp) return;
+        const inp = grp.querySelector('input[type="password"], input[type="text"]');
+        const icn = btn.querySelector('i');
+        if (!inp) return;
+        btn.onclick = function() {
+            const isPwd = inp.type === 'password';
+            inp.type = isPwd ? 'text' : 'password';
+            if (icn) icn.className = isPwd ? 'bi bi-eye-slash' : 'bi bi-eye';
+        };
+    });
 })();
 </script>
-{% endblock %}
+</body>
+</html>
