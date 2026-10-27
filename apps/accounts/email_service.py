@@ -30,15 +30,22 @@ def _send_async_mail(subject, text_content, html_content, recipient_list):
 
     def _worker():
         try:
+            from email.header import Header
+            import os
+            os.environ.setdefault('PYTHONIOENCODING', 'utf-8')
+
             from_email = f"ACADEMIX <{settings.EMAIL_HOST_USER}>" if settings.EMAIL_HOST_USER else settings.DEFAULT_FROM_EMAIL
             for recipient in valid_recipients:
                 try:
+                    # Codificar asunto con UTF-8 para soportar emojis y tildes
+                    encoded_subject = str(Header(subject, 'utf-8'))
                     msg = EmailMultiAlternatives(
-                        subject=subject,
+                        subject=encoded_subject,
                         body=text_content,
                         from_email=from_email,
                         to=[recipient]
                     )
+                    msg.encoding = 'utf-8'
                     msg.attach_alternative(html_content, "text/html")
                     msg.send(fail_silently=False)
                     logger.info(f"[NOTIFICACION_ENVIADA] Correo enviado a {recipient}: {subject}")
@@ -73,14 +80,14 @@ def send_registration_email(user, password, student_code=None, role_label=None):
         app_url = f"https://{app_url}"
     login_url = f"{app_url.rstrip('/')}/accounts/login/"
 
-    asunto = f"📋 Credenciales de Acceso al Sistema - ACADEMIX ({nombre_completo})"
+    asunto = f"[ACADEMIX] Credenciales de Acceso - {nombre_completo}"
 
     texto_plano = f"""Bienvenido(a) {nombre_completo} a ACADEMIX.
 
 Rol asignado: {rol}
-📋 Su número de registro / ID único: {id_registro}
-👤 Su nombre de usuario: {usuario}
-🔐 Su contraseña inicial: {password}
+Su numero de registro / ID unico: {id_registro}
+Su nombre de usuario: {usuario}
+Su contrasena inicial: {password}
 
 Acceso al sistema: {login_url}
 """
@@ -138,7 +145,7 @@ def send_absence_notification_email(student_profile, subject, session_date, stat
     subject_name = getattr(subject, 'name', 'Asignatura')
     fecha_str = session_date.strftime('%d/%m/%Y') if hasattr(session_date, 'strftime') else str(session_date)
 
-    asunto = f"⚠️ Notificación de Inasistencia - ACADEMIX ({student_name})"
+    asunto = f"[ACADEMIX] Notificacion de Inasistencia - {student_name}"
 
     texto_plano = f"""Estimado(a) estudiante / Acudiente:
 
@@ -224,7 +231,7 @@ def send_homework_notification_email(homework):
     teacher_name = homework.teacher.user.get_full_name() if homework.teacher else "Docente Titular"
     due_str = homework.due_date.strftime('%d/%m/%Y') if hasattr(homework.due_date, 'strftime') else str(homework.due_date)
 
-    asunto = f"📚 Nueva Tarea: {homework.title} - {subject_name} ({section.name})"
+    asunto = f"[ACADEMIX] Nueva Tarea: {homework.title} - {subject_name}"
 
     texto_plano = f"""Hola estudiante de {section.name}:
 
@@ -315,7 +322,7 @@ def send_institutional_activity_email(activity):
     date_str = activity.event_date.strftime('%d/%m/%Y') if hasattr(activity.event_date, 'strftime') else str(activity.event_date)
     time_str = f" a las {activity.event_time.strftime('%H:%M')}" if activity.event_time else ""
 
-    asunto = f"📢 Comunicado Institucional: {activity.title} - ACADEMIX"
+    asunto = f"[ACADEMIX] Comunicado Institucional: {activity.title}"
 
     texto_plano = f"""Comunicado Oficial ACADEMIX:
 
@@ -384,8 +391,7 @@ def send_discipline_annotation_email(anotacion):
     student_name = student_profile.user.get_full_name()
     author_name = anotacion.author_user.get_full_name() if anotacion.author_user else "Docente / Directivo"
 
-    asunto = f"📋 Notificación de Observador del Estudiante - ACADEMIX ({student_name})"
-
+    asunto = f"[ACADEMIX] Notificacion del Observador - {student_name}"
     texto_plano = f"""Estimado(a) estudiante / Acudiente:
 
 Se ha registrado una situación en el Observador Estudiantil de {student_name}:
