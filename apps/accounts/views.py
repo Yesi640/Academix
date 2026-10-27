@@ -683,6 +683,28 @@ def users_management_view(request):
                 if getattr(request.user, 'school', None):
                     new_user.school = request.user.school
                 new_user.save()
+
+                # Crear perfiles institucionales según el rol
+                if role == CustomUser.Role.TEACHER:
+                    from apps.teachers.models import TeacherProfile
+                    TeacherProfile.objects.get_or_create(user=new_user, defaults={'specialty': 'Docencia General'})
+                elif role == CustomUser.Role.STUDENT:
+                    import random
+                    from apps.students.models import StudentProfile
+                    code = f"ALU-2026-{random.randint(1000, 9999)}"
+                    StudentProfile.objects.get_or_create(user=new_user, defaults={'student_code': code})
+
+                # Notificación por correo si se ingresó email externo
+                mail_sent = False
+                has_external_mail = bool(email and not email.endswith('@academix.edu.co'))
+                if has_external_mail:
+                    try:
+                        from apps.accounts.email_service import send_registration_email
+                        mail_sent = send_registration_email(new_user, password=password, role_label=new_user.get_role_display())
+                    except Exception as err:
+                        import logging
+                        logging.getLogger(__name__).warning(f"Error enviando correo de credenciales: {err}")
+
                 log_audit(
                     user=request.user,
                     action='CREATE',
@@ -692,7 +714,11 @@ def users_management_view(request):
                     reason=f'Creación de usuario institucional: {new_user.username} ({new_user.get_role_display()})',
                     request=request
                 )
-                messages.success(request, f'¡Usuario {new_user.username} ({new_user.get_role_display()}) creado exitosamente!')
+
+                if mail_sent:
+                    messages.success(request, f'¡Usuario {new_user.username} ({new_user.get_role_display()}) creado exitosamente! Credenciales enviadas a {email}.')
+                else:
+                    messages.success(request, f'¡Usuario {new_user.username} ({new_user.get_role_display()}) creado! Puede ingresar con su usuario "{new_user.username}" o con su documento "{doc_num or username}".')
 
         return redirect('accounts:users_list')
 

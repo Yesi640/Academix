@@ -135,20 +135,34 @@ class LoginForm(forms.Form):
 
             self.user_cache = user
 
-        # 3. Validación para PROFESOR o SECRETARIA
+        # 3. Validación para PROFESOR, SECRETARIA, RECTOR o ADMIN
         else:
             if not username:
-                raise ValidationError("Debe ingresar su usuario o documento institucional.")
+                raise ValidationError("Debe ingresar su usuario, número de documento o correo institucional.")
 
-            user = authenticate(self.request, username=username, password=password)
+            ident = username.strip()
+            # Buscar usuario por username exacto, número de documento o correo electrónico
+            found_user = (
+                CustomUser.objects.filter(username__iexact=ident).first()
+                or CustomUser.objects.filter(document_number=ident).first()
+                or CustomUser.objects.filter(email__iexact=ident).first()
+            )
+
+            resolved_username = found_user.username if found_user else ident
+            user = authenticate(self.request, username=resolved_username, password=password)
+
             if not user:
-                raise ValidationError("Credenciales inválidas. Verifique su usuario y contraseña.")
+                if not found_user:
+                    raise ValidationError(f"No existe ningún usuario registrado con '{ident}'. Verifique su usuario o documento.")
+                raise ValidationError("Contraseña incorrecta. Verifique sus credenciales de acceso.")
 
-            # Verificar coincidencia estricta de rol
+            # Verificar coincidencia de rol con mensaje orientativo
             if role == 'TEACHER' and not (user.is_teacher or user.is_admin_role):
-                raise ValidationError("El usuario no corresponde al rol de Docente seleccionado.")
+                raise ValidationError(f"Esta cuenta pertenece al rol '{user.get_role_display()}'. Cambie el selector de rol a '{user.get_role_display()}' para ingresar.")
             elif role == 'SECRETARIA' and not (user.is_secretary or user.is_admin_role or user.is_rector):
-                raise ValidationError("El usuario no corresponde al rol de Secretaría seleccionado.")
+                raise ValidationError(f"Esta cuenta pertenece al rol '{user.get_role_display()}'. Cambie el selector de rol a '{user.get_role_display()}' para ingresar.")
+            elif role == 'RECTOR' and not (user.is_rector or user.is_admin_role):
+                raise ValidationError(f"Esta cuenta pertenece al rol '{user.get_role_display()}'. Cambie el selector de rol a '{user.get_role_display()}' para ingresar.")
 
             self.user_cache = user
 
