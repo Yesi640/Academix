@@ -1,4 +1,4 @@
-﻿"""
+"""
 Servicio centralizado de notificaciones por correo electronico institucional para ACADEMIX.
 Envia credenciales, alertas de asistencia, nuevas tareas por curso, comunicados de rectoria/secretaria y observador.
 """
@@ -58,7 +58,8 @@ def _send_async_mail(subject, text_content, html_content, recipient_list):
 # 1. BIENVENIDA Y CREDENCIALES
 # ══════════════════════════════════════════════════════════════════════
 def send_registration_email(user, password, student_code=None, role_label=None):
-    """Envia credenciales de acceso al crear alumno o docente."""
+    """Envia credenciales de acceso al crear alumno, docente o acudiente."""
+    import os
     if not is_valid_recipient(user.email):
         return False
 
@@ -66,6 +67,11 @@ def send_registration_email(user, password, student_code=None, role_label=None):
     rol = role_label or user.get_role_display()
     usuario = user.username
     id_registro = student_code if student_code else usuario
+
+    app_url = os.getenv('APP_URL', 'https://academix-q2g4.onrender.com')
+    if not app_url.startswith('http'):
+        app_url = f"https://{app_url}"
+    login_url = f"{app_url.rstrip('/')}/accounts/login/"
 
     asunto = f"📋 Credenciales de Acceso al Sistema - ACADEMIX ({nombre_completo})"
 
@@ -76,7 +82,7 @@ Rol asignado: {rol}
 👤 Su nombre de usuario: {usuario}
 🔐 Su contraseña inicial: {password}
 
-Acceso al sistema: http://localhost:8000/
+Acceso al sistema: {login_url}
 """
 
     texto_html = f"""
@@ -105,7 +111,7 @@ Acceso al sistema: http://localhost:8000/
             </tr>
         </table>
         <div style="text-align: center; margin: 25px 0;">
-            <a href="http://localhost:8000/" style="background: #2563eb; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">Ingresar a ACADEMIX</a>
+            <a href="{login_url}" style="background: #2563eb; color: #ffffff; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; display: inline-block;">Ingresar a ACADEMIX</a>
         </div>
     </div>
     """

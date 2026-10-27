@@ -206,26 +206,21 @@ def register_view(request):
 
             login(request, user)
 
-            if role == CustomUser.Role.STUDENT and extra_msg:
-                try:
-                    from django.core.mail import send_mail
-                    if email and '@academix.edu.co' not in email:
-                        generated_code = StudentProfile.objects.get(user=user).student_code
-                        send_mail(
-                            subject='ACADEMIX – Tu ID Único de Estudiante',
-                            message=(
-                                f'Hola {user.get_full_name() or user.username},\n\n'
-                                f'Tu registro en ACADEMIX fue exitoso.\n'
-                                f'Tu ID ÚNICO de alumno es: {generated_code}\n'
-                                f'Guárdalo con cuidado; lo necesitarás para iniciar sesión.\n\n'
-                                f'ACADEMIX – Sistema de Gestión Educativa'
-                            ),
-                            from_email=None,
-                            recipient_list=[email],
-                            fail_silently=True,
-                        )
-                except Exception:
-                    pass
+            # Enviar correo de bienvenida con credenciales completas
+            try:
+                from apps.accounts.email_service import send_registration_email
+                student_code = None
+                if role == CustomUser.Role.STUDENT:
+                    sp = StudentProfile.objects.filter(user=user).first()
+                    student_code = sp.student_code if sp else None
+                send_registration_email(
+                    user=user,
+                    password=password,
+                    student_code=student_code,
+                    role_label=user.get_role_display()
+                )
+            except Exception as mail_err:
+                logger.warning(f"No se pudo enviar correo de bienvenida: {mail_err}")
 
             messages.success(request, f"¡Registro completado!{extra_msg}")
             return redirect('accounts:dashboard')
