@@ -256,8 +256,8 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CONFIGURACIÓN DE CORREO ELECTRÓNICO INSTITUCIONAL
-_email_user = os.getenv('EMAIL_HOST_USER', '')
-_email_pass = os.getenv('EMAIL_HOST_PASSWORD', '')
+_email_user = os.getenv('EMAIL_HOST_USER', 'academix651@gmail.com')
+_email_pass = os.getenv('EMAIL_HOST_PASSWORD', 'uzgn axgt yxpf mvvv')
 
 if _email_user and _email_pass:
     EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
@@ -269,7 +269,7 @@ EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
 EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True').lower() in ('true', '1', 't')
 EMAIL_HOST_USER = _email_user
 EMAIL_HOST_PASSWORD = _email_pass
-DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'ACADEMIX <{_email_user}>' if _email_user else 'ACADEMIX <notificaciones@academix.edu.co>')
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', f'ACADEMIX <{_email_user}>' if _email_user else 'ACADEMIX <academix651@gmail.com>')
 
 # Configuración WhiteNoise para producción web (compresión y caché de estáticos)
 WHITENOISE_USE_FINDERS = True
