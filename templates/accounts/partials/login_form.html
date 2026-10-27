@@ -1,13 +1,14 @@
 <form method="POST" action="{% url 'accounts:login' %}" class="needs-validation">
     {% csrf_token %}
     <input type="hidden" name="institution_type" id="institution_type_hidden" value="{{ current_institution.institution_type }}">
+
     <!-- 0. Selector Visible de Colegio / Escuela -->
-    <div class="mb-3 p-2 px-3 rounded-3 border" style="background:color-mix(in srgb, var(--inst-secondary, #c4b5fd) 12%, white 88%); border-color:color-mix(in srgb, var(--inst-secondary, #c4b5fd) 40%, white 60%) !important;">
-        <label for="login-school-select" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center justify-content-between" style="font-size:0.78rem;">
-            <span><i class="bi bi-building-fill" style="color:var(--inst-primary, #7c3aed);"></i> Colegio / Escuela:</span>
-            <span class="badge border" style="background:white; color:var(--inst-primary, #7c3aed); font-size:0.62rem;">Institución Oficial</span>
+    <div class="mb-3 p-2 px-3 rounded-4 border gss-school-box">
+        <label for="login-school-select" class="form-label small fw-bold text-white mb-1 d-flex align-items-center justify-content-between" style="font-size:0.75rem;">
+            <span><i class="bi bi-building-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> Colegio / Escuela:</span>
+            <span class="badge rounded-pill" style="background:rgba(255,255,255,0.18); color:white; font-size:0.62rem;">Sede Oficial</span>
         </label>
-        <select name="school_id" id="login-school-select" class="form-select form-select-sm fw-bold border-primary shadow-sm" style="font-size:0.83rem;">
+        <select name="school_id" id="login-school-select" class="form-select form-select-sm fw-bold rounded-pill border-0 shadow-sm" style="font-size:0.83rem; height:42px;">
             {% for s in active_schools %}
             <option value="{{ s.pk }}"
                     data-primary-color="{{ s.primary_color|default:'#7c3aed' }}"
@@ -22,13 +23,13 @@
             <option value="" selected>🏫 {{ current_institution.institution_name|default:"Colegio ACADEMIX Central" }}</option>
             {% endfor %}
         </select>
-        <div class="form-text text-muted mt-1" style="font-size:0.68rem;">
+        <div class="form-text text-white-50 mt-1" style="font-size:0.68rem;">
             Selecciona el plantel educativo al que perteneces para validar tu acceso.
         </div>
     </div>
 
     {% if form.non_field_errors %}
-    <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 rounded-3 border-0 shadow-sm" role="alert">
+    <div class="alert alert-danger py-2 px-3 small d-flex align-items-center mb-3 rounded-pill border-0 shadow-sm" role="alert">
         <i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>
         <div>{% for error in form.non_field_errors %}<span>{{ error }}</span>{% endfor %}</div>
     </div>
@@ -36,58 +37,73 @@
 
     <!-- 1. Selector de Rol -->
     <div class="mb-2">
-        <label for="login-role-select" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
-            <i class="bi bi-shield-lock-fill" style="color:var(--inst-primary, #7c3aed);"></i> Rol en el Sistema:
+        <label for="login-role-select" class="form-label small fw-bold text-white mb-1 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
+            <i class="bi bi-shield-lock-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> ROL EN EL SISTEMA:
         </label>
-        {{ form.role }}
+        <div class="input-group">
+            <span class="input-group-text gss-pill-left"><i class="bi bi-person-gear"></i></span>
+            <select name="role" id="login-role-select" class="form-select gss-pill-right" style="height:44px; font-weight:600; font-size:0.88rem;">
+                <option value="RECTOR" {% if form.role.value == 'RECTOR' %}selected{% endif %}>Rector / Rectora</option>
+                <option value="TEACHER" {% if form.role.value == 'TEACHER' or not form.role.value %}selected{% endif %}>Docente</option>
+                <option value="STUDENT" {% if form.role.value == 'STUDENT' %}selected{% endif %}>Alumno</option>
+                <option value="PARENT" {% if form.role.value == 'PARENT' %}selected{% endif %}>Padre de Familia</option>
+                <option value="SECRETARIA" {% if form.role.value == 'SECRETARIA' %}selected{% endif %}>Secretaria</option>
+            </select>
+        </div>
     </div>
 
     <!-- 2. ID Alumno (dinámico) -->
-    <div class="mb-2" id="student-id-wrapper">
-        <label for="login-student-id-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
-            <i class="bi bi-person-badge-fill" style="color:var(--inst-primary, #7c3aed);"></i>
-            ID ÚNICO del Alumno: <span class="text-danger">*</span>
+    <div class="mb-2" id="student-id-wrapper" style="display:none;">
+        <label for="login-student-id-input" class="form-label small fw-bold text-white mb-1 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
+            <i class="bi bi-person-badge-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> ID ÚNICO DEL ALUMNO: <span class="text-danger">*</span>
         </label>
-        {{ form.student_id }}
-        <div class="form-text text-muted" style="font-size:0.7rem;">Obligatorio para Alumnos y Padres de Familia.</div>
-        {% if form.student_id.errors %}<div class="text-danger small mt-1">{{ form.student_id.errors.0 }}</div>{% endif %}
+        <div class="input-group">
+            <span class="input-group-text gss-pill-left"><i class="bi bi-qr-code"></i></span>
+            <input type="text" name="student_id" id="login-student-id-input" class="form-control gss-pill-right font-monospace fw-bold" placeholder="Ej: ALU-2026-1001 o Código" value="{{ form.student_id.value|default:'' }}" style="height:44px;">
+        </div>
+        <div class="form-text text-white-50 ps-3" style="font-size:0.68rem;">Obligatorio para Alumnos y Padres de Familia.</div>
+        {% if form.student_id.errors %}<div class="text-danger small mt-1 ps-3">{{ form.student_id.errors.0 }}</div>{% endif %}
     </div>
 
     <!-- 3. Usuario / Documento -->
     <div class="mb-2" id="username-wrapper">
-        <label for="login-username-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
-            <i class="bi bi-person" style="color:var(--inst-primary, #7c3aed);"></i> Usuario o Documento:
+        <label for="login-username-input" class="form-label small fw-bold text-white mb-1 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
+            <i class="bi bi-person-circle" style="color:var(--inst-secondary, #c4b5fd);"></i> USUARIO O CORREO INSTITUCIONAL:
         </label>
-        {{ form.username }}
-        {% if form.username.errors %}<div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>{% endif %}
+        <div class="input-group">
+            <span class="input-group-text gss-pill-left"><i class="bi bi-person-fill"></i></span>
+            <input type="text" name="username" id="login-username-input" class="form-control gss-pill-right" placeholder="admin@sena.edu.co" autocomplete="username" value="{{ form.username.value|default:'' }}" style="height:44px; font-size:0.92rem;">
+        </div>
+        {% if form.username.errors %}<div class="text-danger small mt-1 ps-3">{{ form.username.errors.0 }}</div>{% endif %}
     </div>
 
     <!-- 4. Contraseña -->
     <div class="mb-3">
-        <label for="login-password-input" class="form-label small fw-bold text-dark mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;">
-            <i class="bi bi-lock-fill" style="color:var(--inst-primary, #7c3aed);"></i> Contraseña:
+        <label for="login-password-input" class="form-label small fw-bold text-white mb-1 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
+            <i class="bi bi-lock-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> CONTRASEÑA:
         </label>
-        <div class="input-group input-group-sm">
-            {{ form.password }}
-            <button class="btn btn-toggle-password" type="button" id="togglePasswordBtn" title="Ver contraseña" tabindex="-1">
+        <div class="input-group">
+            <span class="input-group-text gss-pill-left"><i class="bi bi-lock-fill"></i></span>
+            <input type="password" name="password" id="login-password-input" class="form-control gss-pill-mid" placeholder="••••••••••••" autocomplete="current-password" style="height:44px; font-size:0.92rem;">
+            <button class="btn btn-toggle-password gss-pill-right" type="button" id="togglePasswordBtn" title="Ver contraseña" tabindex="-1">
                 <i class="bi bi-eye" id="togglePasswordIcon"></i>
             </button>
         </div>
-        {% if form.password.errors %}<div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>{% endif %}
+        {% if form.password.errors %}<div class="text-danger small mt-1 ps-3">{{ form.password.errors.0 }}</div>{% endif %}
     </div>
 
     <!-- Botón de Ingreso -->
     <div class="d-grid mt-3">
-        <button type="submit" class="lp-btn-submit" id="login-submit-btn">
-            <i class="bi bi-box-arrow-in-right fs-5"></i>
-            <span>Ingresar al Sistema</span>
+        <button type="submit" class="lp-btn-submit gss-submit-btn" id="login-submit-btn">
+            <span>Ingresar a la Plataforma</span>
+            <i class="bi bi-arrow-right-circle-fill fs-5"></i>
         </button>
     </div>
 
-    <div class="text-center mt-3 pt-2 border-top" style="border-color:#e2e8f0 !important;">
-        <span class="text-muted" style="font-size:0.78rem;">¿Sin cuenta aún?</span>
+    <div class="text-center mt-3 pt-2 border-top border-white-10">
+        <span class="text-white-50" style="font-size:0.78rem;">¿Sin cuenta aún?</span>
         <a href="{% url 'accounts:register' %}?model={{ current_institution.institution_type }}" id="login-register-link"
-           class="fw-bold text-decoration-none ms-1" style="font-size:0.78rem; color:var(--inst-primary, #7c3aed);">
+           class="fw-bold text-decoration-none ms-1" style="font-size:0.78rem; color:var(--inst-secondary, #c4b5fd);">
             <i class="bi bi-person-plus me-1"></i>Registrarse Aquí
         </a>
     </div>
