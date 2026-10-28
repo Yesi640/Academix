@@ -361,6 +361,9 @@ def bulk_upload_students_view(request):
             messages.error(request, 'Debe seleccionar un curso/sección para matricular a los estudiantes.')
             return redirect('students:bulk_upload')
 
+        # Asegurar año lectivo
+        effective_year = current_year or selected_section.academic_year
+
         raw_text = request.POST.get('raw_data', '').strip()
         uploaded_file = request.FILES.get('csv_file')
 
@@ -368,7 +371,13 @@ def bulk_upload_students_view(request):
 
         if uploaded_file:
             content = uploaded_file.read()
-            is_xlsx = content.startswith(b'PK\x03\x04') or (hasattr(uploaded_file, 'name') and uploaded_file.name.lower().endswith('.xlsx'))
+            filename = (uploaded_file.name or '').lower()
+            is_xlsx = content.startswith(b'PK\x03\x04') or filename.endswith('.xlsx')
+            is_old_xls = content.startswith(b'\xd0\xcf\x11\xe0') or filename.endswith('.xls')
+
+            if is_old_xls:
+                messages.error(request, 'El archivo cargado está en formato antiguo de Excel (.xls). Por favor guárdelo como "Libro de Excel (.xlsx)" o archivo de texto (.csv) antes de subirlo.')
+                return redirect(f"{request.path}?section={selected_section.id}")
 
             if is_xlsx:
                 # Procesar directamente archivo Excel .xlsx
@@ -379,7 +388,17 @@ def bulk_upload_students_view(request):
                     for row in ws.iter_rows(values_only=True):
                         if not row or not any(row):
                             continue
-                        row_strings = [str(c).strip() if c is not None else '' for c in row]
+                        row_strings = []
+                        for c in row:
+                            if c is None:
+                                row_strings.append('')
+                            elif isinstance(c, float) and c.is_integer():
+                                row_strings.append(str(int(c)))
+                            else:
+                                val_str = str(c).strip()
+                                if val_str.endswith('.0') and val_str[:-2].isdigit():
+                                    val_str = val_str[:-2]
+                                row_strings.append(val_str)
                         if any(row_strings):
                             rows_data.append(row_strings)
                 except Exception as xlsx_err:
@@ -443,7 +462,7 @@ def bulk_upload_students_view(request):
             rows_data = list(reader)
 
         if not rows_data:
-            messages.warning(request, 'No se proporcionaron datos para importar. Suba un archivo CSV o pegue el contenido.')
+            messages.warning(request, 'No se proporcionaron datos para importar. Suba un archivo Excel (.xlsx), CSV o pegue el contenido.')
             return redirect(f"{request.path}?section={selected_section.id}")
 
         created_count = 0
@@ -451,127 +470,157 @@ def bulk_upload_students_view(request):
         errors = []
         credentials_to_send = []
 
-        # Analizar encabezados: Si la primera celda no es numérica, es fila de encabezados
-        first_col = rows_data[0][0].strip().lower() if rows_data and rows_data[0] else ''
-        has_headers = not first_col.isdigit()
+        # Analizar encabezados: Si la primera celda no es numérica o contiene nombres de campo
+        first_cell = rows_data[0][0].strip().lower() if rows_data and rows_data[0] else ''
+        has_headers = (
+            not first_cell.isdigit() or
+            any(h in first_cell for h in ['doc', 'ident', 'tipo', 'nom', 'ape', 'est'])
+        )
         start_idx = 1 if has_headers else 0
+
+        from django.db import transaction
 
         for row_num, row in enumerate(rows_data[start_idx:], start=start_idx + 1):
             if not row or not any(row):
                 continue
 
-            cleaned = [c.strip() for c in row]
-            if len(cleaned) < 3:
+            cleaned = [str(c).strip() for c in row]
+            # Normalizar sufijo numérico .0
+            cleaned = [c[:-2] if c.endswith('.0') and c[:-2].isdigit() else c for c in cleaned]
+
+            if len(cleaned) < 2 or not cleaned[0]:
                 continue
 
-            # Mapeo posicional estándar:
-            # Col 0: Documento
-            # Col 1: Tipo Documento (TI, CC, etc.) o Nombre si omitido
-            # Col 2: Nombres
-            # Col 3: Apellidos
-            # Col 4: Email (opcional)
-            # Col 5: Teléfono (opcional)
-            # Col 6: Código (opcional)
+            doc_num = cleaned[0].replace(' ', '').replace('.', '').replace('-', '')
+            if not doc_num:
+                continue
+
+            # Mapeo posicional inteligente
+            if len(cleaned) >= 4 and cleaned[1].upper() in ['TI', 'CC', 'CE', 'PASSPORT', 'PEP', 'RC']:
+                doc_type = cleaned[1].upper()
+                first_name = cleaned[2]
+                last_name = cleaned[3]
+                email = cleaned[4] if len(cleaned) > 4 and '@' in cleaned[4] else ''
+                phone = cleaned[5] if len(cleaned) > 5 else ''
+                student_code = cleaned[6] if len(cleaned) > 6 else ''
+            else:
+                doc_type = 'TI'
+                first_name = cleaned[1] if len(cleaned) > 1 else 'Estudiante'
+                last_name = cleaned[2] if len(cleaned) > 2 else doc_num
+                email = cleaned[3] if len(cleaned) > 3 and '@' in cleaned[3] else ''
+                phone = cleaned[4] if len(cleaned) > 4 else ''
+                student_code = cleaned[5] if len(cleaned) > 5 else ''
+
+            if not student_code:
+                student_code = f"EST-{doc_num[-6:] if len(doc_num)>=6 else doc_num}"
+
+            username = f"est_{doc_num}"
+            user_email = email if email else f"{username}@academix.edu.co"
+            password = doc_num
+
+            # Procesar cada estudiante en su propio punto de guardado (Savepoint atómico)
             try:
-                doc_num = cleaned[0]
-                if not doc_num:
-                    continue
+                with transaction.atomic():
+                    # 1. Buscar o crear usuario
+                    user = CustomUser.objects.filter(document_number=doc_num).first()
+                    is_new_user = False
 
-                if len(cleaned) >= 4 and cleaned[1].upper() in ['TI', 'CC', 'CE', 'PASSPORT', 'PEP', 'RC']:
-                    doc_type = cleaned[1].upper()
-                    first_name = cleaned[2]
-                    last_name = cleaned[3]
-                    email = cleaned[4] if len(cleaned) > 4 and '@' in cleaned[4] else ''
-                    phone = cleaned[5] if len(cleaned) > 5 else ''
-                    student_code = cleaned[6] if len(cleaned) > 6 else ''
-                else:
-                    doc_type = 'TI'
-                    first_name = cleaned[1] if len(cleaned) > 1 else 'Estudiante'
-                    last_name = cleaned[2] if len(cleaned) > 2 else doc_num
-                    email = cleaned[3] if len(cleaned) > 3 and '@' in cleaned[3] else ''
-                    phone = cleaned[4] if len(cleaned) > 4 else ''
-                    student_code = cleaned[5] if len(cleaned) > 5 else ''
+                    if not user:
+                        # Evitar colisión de username si ya existía ese nombre de usuario
+                        candidate_username = username
+                        u_suffix = 1
+                        while CustomUser.objects.filter(username=candidate_username).exists():
+                            candidate_username = f"{username}_{u_suffix}"
+                            u_suffix += 1
 
-                if not student_code:
-                    student_code = f"EST-{doc_num[-6:] if len(doc_num)>=6 else doc_num}"
+                        user = create_institutional_user(
+                            username=candidate_username,
+                            email=user_email,
+                            password=password,
+                            role=CustomUser.Role.STUDENT,
+                            document_type=doc_type,
+                            document_number=doc_num,
+                            first_name=first_name,
+                            last_name=last_name,
+                            phone=phone or None,
+                            must_change_password=True
+                        )
+                        if getattr(request.user, 'school', None):
+                            user.school = request.user.school
+                            user.save(update_fields=['school'])
+                        created_count += 1
+                        is_new_user = True
+                    else:
+                        if email and user.email != email:
+                            user.email = email
+                            user.save(update_fields=['email'])
 
-                username = f"est_{doc_num}"
-                user_email = email if email else f"{username}@academix.edu.co"
-                password = doc_num
+                    # 2. Perfil de estudiante asegurando unicidad de student_code
+                    profile = StudentProfile.objects.filter(user=user).first()
+                    if not profile:
+                        candidate_code = student_code
+                        code_suffix = 1
+                        while StudentProfile.objects.filter(student_code=candidate_code).exists():
+                            candidate_code = f"{student_code}-{code_suffix}"
+                            code_suffix += 1
 
-                # 1. Buscar o crear usuario
-                user = CustomUser.objects.filter(document_number=doc_num).first()
-                if not user:
-                    user = CustomUser.objects.filter(username=username).first()
+                        profile = StudentProfile.objects.create(
+                            user=user,
+                            student_code=candidate_code,
+                            blood_type='O+'
+                        )
 
-                is_new_user = False
-                if not user:
-                    user = create_institutional_user(
-                        username=username,
-                        email=user_email,
-                        password=password,
-                        role=CustomUser.Role.STUDENT,
-                        document_type=doc_type,
-                        document_number=doc_num,
-                        first_name=first_name,
-                        last_name=last_name,
-                        phone=phone or None,
-                        must_change_password=True
+                    # 3. Matricular en la sección seleccionada con año efectivo
+                    enroll_student_in_section(
+                        student_profile=profile,
+                        course_section=selected_section,
+                        academic_year=effective_year,
+                        user=request.user
                     )
-                    created_count += 1
-                    is_new_user = True
-                else:
-                    # Si ya existía y se proporcionó correo real nuevo, actualizarlo
-                    if email and user.email != email:
-                        user.email = email
-                        user.save(update_fields=['email'])
+                    enrolled_count += 1
 
-                # 2. Perfil de estudiante
-                profile = get_or_create_student_profile(user, student_code=student_code)
-
-                # 3. Matricular en la sección seleccionada
-                enroll_student_in_section(
-                    student_profile=profile,
-                    course_section=selected_section,
-                    academic_year=current_year,
-                    user=request.user
-                )
-                enrolled_count += 1
-
-                # 4. Encolar para envío de credenciales por correo
-                if is_new_user or user.must_change_password:
-                    credentials_to_send.append({
-                        'user': user,
-                        'password': password,
-                        'student_code': student_code,
-                        'section_name': selected_section.name,
-                        'academic_year': current_year.year if current_year else '',
-                        'email': email or user.email,
-                    })
+                    # 4. Encolar para envío de credenciales por correo
+                    if is_new_user or user.must_change_password:
+                        credentials_to_send.append({
+                            'user': user,
+                            'password': password,
+                            'student_code': profile.student_code,
+                            'section_name': selected_section.name,
+                            'academic_year': effective_year.year if effective_year else '',
+                            'email': email or user.email,
+                        })
 
             except Exception as ex:
-                errors.append(f"Fila {row_num} ({cleaned[0]}): {str(ex)}")
+                errors.append(f"Fila {row_num} ({doc_num}): {str(ex)}")
 
         # Envío automático de credenciales por correo electrónico
-        from apps.students.services import send_bulk_student_credentials
-        login_url = request.build_absolute_uri('/accounts/login/')
-        email_stats = send_bulk_student_credentials(credentials_to_send, login_url=login_url)
+        email_stats = {'sent': 0, 'failed': 0, 'skipped': len(credentials_to_send)}
+        try:
+            from apps.students.services import send_bulk_student_credentials
+            login_url = request.build_absolute_uri('/accounts/login/')
+            email_stats = send_bulk_student_credentials(credentials_to_send, login_url=login_url)
+        except Exception as mail_err:
+            import logging
+            logging.getLogger(__name__).warning(f"Error al enviar credenciales masivas: {mail_err}")
 
-        log_audit(
-            user=request.user,
-            action='BULK_ENROLL_STUDENTS',
-            table_name='Enrollment',
-            record_id=selected_section.id,
-            new_values={
-                'section': selected_section.name,
-                'enrolled': enrolled_count,
-                'created_users': created_count,
-                'emails_sent': email_stats['sent'],
-                'emails_failed': email_stats['failed'],
-            },
-            reason=f'Carga masiva de lista de estudiantes en {selected_section.name}',
-            request=request
-        )
+        try:
+            log_audit(
+                user=request.user,
+                action='BULK_ENROLL_STUDENTS',
+                table_name='Enrollment',
+                record_id=selected_section.id,
+                new_values={
+                    'section': selected_section.name,
+                    'enrolled': enrolled_count,
+                    'created_users': created_count,
+                    'emails_sent': email_stats['sent'],
+                    'emails_failed': email_stats['failed'],
+                },
+                reason=f'Carga masiva de lista de estudiantes en {selected_section.name}',
+                request=request
+            )
+        except Exception:
+            pass
 
         if enrolled_count > 0:
             success_msg = (
@@ -579,9 +628,7 @@ def bulk_upload_students_view(request):
                 f'({created_count} nuevas cuentas de usuario creadas).'
             )
             if email_stats['sent'] > 0:
-                success_msg += f' Se enviaron automáticamente {email_stats["sent"]} correos con el usuario, contraseña inicial y enlace para cambio de contraseña.'
-            if email_stats['skipped'] > 0:
-                success_msg += f' ({email_stats["skipped"]} estudiantes no tenían correo electrónico válido registrado).'
+                success_msg += f' Se enviaron automáticamente {email_stats["sent"]} correos con credenciales.'
             messages.success(request, success_msg)
 
         if errors:
