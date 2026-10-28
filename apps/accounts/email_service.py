@@ -130,7 +130,12 @@ Acceso al sistema: {login_url}
     </div>
     """
 
-    return _send_async_mail(asunto, texto_plano, texto_html, [user.email])
+    recipients = [user.email]
+    # Si es estudiante y tiene acudiente con correo, notificar también al padre de familia
+    if hasattr(user, 'student_profile') and user.student_profile and user.student_profile.parent and user.student_profile.parent.email:
+        recipients.append(user.student_profile.parent.email)
+
+    return _send_async_mail(asunto, texto_plano, texto_html, recipients)
 
 
 # ══════════════════════════════════════════════════════════════════════

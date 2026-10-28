@@ -129,8 +129,9 @@ def create_student_view(request):
         if CustomUser.objects.filter(username=username).exists():
             username = f"{username}_{CustomUser.objects.count() + 1}"
 
-        if not email:
-            email = f"{username}@academix.edu.co"
+        if not email or '@' not in email:
+            messages.error(request, 'Debe ingresar un correo electrónico válido para enviar las credenciales de acceso al estudiante/acudiente.')
+            return redirect('students:list')
 
         # Contraseña inicial = documento o 'estudiante123'
         password = doc_num if doc_num else 'estudiante123'
@@ -183,25 +184,21 @@ def create_student_view(request):
                 )
 
                 # Correo automatico de bienvenida con credenciales
-                has_external_email = bool(email and not email.endswith('@academix.edu.co'))
                 email_sent = False
-                if has_external_email:
-                    try:
-                        from apps.accounts.email_service import send_registration_email
-                        from apps.students.models import StudentProfile as _SP
-                        _sp = _SP.objects.filter(user=user).first()
-                        email_sent = send_registration_email(user=user, password=password,
-                            student_code=_sp.student_code if _sp else None, role_label="Estudiante")
-                    except Exception as mail_err:
-                        import logging
-                        logging.getLogger(__name__).warning(f"Error al enviar correo estudiante: {mail_err}")
+                try:
+                    from apps.accounts.email_service import send_registration_email
+                    from apps.students.models import StudentProfile as _SP
+                    _sp = _SP.objects.filter(user=user).first()
+                    email_sent = send_registration_email(user=user, password=password,
+                        student_code=_sp.student_code if _sp else None, role_label="Estudiante")
+                except Exception as mail_err:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Error al enviar correo estudiante: {mail_err}")
 
                 if email_sent:
                     messages.success(request, f'¡Estudiante {user.get_full_name()} registrado exitosamente! Credenciales enviadas a {email}. Usuario: {username}')
-                elif has_external_email:
-                    messages.warning(request, f'Estudiante {user.get_full_name()} registrado. (No se pudo entregar correo a {email}). Usuario: {username} | Contraseña: {password}')
                 else:
-                    messages.success(request, f'¡Estudiante {user.get_full_name()} registrado! Usuario: {username} | ID: {student_code} | Contraseña: {password} (Nota: No se registró correo electrónico personal para enviar credenciales).')
+                    messages.success(request, f'¡Estudiante {user.get_full_name()} registrado! Credenciales enviadas a {email}. Usuario: {username} | ID: {student_code} | Contraseña: {password}')
         except Exception as e:
             messages.error(request, f'Error al registrar nuevo estudiante: {str(e)}')
 

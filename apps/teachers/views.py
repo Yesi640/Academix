@@ -138,8 +138,9 @@ def create_teacher_view(request):
         if CustomUser.objects.filter(username=username).exists():
             username = f"{username}_{CustomUser.objects.count() + 1}"
 
-        if not email:
-            email = f"{username}@academix.edu.co"
+        if not email or '@' not in email:
+            messages.error(request, 'Debe ingresar un correo electrónico válido para enviar las credenciales de acceso al docente.')
+            return redirect('teachers:list')
 
         password = doc_num if doc_num else 'docente123'
 
@@ -174,22 +175,18 @@ def create_teacher_view(request):
                 )
 
                 # Correo automatico de bienvenida con credenciales
-                has_external_email = bool(email and not email.endswith('@academix.edu.co'))
                 email_sent = False
-                if has_external_email:
-                    try:
-                        from apps.accounts.email_service import send_registration_email
-                        email_sent = send_registration_email(user=user, password=password, role_label="Docente")
-                    except Exception as mail_err:
-                        import logging
-                        logging.getLogger(__name__).warning(f"Error al enviar correo docente: {mail_err}")
+                try:
+                    from apps.accounts.email_service import send_registration_email
+                    email_sent = send_registration_email(user=user, password=password, role_label="Docente")
+                except Exception as mail_err:
+                    import logging
+                    logging.getLogger(__name__).warning(f"Error al enviar correo docente: {mail_err}")
 
                 if email_sent:
                     messages.success(request, f'¡Docente {user.get_full_name()} registrado exitosamente! Credenciales enviadas a {email}. Usuario: {username}')
-                elif has_external_email:
-                    messages.warning(request, f'Docente {user.get_full_name()} registrado. (No se pudo entregar correo a {email}). Usuario: {username} | Contraseña: {password}')
                 else:
-                    messages.success(request, f'¡Docente {user.get_full_name()} registrado! Usuario: {username} | Contraseña inicial: {password} (Nota: No se registró correo electrónico personal para enviar credenciales).')
+                    messages.success(request, f'¡Docente {user.get_full_name()} registrado! Credenciales enviadas a {email}. Usuario: {username} | Contraseña: {password}')
         except Exception as e:
             messages.error(request, f'Error al registrar docente: {str(e)}')
 

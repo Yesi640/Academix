@@ -207,13 +207,14 @@ def register_view(request):
             login(request, user)
 
             # Enviar correo de bienvenida con credenciales completas
+            mail_sent = False
             try:
                 from apps.accounts.email_service import send_registration_email
                 student_code = None
                 if role == CustomUser.Role.STUDENT:
                     sp = StudentProfile.objects.filter(user=user).first()
                     student_code = sp.student_code if sp else None
-                send_registration_email(
+                mail_sent = send_registration_email(
                     user=user,
                     password=password,
                     student_code=student_code,
@@ -222,7 +223,10 @@ def register_view(request):
             except Exception as mail_err:
                 logger.warning(f"No se pudo enviar correo de bienvenida: {mail_err}")
 
-            messages.success(request, f"¡Registro completado!{extra_msg}")
+            if mail_sent:
+                messages.success(request, f"¡Registro completado! Hemos enviado tus credenciales de acceso a {user.email}.{extra_msg}")
+            else:
+                messages.success(request, f"¡Registro completado!{extra_msg}")
             return redirect('accounts:dashboard')
         else:
             first_err = form.non_field_errors()[0] if form.non_field_errors() else 'Por favor revise los datos del formulario.'
@@ -664,6 +668,8 @@ def users_management_view(request):
 
             if not username or not password or not role:
                 messages.error(request, 'El nombre de usuario, la contraseña y el rol son obligatorios.')
+            elif not email or '@' not in email:
+                messages.error(request, 'Debe ingresar un correo electrónico válido para enviarle las credenciales de acceso al usuario.')
             elif CustomUser.objects.filter(username=username).exists():
                 messages.error(request, f'El nombre de usuario "{username}" ya existe en el sistema.')
             elif doc_num and CustomUser.objects.filter(document_number=doc_num).exists():

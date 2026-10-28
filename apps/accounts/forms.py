@@ -192,9 +192,9 @@ class RegistrationForm(forms.Form):
         label='Apellidos'
     )
     email = forms.EmailField(
-        required=False,
-        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'correo@ejemplo.edu'}),
-        label='Correo Electrónico (Opcional)'
+        required=True,
+        widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ejemplo@gmail.com'}),
+        label='Correo Electrónico (Obligatorio para recibir credenciales)'
     )
     document_type = forms.ChoiceField(
         choices=CustomUser.DocumentType.choices,

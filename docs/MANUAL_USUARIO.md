@@ -1,172 +1,121 @@
-# Manual de Usuario del Sistema Academix
-**Guía Integral de Operación y Administración Académica**
-*Versión: 2.0.0 | Plataforma Multi-Entorno Adaptativa*
+# 📖 MANUAL DE USUARIO FINAL DEL SISTEMA ACADEMIX
+**Guía Integral de Operación, Navegación y Procesos Escolares por Roles**  
+*Versión: 2.5.0 | Plataforma Web en la Nube y Red Local*
 
 ---
 
-## 1. Bienvenida a Academix
+## 1. BIENVENIDA A ACADEMIX
 
-**Academix** es tu plataforma de gestión escolar y académica integral. Permite administrar de forma sencilla, ágil e intuitiva todos los procesos institucionales: matrículas, asignación de docentes, planes de estudio, calificaciones, asistencia diaria, tareas y boletines.
+**ACADEMIX** es la plataforma institucional moderna de gestión escolar diseñada para conectar a directivos, secretaría, docentes, alumnos y acudientes en un único entorno ágil, transparente y seguro.
 
-### 🌟 Característica Exclusiva: Adaptabilidad Institucional Total
-Academix se amolda automáticamente a la naturaleza de tu institución. Dependiendo del modelo seleccionado, el sistema transformará sus términos, menús y formularios:
-
-| Modelo Institucional | ¿A quién se enseña? | ¿Quién orienta? | Nivel Académico | Grupo / Salón | Asignatura / Saber |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Básica Primaria, Secundaria y Media** | Estudiante | Docente | Grado | Curso | Asignatura |
-| **Universidad / Superior** | Estudiante | Profesor(a) | Semestre | Grupo | Materia |
-| **Técnico / SENA** | Aprendiz | Instructor(a) | Trimestre | Ficha | Competencia / Módulo |
-| **Academia / Cursos Libres** | Alumno(a) | Tutor(a) | Nivel | Grupo / Clase | Módulo / Taller |
-
-> **🔒 Garantía de Aislamiento:** La información de un modelo nunca se mezcla con la de otro. Al cambiar de entorno, solo verás los estudiantes, grupos, materias y notas correspondientes a ese modelo.
+A través de este sistema podrás realizar matrículas, registrar asistencias en tiempo real, asentar calificaciones bimestrales con escalas oficiales, enviar y calificar tareas, redactar novedades en el observador escolar y emitir boletines de calificaciones oficiales con código QR.
 
 ---
 
-## 2. Acceso al Sistema y Roles
+## 2. TABLA OFICIAL DE ACCESO Y CREDENCIALES
 
-### 2.0 Cómo Poner en Marcha el Sistema (Servidor)
-Antes de ingresar al navegador, asegúrate de que el servidor esté activo:
-- Haz doble clic en el archivo **`iniciar_servidor_produccion.bat`** (acceso local en el mismo equipo).
-- O haz doble clic en **`iniciar_servidor_red.bat`** (si vas a ingresar desde otros equipos o celulares en la red Wi-Fi).
+Para ingresar a la plataforma, abre tu navegador web (Google Chrome, Firefox, Safari o Microsoft Edge) y accede al enlace de tu institución:
+* **Enlace Web en la Nube:** [https://academix-q2g4.onrender.com/accounts/login/](https://academix-q2g4.onrender.com/accounts/login/)
+* **Enlace en Servidor Local:** `http://localhost:8000/accounts/login/`
 
-### 2.1 Inicio de Sesión
-1. Ingresa a la dirección URL en el navegador: `http://localhost:8000/` (o la IP mostrada en consola si trabajas en red).
-2. Haz clic en **"Ingresar al Portal"**.
-3. Selecciona tu **Rol**.
-4. Ingresa tu **Usuario o Identificación**, el **ID ÚNICO del Alumno** (si eres Alumno o Padre) y tu **Contraseña**.
-5. Haz clic en **Ingresar al Sistema**.
+### 🔑 Credenciales Institucionales Activas:
 
-### 2.2 Tabla de Usuarios y Credenciales de Prueba para Evaluación
-Para pruebas inmediatas sin necesidad de crear cuentas previas:
-
-| Rol | Usuario | ID ÚNICO del Alumno | Contraseña | Perfil / Titular |
+| Rol a Seleccionar | Usuario / Documento | ID Único Alumno *(si aplica)* | Contraseña | ¿Quién debe usar esta cuenta? |
 | :--- | :--- | :--- | :--- | :--- |
-| **👑 Administrador** | `admin` | *(No aplica)* | `Admin2026*` | Administrador General |
-| **🏛️ Rector / Directivo** | `rector` | *(No aplica)* | `Rector2026*` | Rector Institucional |
-| **📋 Secretaría** | `secretaria1` | *(No aplica)* | `Secre2026*` | Secretaría Académica |
-| **👨‍🏫 Docente** | `docente1` | *(No aplica)* | `Profe2026*` | Docente de Área |
-| **🎓 Estudiante** | `est_1023456789` | `EST-456789` *(o `1023456789`)* | `Estudiante2026*` | Carlos Andrés Gómez |
-| **👨‍👩‍👧 Acudiente / Padre** | `manuel` | `EST-456789` *(o `1023456789`)* | `Padre2026*` | Manuel Gómez (Padre) |
+| **👑 Superadministrador** | `admin` | *(No aplica)* | `Academix2026!` | Administrador de sistemas y soporte técnico. |
+| **🏛️ Rector / Rectora** | `rector` | *(No aplica)* | `Academix2026!` | Rectores y directores de sede institucional. |
+| **📋 Secretaría** | `nuryssecretaria` | *(No aplica)* | `123456789` | Secretaría académica, admisiones y cobros. |
+| **👨‍🏫 Docente** | `docente` | *(No aplica)* | `Academix2026!` | Profesores de aula y directores de grupo. |
+| **🎓 Alumno** | `alumno` *(o ID)* | **`ALU-2026-1001`** | `Academix2026!` | Estudiantes matriculados. |
+| **👨‍👩‍👧 Padre de Familia** | `padre` | **`ALU-2026-1001`** | `Academix2026!` | Acudientes y padres de familia. |
 
 ---
 
-## 3. Configuración y Adaptabilidad Institucional
+## 3. PASO A PASO: CÓMO INICIAR SESIÓN
 
-*Ruta: Menú Lateral > Ajustes Institucionales*
-
-### 3.1 Cómo cambiar o elegir el Modelo Educativo
-1. Dirígete a **Ajustes Institucionales** en el menú lateral.
-2. En la sección superior verás una tarjeta indicando el **Modelo Institucional Activo**.
-3. Haz clic en el botón **Cambiar Modelo Institucional**.
-4. Selecciona una de las 4 opciones:
-   - **Colegio (Básica Primaria, Secundaria y Media)**
-   - **Universidad / Superior**
-   - **Técnico / SENA**
-   - **Academia / Cursos Libres**
-5. Haz clic en **Aplicar Modelo**.
-6. ¡Listo! El sistema adaptará los nombres de todos los módulos, menús y tablas de inmediato, mostrando únicamente la información perteneciente a dicho modelo.
-
-### 3.2 Personalización de Datos de la Institución
-- **Nombre de la Institución**: Nombre oficial visible en reportes y encabezados.
-- **Lema y NIT / Código DANE**: Información reglamentaria.
-- **Escudo / Logo**: Sube la imagen representativa en formato PNG o JPG.
-- **Términos Personalizados**: Si lo deseas, puedes refinar los nombres singulares y plurales de los actores del sistema.
+1. En la pantalla de ingreso, asegúrate de seleccionar tu **Sede Escolar** (ej. *Institución Educativa ACADEMIX Central*).
+2. En el desplegable **"ROL EN EL SISTEMA"**, elige tu perfil:
+   * Si eres docente, elige **Docente**.
+   * Si eres secretaria, elige **Secretaria**.
+   * Si eres directivo, elige **Rector / Rectora**.
+   * Si eres estudiante, elige **Alumno**. *(El formulario te mostrará el campo obligatorio: ID ÚNICO DEL ALUMNO)*.
+   * Si eres acudiente, elige **Padre de Familia**. *(Se solicitará tu usuario de padre y el ID de tu hijo)*.
+3. Ingresa tu usuario y contraseña correspondiente.
+4. Haz clic en el botón azul **"Ingresar a la Plataforma"**.
+5. ¡Listo! Accederás de inmediato al Panel de Control (Dashboard) adaptado a tu rol.
 
 ---
 
-## 4. Guía de Módulos Operativos
+## 4. GUÍA OPERATIVA SEGÚN TU ROL
 
-### 4.1 Estructura Académica (Cursos / Fichas / Grupos)
-*Ruta: Menú Lateral > Estructura Académica*
-- **Ver Niveles**: Consulta la lista de Grados, Semestres, Trimestres o Niveles.
-- **Crear Nuevo Grupo / Curso / Ficha**:
-  1. Haz clic en **Nueva Sección / Curso / Ficha**.
-  2. Selecciona el nivel correspondiente (ej. *10° Grado* o *Trimestre 1*).
-  3. Ingresa el nombre o código (ej. *10-A* o *Ficha 2670123*), jornada y aula.
-  4. Guarda los cambios.
+### 🏛️ A. ROL: RECTORÍA Y ADMINISTRACIÓN GENERAL (`rector` / `admin`)
+* **Panel de Control:** Resumen gráfico con total de estudiantes matriculados, docentes activos, cursos y porcentaje global de asistencia institucional.
+* **Gestión de Sedes y Escuelas:** Configuración de nombre del colegio, resolución DANE, lema institucional y escudo en alta definición.
+* **Apertura de Año Lectivo y Periodos:** Creación del calendario escolar vigente y habilitación de los 4 periodos académicos bimestrales.
+* **Auditoría del Sistema:** Supervisión en tiempo real de cada cambio de nota, matrícula o pago realizado en el colegio con fecha, hora e IP.
 
 ---
 
-### 4.2 Plan de Estudios (Asignaturas / Competencias / Materias)
-*Ruta: Menú Lateral > Plan de Estudios*
-- **Áreas de Conocimiento**: Agrupaciones principales (ej. *Ciencias Básicas, Idiomas, Desarrollo de Software*).
-- **Asignaturas / Competencias**:
-  1. Haz clic en **Nueva Asignatura / Competencia**.
-  2. Asigna el código, nombre y horas semanales o créditos académicos.
-  3. Vincula el área correspondiente.
+### 📋 B. ROL: SECRETARÍA ACADÉMICA (`nuryssecretaria`)
+* **Admisión y Matrícula en 1 Solo Paso:**
+  1. Ingresa a **Estudiantes** > Botón **+ Nuevo Alumno**.
+  2. Diligencia nombres, documento de identidad, acudiente y selecciona el curso (ej. *1°A*, *6°-A*).
+  3. Al guardar, el sistema genera automáticamente el expediente, el **ID ÚNICO** y envía las credenciales al correo del estudiante.
+* **Gestión de Expedientes y Ficha Médica:** Consulta de certificados de estudio, historial de EPS y tipo de sangre del alumno.
+* **Módulo de Tesorería y Cartera:**
+  * Registro de pagos de matrículas y pensiones mensuales.
+  * Emisión de recibos de caja con soporte para paz y salvo escolar.
 
 ---
 
-### 4.3 Gestión de Estudiantes / Aprendices
-*Ruta: Menú Lateral > Estudiantes (o Aprendices / Alumnos)*
-- **Listado y Filtros**: Busca por nombre, documento o filtra por curso/ficha.
-- **Matricular Nuevo Estudiante**:
-  1. Haz clic en **Nuevo Registro**.
-  2. Llena los datos personales (Nombres, Apellidos, Tipo y N° de Documento, Email).
-  3. Selecciona el curso/ficha al cual quedará matriculado(a).
-- **Carga Masiva**: Puedes importar listados masivos desde archivos CSV/Excel usando la opción **Carga Masiva**.
+### 👨‍🏫 C. ROL: DOCENTE TITULAR (`docente`)
+* **Planilla Digital de Calificaciones:**
+  1. Ingresa a **Calificaciones** > Selecciona tu grupo y asignatura asignada.
+  2. Registra las valoraciones bimestrales en las tres dimensiones pedagógicas:
+     * **SABER (Cognitiva - 40%):** Pruebas y evaluaciones.
+     * **HACER (Procedimental - 40%):** Talleres y proyectos de clase.
+     * **SER (Actitudinal - 20%):** Convivencia y puntualidad.
+  3. El sistema calcula la nota definitiva y la escala nacional (Bajo, Básico, Alto, Superior) de forma automática.
+* **Control Diario de Asistencia:**
+  * Toma de asistencia rápida por salón: Presente (verde), Inasistencia Injustificada (rojo), Retardo (amarillo) o Excusa Médica (azul).
+* **Gestión de Tareas y Talleres:**
+  * Publica actividades con fecha límite, instrucciones y archivos adjuntos (PDF o Word).
+  * Revisa y califica los envíos de los alumnos con retroalimentación personalizada.
+* **Observador Convivencial del Alumno:**
+  * Registro de faltas tipo I, II o felicitaciones con firma y compromisos pedagógicos.
 
 ---
 
-### 4.4 Gestión de Docentes / Instructores y Asignación Académica
-*Ruta: Menú Lateral > Docentes (o Instructores / Tutores)*
-- **Registrar Docente**: Ingreso de perfil profesional, contacto y especialidad.
-- **Asignación Académica**:
-  - Asocia a cada docente las materias/competencias que impartirá en cada curso o ficha específico.
+### 🎓 D. ROL: ESTUDIANTE (`alumno`)
+* **Mi Aula Virtual y Tareas:**
+  * Visualiza todas las tareas pendientes con sus fechas de vencimiento.
+  * Sube tus respuestas y archivos adjuntos con confirmación de entrega en pantalla.
+* **Mis Calificaciones y Boletín Escolar:**
+  * Consulta tus notas parciales por periodo y tu promedio acumulado.
+  * Descarga tu **Boletín Académico Oficial** en PDF con sello institucional y código QR.
+* **Mi Registro de Asistencia:**
+  * Seguimiento de fallas y justificaciones tramitadas ante secretaría o coordinación.
 
 ---
 
-### 4.5 Registro de Calificaciones
-*Ruta: Menú Lateral > Calificaciones*
-1. Selecciona el **Período / Trimestre Académico**, el **Curso / Ficha** y la **Asignatura / Competencia**.
-2. Aparecerá la planilla con los estudiantes matriculados.
-3. Ingresa las notas de actividades, talleres o evaluaciones.
-4. El sistema calcula automáticamente el promedio ponderado y el estado de aprobación según la escala institucional.
-5. Haz clic en **Guardar Calificaciones**.
+### 👨‍👩‍👧 E. ROL: PADRE DE FAMILIA / ACUDIENTE (`padre`)
+* **Seguimiento Académico de tu Hijo:**
+  * Monitoreo en tiempo real de calificaciones y tareas enviadas por los profesores.
+* **Alertas de Inasistencia:**
+  * Notificación inmediata si tu hijo no asistió a una clase.
+* **Observador Escolar:**
+  * Consulta de anotaciones disciplinarias y felicitaciones emitidas por la institución.
+* **Estado de Cuenta Escolar:**
+  * Consulta del estado de pagos de pensión y certificados de paz y salvo.
 
 ---
 
-### 4.6 Control de Asistencia Diaria
-*Ruta: Menú Lateral > Asistencia*
-1. Selecciona la **Fecha**, el **Curso / Grupo** y la **Sesión**.
-2. El sistema carga la lista con todos los estudiantes marcados como **Presente** por defecto.
-3. Marca rápidamente a quienes tengan:
-   - 🟢 **Presente (P)**
-   - 🔴 **Falta / Ausente (A)**
-   - 🟡 **Excusa / Justificado (J)**
-   - 🟠 **Retardo / Tardanza (T)**
-4. Haz clic en **Registrar Asistencia**.
+## 5. PREGUNTAS FRECUENTES Y SOLUCIÓN DE PROBLEMAS
 
----
+### ¿Qué hago si al intentar entrar dice "No existe ningún usuario registrado con..."?
+1. Verifica que en el menú desplegable **"ROL EN EL SISTEMA"** hayas seleccionado el rol correcto (por ejemplo, si eres estudiante, debes cambiar el selector a "Alumno").
+2. Si eres estudiante, debes escribir tu **ID ÚNICO** (ejemplo: `ALU-2026-1001`) o tu número de documento en la casilla correspondiente.
+3. Asegúrate de no tener espacios en blanco al inicio o al final de tu usuario.
 
-### 4.7 Tareas y Actividades Virtuales
-*Ruta: Menú Lateral > Tareas*
-- **Para Docentes / Instructores**:
-  1. Crear nueva tarea indicando título, descripción, fecha y hora límite de entrega.
-  2. Adjuntar archivos guía o material complementario.
-  3. Revisar las entregas recibidas de los estudiantes y calificar con comentarios de retroalimentación.
-- **Para Estudiantes / Aprendices**:
-  1. Ingresar al detalle de la tarea asignada.
-  2. Cargar el archivo de solución (PDF, DOCX, ZIP, etc.) y añadir observaciones.
-  3. Enviar entrega antes de la fecha límite.
-
----
-
-### 4.8 Boletines, Informes y Cuadro de Honor
-*Ruta: Menú Lateral > Reportes*
-- **Boletín Individual por Estudiante**: Genera el informe valorativo oficial con desglose de materias, notas y observaciones disciplinarias, listo para imprimir en PDF.
-- **Consolidado por Curso / Sábana de Notas**: Matriz completa con todos los alumnos y asignaturas del período.
-- **Cuadro de Honor**: Muestra a los mejores promedios y puestos destacados por grado y grupo.
-
----
-
-## 5. Preguntas Frecuentes (FAQ)
-
-### ¿Qué pasa si cambio de modelo institucional (por ejemplo de SENA a Colegio)?
-El sistema cambia automáticamente toda la interfaz. La información que registraste en el SENA (fichas, aprendices, instructores) queda guardada de forma segura e independiente, y cuando estás en modo Colegio solo verás los cursos, grados y estudiantes del Colegio.
-
-### ¿Cómo puedo trabajar en red con otros computadores de mi institución?
-Solo debes ejecutar en el computador principal el archivo `iniciar_servidor_red.py` o `iniciar_servidor_red.bat`. El sistema mostrará la dirección IP (ejemplo: `http://192.168.1.15:8000`) para que los demás equipos puedan conectarse desde sus navegadores sin instalar nada adicional.
-
-### ¿Se pueden exportar e imprimir los reportes?
-Sí, todos los módulos de calificaciones, reportes, consolidados y boletines incluyen botones optimizados para exportación e impresión directa.
+### ¿Cómo cambio mi contraseña?
+Una vez dentro de la plataforma, haz clic sobre tu nombre en la esquina superior derecha, selecciona **"Mi Perfil"** y luego **"Cambiar Contraseña"**.
