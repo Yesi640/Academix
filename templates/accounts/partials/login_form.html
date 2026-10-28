@@ -79,9 +79,14 @@
 
     <!-- 4. Contraseña -->
     <div class="mb-3">
-        <label for="login-password-input" class="form-label small fw-bold text-white mb-1 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
-            <i class="bi bi-lock-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> CONTRASEÑA:
-        </label>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <label for="login-password-input" class="form-label small fw-bold text-white mb-0 d-flex align-items-center gap-1" style="font-size:0.76rem; letter-spacing:0.4px;">
+                <i class="bi bi-lock-fill" style="color:var(--inst-secondary, #c4b5fd);"></i> CONTRASEÑA:
+            </label>
+            <a href="{% url 'accounts:password_reset' %}" class="text-decoration-none" style="font-size:0.75rem; color:var(--inst-secondary, #c4b5fd);" title="Recuperar acceso a tu cuenta">
+                ¿Olvidaste tu contraseña?
+            </a>
+        </div>
         <div class="input-group">
             <span class="input-group-text gss-pill-left"><i class="bi bi-lock-fill"></i></span>
             <input type="password" name="password" id="login-password-input" class="form-control gss-pill-mid" placeholder="••••••••••••" autocomplete="current-password" style="height:44px; font-size:0.92rem;">

@@ -874,3 +874,139 @@ def school_api_list(request):
         'id', 'name', 'city', 'primary_color', 'secondary_color', 'contact_email', 'contact_phone'
     ).order_by('name')
     return JsonResponse({'schools': list(schools)})
+
+
+# ══════════════════════════════════════════════════════════════════
+#  RECUPERACIÓN DE CONTRASEÑA (PASSWORD RESET)
+# ══════════════════════════════════════════════════════════════════
+
+def password_reset_request_view(request):
+    """
+    Permite solicitar el restablecimiento de contraseña mediante correo, usuario o documento.
+    Envía un enlace seguro firmado con token criptográfico temporal.
+    """
+    if request.user.is_authenticated:
+        return redirect('accounts:dashboard')
+
+    if request.method == 'POST':
+        ident = request.POST.get('identifier', '').strip()
+        if not ident:
+            messages.error(request, 'Debe ingresar su correo, usuario o documento.')
+            return render(request, 'accounts/password_reset.html')
+
+        user = (
+            CustomUser.objects.filter(email__iexact=ident).first()
+            or CustomUser.objects.filter(username__iexact=ident).first()
+            or CustomUser.objects.filter(document_number=ident).first()
+        )
+
+        if user and user.email and '@' in user.email:
+            from django.utils.http import urlsafe_base64_encode
+            from django.utils.encoding import force_bytes
+            from django.contrib.auth.tokens import default_token_generator
+            from django.template.loader import render_to_string
+            from django.utils.html import strip_tags
+            from django.core.mail import EmailMultiAlternatives
+            from django.urls import reverse
+
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            reset_url = request.build_absolute_uri(
+                reverse('accounts:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+            )
+
+            context = {
+                'user': user,
+                'reset_url': reset_url,
+            }
+            html_message = render_to_string('emails/password_reset.html', context)
+            plain_message = strip_tags(html_message)
+
+            try:
+                from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'ACADEMIX <academix651@gmail.com>')
+                msg = EmailMultiAlternatives(
+                    subject="ACADEMIX - Restablecimiento de Contraseña",
+                    body=plain_message,
+                    from_email=from_email,
+                    to=[user.email]
+                )
+                msg.attach_alternative(html_message, "text/html")
+                msg.send(fail_silently=False)
+
+                log_audit(
+                    user=user,
+                    action='PASSWORD_RESET_REQUEST',
+                    table_name='CustomUser',
+                    record_id=user.id,
+                    reason=f'Solicitud de restablecimiento de contraseña para {user.username}',
+                    request=request
+                )
+            except Exception as mail_err:
+                logger.warning(f"Error enviando correo de restablecimiento a {user.email}: {mail_err}")
+
+        # Siempre redirigir a done para evitar enumeración de usuarios
+        return redirect('accounts:password_reset_done')
+
+    return render(request, 'accounts/password_reset.html')
+
+
+def password_reset_done_view(request):
+    """Confirmación de solicitud de recuperación de contraseña enviada."""
+    return render(request, 'accounts/password_reset_done.html')
+
+
+def password_reset_confirm_view(request, uidb64, token):
+    """
+    Valida el token de recuperación y permite definir una nueva contraseña.
+    """
+    from django.utils.http import urlsafe_base64_decode
+    from django.contrib.auth.tokens import default_token_generator
+
+    user = None
+    validlink = False
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = CustomUser.objects.filter(pk=uid).first()
+    except (TypeError, ValueError, OverflowError):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        validlink = True
+
+    error_msg = None
+    if request.method == 'POST' and validlink:
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+
+        if not new_password or not confirm_password:
+            error_msg = 'Todos los campos son obligatorios.'
+        elif len(new_password) < 8:
+            error_msg = 'La nueva contraseña debe tener al menos 8 caracteres.'
+        elif new_password != confirm_password:
+            error_msg = 'Las contraseñas no coinciden.'
+        else:
+            user.set_password(new_password)
+            user.must_change_password = False
+            user.save()
+
+            log_audit(
+                user=user,
+                action='PASSWORD_RESET_COMPLETE',
+                table_name='CustomUser',
+                record_id=user.id,
+                reason=f'Contraseña restablecida exitosamente para {user.username}',
+                request=request
+            )
+            return redirect('accounts:password_reset_complete')
+
+    return render(request, 'accounts/password_reset_confirm.html', {
+        'validlink': validlink,
+        'error_msg': error_msg,
+    })
+
+
+def password_reset_complete_view(request):
+    """Confirmación de que la contraseña fue cambiada exitosamente."""
+    return render(request, 'accounts/password_reset_complete.html')
+
