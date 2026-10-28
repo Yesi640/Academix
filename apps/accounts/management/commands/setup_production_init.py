@@ -91,6 +91,110 @@ class Command(BaseCommand):
             generate_default_sections_for_year(current_year)
             self.stdout.write(self.style.SUCCESS('    [OK] Cursos y salones escolares generados.'))
 
+        # 2.1 Catálogo Oficial de Áreas de Conocimiento, Asignaturas y Malla Curricular
+        self.stdout.write(self.style.NOTICE('==> [3.5/6] Verificando catálogo oficial de Asignaturas y Mallas por Grado...'))
+        from apps.subjects.models import KnowledgeArea, Subject, GradeSubject
+        INST = 'COLEGIO'
+
+        AREAS = [
+            (1, 'Matemáticas'),
+            (2, 'Lengua Castellana e Idiomas'),
+            (3, 'Ciencias Naturales y Educación Ambiental'),
+            (4, 'Ciencias Sociales, Historia y Geografía'),
+            (5, 'Educación Ética y Valores Humanos'),
+            (6, 'Educación Religiosa'),
+            (7, 'Educación Física, Recreación y Deporte'),
+            (8, 'Educación Artística y Cultural'),
+            (9, 'Idioma Extranjero Inglés'),
+            (10, 'Tecnología e Informática'),
+            (11, 'Ciencias Económicas y Políticas'),
+            (12, 'Filosofía'),
+        ]
+
+        area_objs = {}
+        for order, name in AREAS:
+            a, _ = KnowledgeArea.objects.get_or_create(
+                institution_type=INST,
+                name=name,
+                defaults={'order': order}
+            )
+            area_objs[name] = a
+
+        SUBJECTS = [
+            ('COL-MAT', 'Matemáticas',                         'PRINCIPAL',    'Matemáticas',                            4),
+            ('COL-LEN', 'Lengua Castellana',                   'PRINCIPAL',    'Lengua Castellana e Idiomas',            4),
+            ('COL-CNT', 'Ciencias Naturales',                  'PRINCIPAL',    'Ciencias Naturales y Educación Ambiental', 4),
+            ('COL-BIO', 'Biología',                            'PRINCIPAL',    'Ciencias Naturales y Educación Ambiental', 3),
+            ('COL-FIS', 'Física',                              'PRINCIPAL',    'Ciencias Naturales y Educación Ambiental', 3),
+            ('COL-QUI', 'Química',                             'PRINCIPAL',    'Ciencias Naturales y Educación Ambiental', 3),
+            ('COL-SOC', 'Ciencias Sociales',                   'PRINCIPAL',    'Ciencias Sociales, Historia y Geografía',  3),
+            ('COL-HIS', 'Historia y Geografía',                'HISTORIA',     'Ciencias Sociales, Historia y Geografía',  3),
+            ('COL-CON', 'Constitución Política',               'HUMANISTICA',  'Ciencias Sociales, Historia y Geografía',  2),
+            ('COL-ETI', 'Ética y Valores',                     'HUMANISTICA',  'Educación Ética y Valores Humanos',       1),
+            ('COL-REL', 'Educación Religiosa',                 'HUMANISTICA',  'Educación Religiosa',                     1),
+            ('COL-EFI', 'Educación Física',                    'DEPORTE',      'Educación Física, Recreación y Deporte',  2),
+            ('COL-ART', 'Educación Artística',                 'ARTE',         'Educación Artística y Cultural',         2),
+            ('COL-MUS', 'Música',                              'ARTE',         'Educación Artística y Cultural',         1),
+            ('COL-ING', 'Inglés',                              'PRINCIPAL',    'Idioma Extranjero Inglés',                3),
+            ('COL-TIC', 'Tecnología e Informática',            'PRINCIPAL',    'Tecnología e Informática',                2),
+            ('COL-ECO', 'Economía y Política',                 'HUMANISTICA',  'Ciencias Económicas y Políticas',         2),
+            ('COL-FIL', 'Filosofía',                           'HUMANISTICA',  'Filosofía',                               2),
+        ]
+
+        sub_objs = {}
+        for code, name, cat, area_name, credits in SUBJECTS:
+            area = area_objs[area_name]
+            s, _ = Subject.objects.get_or_create(
+                institution_type=INST,
+                code=code,
+                defaults={
+                    'name': name,
+                    'category': cat,
+                    'area': area,
+                    'credits': credits
+                }
+            )
+            # Asegurar relación con área correcta
+            if s.area_id != area.id or s.name != name:
+                s.area = area
+                s.name = name
+                s.category = cat
+                s.credits = credits
+                s.save()
+            sub_objs[code] = s
+
+        CURRICULUM = {
+            'GR-00': [('COL-MAT',4),('COL-LEN',5),('COL-CNT',3),('COL-SOC',2),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',2),('COL-TIC',1)],
+            'GR-01': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',3),('COL-TIC',2)],
+            'GR-02': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',3),('COL-TIC',2)],
+            'GR-03': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',3),('COL-TIC',2)],
+            'GR-04': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',3),('COL-TIC',2)],
+            'GR-05': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',3),('COL-TIC',2)],
+            'GR-06': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',4),('COL-TIC',2)],
+            'GR-07': [('COL-MAT',5),('COL-LEN',5),('COL-CNT',4),('COL-SOC',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',2),('COL-ING',4),('COL-TIC',2)],
+            'GR-08': [('COL-MAT',5),('COL-LEN',4),('COL-BIO',3),('COL-FIS',3),('COL-QUI',3),('COL-HIS',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',1),('COL-ING',4),('COL-TIC',2)],
+            'GR-09': [('COL-MAT',5),('COL-LEN',4),('COL-BIO',3),('COL-FIS',3),('COL-QUI',3),('COL-HIS',3),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ART',1),('COL-ING',4),('COL-TIC',2)],
+            'GR-10': [('COL-MAT',5),('COL-LEN',4),('COL-BIO',3),('COL-FIS',3),('COL-QUI',3),('COL-HIS',3),('COL-CON',2),('COL-FIL',2),('COL-ECO',2),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ING',4),('COL-TIC',2)],
+            'GR-11': [('COL-MAT',5),('COL-LEN',4),('COL-BIO',3),('COL-FIS',3),('COL-QUI',3),('COL-HIS',3),('COL-CON',2),('COL-FIL',2),('COL-ECO',2),('COL-ETI',1),('COL-REL',1),('COL-EFI',2),('COL-ING',4),('COL-TIC',2)],
+        }
+
+        for code, subjs in CURRICULUM.items():
+            grade = GradeLevel.objects.filter(code=code).first()
+            if not grade:
+                continue
+            for sub_code, hours in subjs:
+                s = sub_objs.get(sub_code)
+                if s:
+                    GradeSubject.objects.get_or_create(
+                        grade_level=grade,
+                        subject=s,
+                        defaults={
+                            'weekly_hours': hours,
+                            'weight_percentage': Decimal('100.00')
+                        }
+                    )
+        self.stdout.write(self.style.SUCCESS(f'    [OK] Catálogo de {len(sub_objs)} Asignaturas y Mallas por Grado verificadas.'))
+
         # 3. Limpieza de usuarios residuales: Conservar únicamente las cuentas oficiales requeridas
         self.stdout.write(self.style.NOTICE('==> [4/6] Depurando usuarios: Conservando únicamente cuentas oficiales...'))
         ALLOWED_USERNAMES = {'admin', 'rector', 'docente', 'alumno', 'padre', 'nuryssecretaria'}
